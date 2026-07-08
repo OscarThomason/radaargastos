@@ -10,7 +10,9 @@
         <img [src]="authService.userSignal()?.photoURL" alt="Avatar" class="avatar">
         <div class="user-info">
           <span class="user-name">{{ authService.userSignal()?.displayName }}</span>
-          <button class="btn-logout" (click)="syncCalendar()" style="color: var(--text);">📅 Sincronizar Pagos</button>
+          <button class="btn-logout" (click)="syncCalendar()" style="color: var(--text); display: flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">event_repeat</span> Sincronizar Pagos
+          </button>
           <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
         </div>
       </div>

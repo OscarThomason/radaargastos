@@ -143,10 +143,16 @@
                 —
               }
             </td>
-            <td style="text-align:right; min-width: 120px;">
-              <button class="btn-primary" style="margin-right: 5px; padding: 4px 8px;" (click)="openPayModal(d.id)" title="Registrar Pago">✅ Pagar</button>
-              <button class="btn-ghost" (click)="editDebt(d.id)" title="Editar">✏️</button>
-              <button class="btn-ghost" (click)="deleteDebt(d.id)" title="Eliminar">✕</button>
+            <td style="text-align:right; min-width: 120px; display: flex; justify-content: flex-end; gap: 4px;">
+              <button class="btn-primary" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;" (click)="openPayModal(d.id)" title="Registrar Pago">
+                <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> Pagar
+              </button>
+              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center;" (click)="editDebt(d.id)" title="Editar">
+                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+              </button>
+              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center; color: var(--danger);" (click)="deleteDebt(d.id)" title="Eliminar">
+                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+              </button>
             </td>
           </tr>
         }

@@ -10,5 +10,7 @@
   
   <span class="tag" [ngClass]="'tag-' + (item.kind === 'servicio' ? 'servicio' : item.kind)">{{ item.kind }}</span>
   
-  <button class="mark-paid" (click)="markPaid.emit({id: item.id, kind: item.kind})">Marcar pagado</button>
+  <button class="mark-paid" style="display: flex; align-items: center; justify-content: center; gap: 4px;" (click)="markPaid.emit({id: item.id, kind: item.kind})">
+    <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> Marcar pagado
+  </button>
 </div>

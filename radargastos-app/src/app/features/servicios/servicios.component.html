@@ -56,9 +56,13 @@
             <td>{{formatDate(s.anchor)}}</td>
             <td><strong>{{getDaysRemaining(s.anchor)}}</strong></td>
             <td><span class="small-muted">{{s.notes}}</span></td>
-            <td style="text-align:right; min-width: 80px;">
-              <button class="btn-ghost" (click)="editService(s.id)" title="Editar">✏️</button>
-              <button class="btn-ghost" (click)="deleteService(s.id)" title="Eliminar">✕</button>
+            <td style="text-align:right; min-width: 80px; display: flex; justify-content: flex-end; gap: 4px;">
+              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center;" (click)="editService(s.id)" title="Editar">
+                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+              </button>
+              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center; color: var(--danger);" (click)="deleteService(s.id)" title="Eliminar">
+                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+              </button>
             </td>
           </tr>
         }
