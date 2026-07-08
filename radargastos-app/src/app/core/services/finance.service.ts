@@ -6,31 +6,11 @@ import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudge
 const CATEGORIES = ['Servicios','Deudas','Transporte','Alimentos','Restaurantes','Oscio','Salud','nutricion y gym','ropa o accesorios','casa','viaje','mascota','Otros'];
 
 const DEFAULT_STATE: AppState = {
-  debts: [
-    {id:'nu', group:'tarjeta', name:'NU Crédito', dueDay:3, interval:1, minPayment:938.08, noInterest:null, debt:9353.02, notes:'Pago atrasado del mínimo mensual'},
-    {id:'banamex', group:'tarjeta', name:'Banamex Costco', dueDay:24, interval:1, minPayment:360, noInterest:4143.67, debt:4143.67, notes:'Corte día 3'},
-    {id:'bbva', group:'tarjeta', name:'BBVA', dueDay:23, interval:1, minPayment:1323.43, noInterest:4220.44, debt:12723.43, notes:'Corte día 3, sobregirado sobre línea de 11,400'},
-    {id:'stori', group:'tarjeta', name:'Stori', dueDay:17, interval:1, minPayment:527.95, noInterest:4933.09, debt:4933.09, notes:''},
-    {id:'branders', group:'tarjeta', name:'Branders Card', dueDay:20, interval:1, minPayment:568.90, noInterest:5688.98, debt:5688.98, notes:'Corte día 25'},
-    {id:'kueski1', group:'prestamo', name:'Kueski · Amazon #1', frequency:'quincenal', anchor:'2026-07-15', cuota:662, cuotasPagadas:1, total:662, pagado:0, notes:'Última cuota'},
-    {id:'kueski2', group:'prestamo', name:'Kueski · Amazon #2', frequency:'quincenal', anchor:'2026-07-15', cuota:1134, cuotasPagadas:2, total:2553.03, pagado:257.93, notes:''},
-    {id:'kueski3', group:'prestamo', name:'Kueski · ETN', frequency:'quincenal', anchor:'2026-07-15', cuota:1044.40, cuotasPagadas:2, total:6624.40, pagado:1044.00, notes:'Monto de cuota ajustado'},
-    {id:'kueski4', group:'prestamo', name:'Kueski · Amazon #3', frequency:'quincenal', anchor:'2026-07-15', cuota:872, cuotasPagadas:3, total:3465.98, pagado:1705.89, notes:''},
-    {id:'kueski5', group:'prestamo', name:'Kueski · Amazon #4', frequency:'quincenal', anchor:'2026-07-15', cuota:1134, cuotasPagadas:3, total:6980.14, pagado:2200.17, notes:''},
-    {id:'kueski6', group:'prestamo', name:'Kueski · Préstamo personal', frequency:'quincenal', anchor:'2026-07-15', cuota:1956, cuotasPagadas:2, total:15818.95, pagado:1956.00, notes:''}
-  ],
-  services: [
-    {id:'luz', name:'Luz (CFE)', amount:350, dueDay:27, interval:2, notes: ''},
-    {id:'renta', name:'Renta', amount:7750, dueDay:5, interval:1, notes: ''},
-    {id:'telmex', name:'Telmex', amount:708, dueDay:13, interval:1, notes: ''},
-    {id:'telcel', name:'Telcel', amount:550, dueDay:27, interval:1, notes: ''},
-    {id:'spotify', name:'Spotify', amount:189, dueDay:1, interval:1, notes:'Sin día fijo confirmado, ajústalo si sabes la fecha exacta'}
-  ],
+  debts: [],
+  services: [],
   expenses: [],
   incomes: [],
-  weeklyBudgets: [
-    {id:'gasolina', name:'Gasolina', min:600, max:800}
-  ]
+  weeklyBudgets: []
 };
 
 @Injectable({
@@ -55,6 +35,7 @@ export class FinanceService {
           this.unsubSnapshot = null;
         }
         this.state.set(JSON.parse(JSON.stringify(DEFAULT_STATE)));
+        localStorage.removeItem('finanzas:state');
       }
     });
   }
