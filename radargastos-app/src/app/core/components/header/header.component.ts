@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { CalendarService } from '../services/calendar.service';
+import { CalendarService } from '../../services/calendar.service';
 
 @Component({
   selector: 'app-header',
