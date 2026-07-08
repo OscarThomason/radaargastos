@@ -39,12 +39,8 @@ export class ResumenComponent {
     return groups;
   });
 
-  totalMin = computed(() => {
-    return this.financeService.state().debts.reduce((acc, d) => acc + (d.group === 'prestamo' ? (d.cuota || 0) : (d.minPayment || 0)), 0);
-  });
-
-  totalServ = computed(() => {
-    return this.financeService.state().services.reduce((acc, s) => acc + s.amount, 0);
+  compromisoCiclo = computed(() => {
+    return this.next30().reduce((acc, item) => acc + item.amount, 0);
   });
 
   totalDeudaViva = computed(() => {
@@ -67,24 +63,34 @@ export class ResumenComponent {
   payRegisterAsExpense = false;
 
   onMarkPaid(event: {id: string, kind: string}) {
-    if (event.kind === 'tarjeta' || event.kind === 'prestamo') {
-      const item = this.financeService.state().debts.find(d => d.id === event.id);
-      if (!item) return;
-      this.payingDebt = JSON.parse(JSON.stringify(item));
-      this.payRegisterAsExpense = false;
-      this.payCustomAmount = null;
-      
-      if (item.group === 'prestamo') {
-        this.payAmountType = 'cuota';
-        this.payCustomAmount = item.cuota || 0;
-      } else {
-        this.payAmountType = 'minimo';
-      }
-      this.isPayModalOpen = true;
+    let item;
+    if (event.kind === 'servicio') {
+      item = this.financeService.state().services.find(s => s.id === event.id);
     } else {
-      // Para servicios, se paga automáticamente sin modal extra
-      this.financeService.markPaid(event.id, event.kind);
+      item = this.financeService.state().debts.find(d => d.id === event.id);
     }
+    
+    if (!item) return;
+    this.payingDebt = JSON.parse(JSON.stringify(item));
+    
+    // Inject group if it's a service to reuse the modal logic
+    if (event.kind === 'servicio') {
+      this.payingDebt.group = 'servicio';
+    }
+    
+    this.payRegisterAsExpense = false;
+    this.payCustomAmount = null;
+    
+    if (this.payingDebt.group === 'prestamo') {
+      this.payAmountType = 'cuota';
+      this.payCustomAmount = this.payingDebt.cuota || 0;
+    } else if (this.payingDebt.group === 'servicio') {
+      this.payAmountType = 'cuota'; // Usamos la misma UI de préstamo
+      this.payCustomAmount = this.payingDebt.amount || 0;
+    } else {
+      this.payAmountType = 'minimo';
+    }
+    this.isPayModalOpen = true;
   }
 
   cancelPay() {
@@ -103,10 +109,13 @@ export class ResumenComponent {
       else amountPaid = this.payCustomAmount || 0;
 
       debt.debt = Math.max(0, (debt.debt || 0) - amountPaid);
-    } else {
+    } else if (debt.group === 'prestamo') {
       amountPaid = this.payCustomAmount || debt.cuota || 0;
       debt.pagado = (debt.pagado || 0) + amountPaid;
       debt.cuotasPagadas = (debt.cuotasPagadas || 0) + 1;
+    } else {
+      // Servicio
+      amountPaid = this.payCustomAmount || debt.amount || 0;
     }
 
     if (this.payRegisterAsExpense && amountPaid > 0) {
@@ -120,11 +129,23 @@ export class ResumenComponent {
       });
     }
 
-    if (debt.anchor) {
-      debt.anchor = this.advanceAnchor(debt.anchor, debt.frequency || 'mensual');
+    if (debt.group === 'servicio') {
+      this.financeService.markPaid(debt.id, 'servicio');
+      // markPaid ya avanza el anchor y genera el gasto (si no estuviera controlado por nosotros).
+      // Pero como queremos controlar el expense nosotros con `payRegisterAsExpense`...
+      // Vamos a delegar la actualización a financeService pero saltarnos su expense autogenerado.
+      // Modificaremos financeService o simplemente lo usamos y reemplazamos el expense si diff.
+      // Mejor actualizar el servicio directamente:
+      if (debt.anchor) {
+        debt.anchor = this.advanceAnchor(debt.anchor, debt.frequency || 'mensual');
+      }
+      this.financeService.updateService(debt.id, debt);
+    } else {
+      if (debt.anchor) {
+        debt.anchor = this.advanceAnchor(debt.anchor, debt.frequency || 'mensual');
+      }
+      this.financeService.updateDebt(debt.id, debt);
     }
-
-    this.financeService.updateDebt(debt.id, debt);
     this.cancelPay();
   }
 

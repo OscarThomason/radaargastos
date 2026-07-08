@@ -1,7 +1,7 @@
 <div class="summary-strip">
   <app-stat-card 
     label="Compromiso este ciclo" 
-    [value]="money(totalMin() + totalServ())">
+    [value]="money(compromisoCiclo())">
   </app-stat-card>
   <app-stat-card 
     label="Deuda viva total" 
@@ -58,6 +58,12 @@
               <input [(ngModel)]="payCustomAmount" type="number" placeholder="Ej. 1500">
             </div>
           }
+        } @else if (payingDebt.group === 'servicio') {
+          <div style="grid-column: 1 / -1;">
+            <label>¿Cuánto pagaste por este servicio?</label>
+            <input [(ngModel)]="payCustomAmount" type="number">
+            <small class="hint">Por defecto es el costo registrado de {{ money(payingDebt.amount || 0) }}</small>
+          </div>
         } @else {
           <div style="grid-column: 1 / -1;">
             <label>¿Monto a abonar al préstamo?</label>
