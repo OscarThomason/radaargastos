@@ -3,3 +3,9 @@
   margin: 0 auto;
   padding: 24px 20px 80px 60px; /* Padding izquierdo extra para la línea roja */
 }
+
+@media (max-width: 768px) {
+  #app {
+    padding: 16px 12px 80px 32px; /* Reducido en móvil, línea roja a 20px */
+  }
+}

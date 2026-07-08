@@ -210,6 +210,19 @@ import { AuthService } from '../../core/services/auth.service';
       0% { opacity: 0.6; }
       100% { opacity: 1; }
     }
+
+    @media (max-width: 768px) {
+      .notebook-page {
+        padding: 40px 20px 40px 50px;
+        background-image: 
+          linear-gradient(90deg, transparent 20px, #E53935 20px, #E53935 22px, transparent 22px),
+          linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+      }
+      .holes {
+        left: 5px;
+      }
+    }
   `]
 })
 export class LoginComponent {
