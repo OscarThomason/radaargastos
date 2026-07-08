@@ -29,3 +29,48 @@
     }
   }
 </div>
+
+@if (isPayModalOpen && payingDebt) {
+  <div class="modal-overlay" (click)="cancelPay()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>Pagar: {{ payingDebt.name }}</h3>
+      
+      <div class="form-grid" style="margin-top: 15px;">
+        @if (payingDebt.group === 'tarjeta') {
+          <div style="grid-column: 1 / -1;">
+            <label>¿Cuánto pagaste?</label>
+            <select [(ngModel)]="payAmountType" style="margin-bottom: 10px;">
+              <option value="minimo">Pago Mínimo ({{ money(payingDebt.minPayment || 0) }})</option>
+              <option value="noInterest">Para no generar intereses ({{ money(payingDebt.noInterest || 0) }})</option>
+              <option value="otro">Otro monto manual</option>
+            </select>
+          </div>
+          @if (payAmountType === 'otro') {
+            <div style="grid-column: 1 / -1;">
+              <label>Monto Pagado</label>
+              <input [(ngModel)]="payCustomAmount" type="number" placeholder="Ej. 1500">
+            </div>
+          }
+        } @else {
+          <div style="grid-column: 1 / -1;">
+            <label>¿Monto a abonar al préstamo?</label>
+            <input [(ngModel)]="payCustomAmount" type="number">
+            <small class="hint">Por defecto es tu cuota regular de {{ money(payingDebt.cuota || 0) }}</small>
+          </div>
+        }
+      </div>
+
+      <div style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius);">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+          <input type="checkbox" [(ngModel)]="payRegisterAsExpense" style="width: 20px; height: 20px;">
+          <span>Registrar como "Gasto" (Restará de tu efectivo mensual)</span>
+        </label>
+      </div>
+      
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-ghost" (click)="cancelPay()">Cancelar</button>
+        <button class="btn-primary" (click)="submitPayment()">Confirmar Pago</button>
+      </div>
+    </div>
+  </div>
+}
