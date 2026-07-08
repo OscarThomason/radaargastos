@@ -35,6 +35,10 @@ jobs:
       - name: Build with GitHub Pages base href
         working-directory: ./radargastos-app
         run: npm run build -- --base-href=/radaargastos/
+        
+      - name: Fix GitHub Pages 404 routing
+        working-directory: ./radargastos-app
+        run: cp dist/radargastos-app/browser/index.html dist/radargastos-app/browser/404.html
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
