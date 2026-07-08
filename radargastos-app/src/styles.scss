@@ -262,4 +262,10 @@ h2.section-title:first-child { margin-top: 0; }
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   }
+
+  .modal-content {
+    padding: 16px;
+    width: 95%;
+    max-height: 85vh;
+  }
 }
