@@ -75,6 +75,9 @@
 }
 
 .tabs a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 16px 24px;
   text-decoration: none;
   color: var(--text-muted);
@@ -84,6 +87,11 @@
   transition: all 0.2s;
   text-transform: uppercase;
   font-family: 'Montserrat', sans-serif;
+}
+
+.tabs a svg {
+  width: 18px;
+  height: 18px;
 }
 
 .tabs a:hover {
@@ -103,7 +111,36 @@
     gap: 15px;
   }
   .tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     padding: 0;
-    overflow-x: auto;
+    display: flex;
+    justify-content: space-around;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    z-index: 1000;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+  }
+  .tabs a {
+    flex-direction: column;
+    padding: 12px 0 8px 0;
+    font-size: 10px;
+    gap: 4px;
+    flex: 1;
+    text-align: center;
+    border-bottom: none;
+    border-top: 3px solid transparent;
+  }
+  .tabs a.active {
+    border-bottom-color: transparent;
+    border-top-color: var(--text);
+  }
+  .tabs a svg {
+    width: 24px;
+    height: 24px;
+    margin: 0 auto;
   }
 }
