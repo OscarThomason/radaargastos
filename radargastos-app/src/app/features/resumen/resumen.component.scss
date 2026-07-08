@@ -9,4 +9,18 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 12px;
+  margin-bottom: 24px;
+}
+
+.month-separator {
+  margin: 16px 0 12px;
+  border-bottom: 2px dashed rgba(0,0,0,0.1);
+  padding-bottom: 4px;
+}
+.month-separator h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }

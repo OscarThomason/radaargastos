@@ -20,6 +20,25 @@ export class ResumenComponent {
   next30 = computed(() => this.upcomingItems().filter(i => i.days <= 30));
   vencidos = computed(() => this.upcomingItems().filter(i => i.days < 0).length);
 
+  next30Grouped = computed(() => {
+    const items = this.next30();
+    const groups: { month: string, items: typeof items }[] = [];
+    
+    items.forEach(item => {
+      const monthStr = item.due.toLocaleDateString('es-MX', { month: 'long' });
+      const monthName = monthStr.charAt(0).toUpperCase() + monthStr.slice(1);
+      
+      let group = groups.find(g => g.month === monthName);
+      if (!group) {
+        group = { month: monthName, items: [] };
+        groups.push(group);
+      }
+      group.items.push(item);
+    });
+    
+    return groups;
+  });
+
   totalMin = computed(() => {
     return this.financeService.state().debts.reduce((acc, d) => acc + (d.group === 'prestamo' ? (d.cuota || 0) : (d.minPayment || 0)), 0);
   });

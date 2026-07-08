@@ -20,12 +20,19 @@
 </div>
 
 <h2 class="section-title">Cuenta regresiva de pagos</h2>
-<div class="countdown-grid">
-  @if (next30().length === 0) {
+<div>
+  @if (next30Grouped().length === 0) {
     <div class="empty-state">No hay pagos programados en los próximos 30 días.</div>
   } @else {
-    @for (item of next30(); track item.id) {
-      <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
+    @for (group of next30Grouped(); track group.month) {
+      <div class="month-separator">
+        <h3>{{ group.month }}</h3>
+      </div>
+      <div class="countdown-grid">
+        @for (item of group.items; track item.id) {
+          <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
+        }
+      </div>
     }
   }
 </div>
