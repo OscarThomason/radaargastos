@@ -2,9 +2,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30px 40px;
-  background: #E6F0F9; /* Azul claro tipo margen de libreta */
-  border-bottom: 2px solid #E53935; /* Línea roja simulando el margen de la libreta */
+  padding: 10px 0 30px; /* Reducir padding ya que #app tiene padding */
+  background: transparent;
+  border-bottom: none;
+}
+
+.title-box {
+  border: 2px solid #82B1FF;
+  border-radius: 8px;
+  padding: 12px 20px;
+  background: var(--surface);
 }
 
 .topbar h1 {
@@ -19,13 +26,16 @@
 }
 
 .today-chip {
-  background: var(--surface2);
+  background: var(--surface);
   padding: 8px 16px;
-  border-radius: var(--radius);
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
-  border: 1px solid var(--border);
+  border: 2px solid #82B1FF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .user-profile {

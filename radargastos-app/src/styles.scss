@@ -28,10 +28,11 @@ body {
   margin: 0;
   background-color: var(--bg);
   background-image: 
+    linear-gradient(90deg, transparent 40px, #E53935 40px, #E53935 42px, transparent 42px),
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 24px 24px;
-  background-position: center top;
+  background-size: 100% 100%, 24px 24px, 24px 24px;
+  background-position: left top;
   color: var(--text);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
