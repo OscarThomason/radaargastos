@@ -138,6 +138,55 @@ table.data-table td {
 table.data-table tr:last-child td { border-bottom: none; }
 .row-actions { display: flex; gap: 6px; }
 
+/* Modals */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.modal-content {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  box-shadow: 8px 8px 0px rgba(0,0,0,1);
+  padding: 24px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border);
+}
+.modal-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.modal-tabs button {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 10px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.modal-tabs button.active {
+  background: var(--text);
+  color: var(--bg);
+}
+
 /* Typography */
 h2.section-title { 
   font-size: 16px; 

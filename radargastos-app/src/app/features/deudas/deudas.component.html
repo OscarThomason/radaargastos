@@ -7,7 +7,7 @@
   <div class="modal-overlay" (click)="cancelEdit()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <h3>{{ editingId ? 'Editar Deuda' : 'Añadir Deuda' }}</h3>
-      <div class="tabs">
+      <div class="modal-tabs">
         <button [class.active]="dGroup === 'prestamo'" (click)="dGroup = 'prestamo'">Préstamo / A plazos</button>
         <button [class.active]="dGroup === 'tarjeta'" (click)="dGroup = 'tarjeta'">Tarjeta de Crédito</button>
       </div>
