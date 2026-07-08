@@ -1,0 +1,14 @@
+<div class="countdown-card" [ngClass]="statusClass">
+  <div class="days" [style.color]="statusColorVar">{{ dayLabel }}</div>
+  <div class="days-label">{{ formattedDate }}</div>
+  <div class="name">{{ item.name }}</div>
+  <div class="amount">{{ money(item.amount) }}</div>
+  
+  @if (item.noInterest) {
+    <div class="meta">Sin intereses: {{ money(item.noInterest) }}</div>
+  }
+  
+  <span class="tag" [ngClass]="'tag-' + (item.kind === 'servicio' ? 'servicio' : item.kind)">{{ item.kind }}</span>
+  
+  <button class="mark-paid" (click)="markPaid.emit({id: item.id, kind: item.kind})">Marcar pagado</button>
+</div>

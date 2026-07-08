@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar de Pagos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#0F1720;
+  --surface:#161F2A;
+  --surface2:#1D2833;
+  --border:#2A3744;
+  --text:#EDF1F5;
+  --text-muted:#8FA0AF;
+  --text-dim:#63727F;
+  --safe:#35D0A8;
+  --safe-dim:#12352C;
+  --warn:#F0A93A;
+  --warn-dim:#3A2C12;
+  --danger:#FF6B6B;
+  --danger-dim:#3B1717;
+  --info:#7C9CF5;
+  --info-dim:#1E2440;
+  --radius:14px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+#app{max-width:1080px;margin:0 auto;padding:24px 20px 80px;}
+
+header.topbar{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:20px;flex-wrap:wrap;gap:12px;
+}
+header.topbar h1{font-size:26px;font-weight:700;margin:0;letter-spacing:-0.02em;}
+header.topbar p{color:var(--text-muted);margin:4px 0 0;font-size:14px;}
+.today-chip{
+  background:var(--surface2);border:1px solid var(--border);border-radius:999px;
+  padding:6px 14px;font-size:13px;color:var(--text-muted);white-space:nowrap;
+}
+
+nav.tabs{
+  display:flex;gap:6px;margin-bottom:24px;border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+nav.tabs button{
+  background:none;border:none;color:var(--text-muted);font-family:'Inter';
+  font-size:14px;font-weight:600;padding:12px 16px;cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap;
+}
+nav.tabs button.active{color:var(--text);border-bottom-color:var(--info);}
+nav.tabs button:hover{color:var(--text);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+.summary-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:28px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.stat-card .label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px;font-family:'Space Grotesk';}
+.stat-card .value.danger{color:var(--danger);}
+.stat-card .value.warn{color:var(--warn);}
+.stat-card .value.safe{color:var(--safe);}
+
+h2.section-title{font-size:16px;font-weight:600;margin:28px 0 12px;color:var(--text);}
+h2.section-title:first-child{margin-top:0;}
+
+.countdown-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;}
+.countdown-card{
+  background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--safe);
+  border-radius:var(--radius);padding:16px;position:relative;
+}
+.countdown-card.status-danger{border-left-color:var(--danger);}
+.countdown-card.status-warn{border-left-color:var(--warn);}
+.countdown-card.status-safe{border-left-color:var(--safe);}
+.countdown-card .days{font-family:'Space Grotesk';font-size:34px;font-weight:700;line-height:1;}
+.countdown-card .days-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:2px;}
+.countdown-card .name{font-weight:600;margin-top:12px;font-size:14px;}
+.countdown-card .meta{color:var(--text-muted);font-size:12px;margin-top:2px;}
+.countdown-card .amount{font-weight:700;margin-top:10px;font-size:16px;}
+.countdown-card .tag{
+  display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;
+  margin-top:8px;text-transform:uppercase;letter-spacing:0.03em;font-weight:600;
+}
+.tag-tarjeta{background:var(--info-dim);color:var(--info);}
+.tag-prestamo{background:var(--warn-dim);color:var(--warn);}
+.tag-servicio{background:var(--safe-dim);color:var(--safe);}
+.countdown-card button.mark-paid{
+  margin-top:12px;width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-size:12px;font-weight:600;padding:8px;border-radius:8px;cursor:pointer;
+}
+.countdown-card button.mark-paid:hover{border-color:var(--safe);color:var(--safe);}
+
+.empty-state{color:var(--text-dim);font-size:13px;padding:20px 0;}
+
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.data-table th{
+  text-align:left;color:var(--text-muted);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:0.03em;padding:8px 10px;border-bottom:1px solid var(--border);
+}
+table.data-table td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.data-table tr:last-child td{border-bottom:none;}
+.progress-bar{background:var(--surface2);border-radius:6px;height:6px;width:100%;overflow:hidden;margin-top:4px;}
+.progress-bar .fill{background:var(--info);height:100%;}
+.small-muted{color:var(--text-muted);font-size:11px;}
+
+.card-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:20px;}
+.card-panel h3{margin:0 0 14px;font-size:15px;}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.form-grid label{font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px;}
+input,select{
+  width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 10px;font-size:13px;font-family:'Inter';
+}
+input:focus,select:focus{outline:none;border-color:var(--info);}
+button.btn-primary{
+  background:var(--info);color:#0F1720;border:none;font-weight:700;font-size:13px;
+  padding:10px 18px;border-radius:8px;cursor:pointer;margin-top:12px;
+}
+button.btn-primary:hover{opacity:0.9;}
+button.btn-ghost{
+  background:none;border:1px solid var(--border);color:var(--text-muted);font-size:12px;
+  padding:6px 10px;border-radius:6px;cursor:pointer;
+}
+button.btn-ghost:hover{color:var(--danger);border-color:var(--danger);}
+
+.row-actions{display:flex;gap:6px;}
+
+.chart-box{position:relative;height:280px;margin-bottom:8px;}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:700px){.chart-grid{grid-template-columns:1fr;}}
+.legend-custom{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;color:var(--text-muted);margin-bottom:10px;}
+.legend-custom span{display:flex;align-items:center;gap:5px;}
+.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+.expense-log{max-height:420px;overflow-y:auto;}
+.exp-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.exp-row:last-child{border-bottom:none;}
+.exp-cat-badge{font-size:10px;background:var(--surface2);color:var(--text-muted);padding:2px 8px;border-radius:999px;margin-right:8px;}
+.exp-amount{font-weight:700;}
+
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const CATEGORIES = ['Servicios','Deudas','Transporte','Alimentos','Restaurantes','Oscio','Salud','nutricion y gym','ropa o accesorios','casa','viaje','mascota','Otros'];
+
+const DEFAULT_STATE = {
+  debts: [
+    {id:'nu', group:'tarjeta', name:'NU Crédito', dueDay:3, interval:1, minPayment:938.08, noInterest:null, totalDebt:9353.02, notes:'Pago atrasado del mínimo mensual'},
+    {id:'banamex', group:'tarjeta', name:'Banamex Costco', dueDay:24, cutoffDay:3, interval:1, minPayment:360, noInterest:4143.67, totalDebt:null, notes:'Corte día 3'},
+    {id:'bbva', group:'tarjeta', name:'BBVA', dueDay:23, cutoffDay:3, interval:1, minPayment:1323.43, noInterest:4220.44, totalDebt:12723.43, creditLimit:11400, notes:'Corte día 3, sobregirado sobre línea de 11,400'},
+    {id:'stori', group:'tarjeta', name:'Stori', dueDay:17, interval:1, minPayment:527.95, noInterest:4933.09, totalDebt:null, creditLimit:6300, notes:''},
+    {id:'branders', group:'tarjeta', name:'Branders Card', dueDay:20, cutoffDay:25, interval:1, minPayment:568.90, noInterest:5688.98, totalDebt:5688.98, creditLimit:6430, notes:'Corte día 25'},
+    {id:'kueski1', group:'prestamo', name:'Kueski · Amazon #1', frequency:'quincenal', anchor:'2026-07-15', cuota:662, cuotasPagadas:1, cuotasTotal:1, totalDebt:662, pagado:0, notes:'Última cuota'},
+    {id:'kueski2', group:'prestamo', name:'Kueski · Amazon #2', frequency:'quincenal', anchor:'2026-07-15', cuota:1134, cuotasPagadas:2, cuotasTotal:4, totalDebt:2553.03, pagado:257.93, notes:''},
+    {id:'kueski3', group:'prestamo', name:'Kueski · ETN', frequency:'quincenal', anchor:'2026-07-15', cuota:1044.40, cuotasPagadas:2, cuotasTotal:6, totalDebt:6624.40, pagado:1044.00, notes:'Monto de cuota ajustado (posible error de captura de $10,044)'},
+    {id:'kueski4', group:'prestamo', name:'Kueski · Amazon #3', frequency:'quincenal', anchor:'2026-07-15', cuota:872, cuotasPagadas:3, cuotasTotal:4, totalDebt:3465.98, pagado:1705.89, notes:''},
+    {id:'kueski5', group:'prestamo', name:'Kueski · Amazon #4', frequency:'quincenal', anchor:'2026-07-15', cuota:1134, cuotasPagadas:3, cuotasTotal:6, totalDebt:6980.14, pagado:2200.17, notes:''},
+    {id:'kueski6', group:'prestamo', name:'Kueski · Préstamo personal', frequency:'quincenal', anchor:'2026-07-15', cuota:1956, cuotasPagadas:2, cuotasTotal:8, totalDebt:15818.95, pagado:1956.00, notes:''}
+  ],
+  services: [
+    {id:'renta', name:'Renta', amount:7750, dueDay:5, interval:1, anchor:null},
+    {id:'telmex', name:'Telmex', amount:708, dueDay:13, interval:1, anchor:null},
+    {id:'telcel', name:'Telcel', amount:550, dueDay:27, interval:1, anchor:null},
+    {id:'luz', name:'Luz (CFE)', amount:350, dueDay:27, interval:2, anchor:'2026-06-27'},
+    {id:'spotify', name:'Spotify', amount:189, dueDay:1, interval:1, anchor:null, notes:'Sin día fijo confirmado, ajústalo si sabes la fecha exacta'}
+  ],
+  expenses: [],
+  weeklyBudgets: [
+    {id:'gasolina', name:'Gasolina', min:600, max:800}
+  ]
+};
+
+let state = null;
+const el = id => document.getElementById(id);
+const money = n => '$' + Number(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+async function loadState(){
+  try{
+    const res = await window.storage.get('finanzas:state', false);
+    if(res && res.value){
+      const parsed = JSON.parse(res.value);
+      state = Object.assign({}, DEFAULT_STATE, parsed);
+    } else {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      await saveState();
+    }
+  }catch(e){
+    state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  }
+}
+async function saveState(){
+  try{
+    await window.storage.set('finanzas:state', JSON.stringify(state), false);
+  }catch(e){ console.error('Error guardando', e); }
+}
+
+function nextOccurrence(dueDay, interval, anchor, frequency){
+  const today = new Date(); today.setHours(0,0,0,0);
+  if(frequency === 'quincenal' && anchor){
+    let d = new Date(anchor + 'T00:00:00');
+    while(d < today){ d.setDate(d.getDate()+15); }
+    return d;
+  }
+  if(interval === 2 && anchor){
+    let d = new Date(anchor + 'T00:00:00');
+    while(d < today){ d.setMonth(d.getMonth()+2); }
+    return d;
+  }
+  let candidate = new Date(today.getFullYear(), today.getMonth(), dueDay);
+  if(candidate < today){ candidate.setMonth(candidate.getMonth()+1); }
+  return candidate;
+}
+function daysBetween(date){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(date); d.setHours(0,0,0,0);
+  return Math.round((d - today) / 86400000);
+}
+function statusFor(days){
+  if(days <= 3) return 'danger';
+  if(days <= 7) return 'warn';
+  return 'safe';
+}
+function fmtDate(d){
+  return d.toLocaleDateString('es-MX',{day:'numeric',month:'short'});
+}
+
+function getUpcomingItems(){
+  const items = [];
+  state.debts.forEach(d=>{
+    const due = nextOccurrence(d.dueDay, d.interval||1, d.anchor, d.frequency);
+    const amount = d.group === 'prestamo' ? d.cuota : d.minPayment;
+    items.push({
+      id:d.id, kind:d.group, name:d.name, amount, due,
+      days: daysBetween(due), noInterest: d.noInterest
+    });
+  });
+  state.services.forEach(s=>{
+    const due = nextOccurrence(s.dueDay, s.interval||1, s.anchor, s.frequency);
+    items.push({id:s.id, kind:'servicio', name:s.name, amount:s.amount, due, days:daysBetween(due)});
+  });
+  items.sort((a,b)=>a.days-b.days);
+  return items;
+}
+
+function tabButton(id,label){
+  return `<button data-tab="${id}" class="${id==='resumen'?'active':''}">${label}</button>`;
+}
+
+function render(){
+  const app = el('app');
+  app.innerHTML = `
+    <header class="topbar">
+      <div>
+        <h1>Radar de Pagos</h1>
+        <p>Tu control de deudas, servicios y gastos</p>
+      </div>
+      <div class="today-chip">${new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    </header>
+    <nav class="tabs">
+      ${tabButton('resumen','Resumen')}
+      ${tabButton('deudas','Deudas')}
+      ${tabButton('servicios','Servicios')}
+      ${tabButton('gastos','Gastos')}
+      ${tabButton('stats','Estadísticas')}
+    </nav>
+    <div class="view active" id="view-resumen"></div>
+    <div class="view" id="view-deudas"></div>
+    <div class="view" id="view-servicios"></div>
+    <div class="view" id="view-gastos"></div>
+    <div class="view" id="view-stats"></div>
+  `;
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      el('view-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab==='stats') renderStats();
+    });
+  });
+  renderResumen();
+  renderDeudas();
+  renderServicios();
+  renderGastos();
+}
+
+function renderResumen(){
+  const items = getUpcomingItems();
+  const next30 = items.filter(i=>i.days<=30);
+  const totalMin = state.debts.reduce((s,d)=> s + (d.group==='prestamo'? d.cuota : d.minPayment), 0);
+  const totalServ = state.services.reduce((s,x)=>s+x.amount,0);
+  const totalDeudaViva = state.debts.reduce((s,d)=> s + (d.totalDebt ? (d.totalDebt - (d.pagado||0)) : 0), 0);
+  const vencidos = items.filter(i=>i.days<0).length;
+
+  el('view-resumen').innerHTML = `
+    <div class="summary-strip">
+      <div class="stat-card"><div class="label">Compromiso este ciclo</div><div class="value">${money(totalMin+totalServ)}</div></div>
+      <div class="stat-card"><div class="label">Deuda viva total</div><div class="value danger">${money(totalDeudaViva)}</div></div>
+      <div class="stat-card"><div class="label">Pagos vencidos</div><div class="value ${vencidos>0?'danger':'safe'}">${vencidos}</div></div>
+      <div class="stat-card"><div class="label">Próximos 30 días</div><div class="value">${next30.length}</div></div>
+    </div>
+    <h2 class="section-title">Cuenta regresiva de pagos</h2>
+    <div class="countdown-grid" id="countdown-grid"></div>
+  `;
+  const grid = el('countdown-grid');
+  if(next30.length===0){
+    grid.innerHTML = `<div class="empty-state">No hay pagos programados en los próximos 30 días.</div>`;
+    return;
+  }
+  next30.forEach(item=>{
+    const st = statusFor(item.days);
+    const dayLabel = item.days < 0 ? `${Math.abs(item.days)}d vencido` : (item.days===0 ? 'Hoy' : `${item.days}d`);
+    const card = document.createElement('div');
+    card.className = 'countdown-card status-'+st;
+    card.innerHTML = `
+      <div class="days" style="color:var(--${st})">${dayLabel}</div>
+      <div class="days-label">${fmtDate(item.due)}</div>
+      <div class="name">${item.name}</div>
+      <div class="amount">${money(item.amount)}</div>
+      ${item.noInterest ? `<div class="meta">Sin intereses: ${money(item.noInterest)}</div>` : ''}
+      <span class="tag tag-${item.kind==='servicio'?'servicio':item.kind}">${item.kind}</span>
+      <button class="mark-paid" data-id="${item.id}" data-kind="${item.kind}">Marcar pagado</button>
+    `;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll('.mark-paid').forEach(btn=>{
+    btn.addEventListener('click', ()=>markPaid(btn.dataset.id, btn.dataset.kind));
+  });
+}
+
+async function markPaid(id, kind){
+  if(kind==='servicio'){
+    return;
+  }
+  const debt = state.debts.find(d=>d.id===id);
+  if(!debt) return;
+  if(debt.group==='prestamo'){
+    debt.pagado = (debt.pagado||0) + debt.cuota;
+    debt.cuotasPagadas = (debt.cuotasPagadas||0) + 1;
+    if(debt.frequency==='quincenal' && debt.anchor){
+      const due = nextOccurrence(debt.dueDay, debt.interval||1, debt.anchor, debt.frequency);
+      due.setDate(due.getDate()+15);
+      debt.anchor = due.toISOString().slice(0,10);
+    }
+  }
+  await saveState();
+  render();
+}
+
+function renderDeudas(){
+  const tarjetas = state.debts.filter(d=>d.group==='tarjeta');
+  const prestamos = state.debts.filter(d=>d.group==='prestamo');
+  const view = el('view-deudas');
+  view.innerHTML = `
+    <h2 class="section-title">Tarjetas de crédito</h2>
+    <table class="data-table">
+      <thead><tr><th>Tarjeta</th><th>Corte</th><th>Límite de pago</th><th>Mínimo</th><th>Sin intereses</th><th>Saldo</th><th></th></tr></thead>
+      <tbody>${tarjetas.map(d=>`
+        <tr>
+          <td><strong>${d.name}</strong>${d.notes?`<div class="small-muted">${d.notes}</div>`:''}</td>
+          <td>${d.cutoffDay ? 'día '+d.cutoffDay : '—'}</td>
+          <td>día ${d.dueDay}</td>
+          <td>${money(d.minPayment)}</td>
+          <td>${d.noInterest ? money(d.noInterest) : '—'}</td>
+          <td>${d.totalDebt ? money(d.totalDebt) : '—'}</td>
+          <td><div class="row-actions"><button class="btn-ghost" onclick="deleteDebt('${d.id}')">Eliminar</button></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <h2 class="section-title">Préstamos en abonos (Kueski)</h2>
+    <table class="data-table">
+      <thead><tr><th>Concepto</th><th>Frecuencia</th><th>Próximo pago</th><th>Cuota</th><th>Avance</th><th>Pagado / Total</th><th></th></tr></thead>
+      <tbody>${prestamos.map(d=>{
+        const pct = d.totalDebt ? Math.min(100, ((d.pagado||0)/d.totalDebt*100)) : 0;
+        const next = nextOccurrence(d.dueDay, d.interval||1, d.anchor, d.frequency);
+        return `
+        <tr>
+          <td><strong>${d.name}</strong>${d.notes?`<div class="small-muted">${d.notes}</div>`:''}</td>
+          <td>${d.frequency==='quincenal'?'Quincenal':'Mensual'}</td>
+          <td>${fmtDate(next)}</td>
+          <td>${money(d.cuota)}</td>
+          <td>
+            ${d.cuotasPagadas||0} de ${d.cuotasTotal||'?'}
+            <div class="progress-bar"><div class="fill" style="width:${pct}%"></div></div>
+          </td>
+          <td>${money(d.pagado||0)} de ${money(d.totalDebt||0)}</td>
+          <td><div class="row-actions"><button class="btn-ghost" onclick="deleteDebt('${d.id}')">Eliminar</button></div></td>
+        </tr>`;}).join('')}
+      </tbody>
+    </table>
+
+    <div class="card-panel">
+      <h3>Agregar deuda</h3>
+      <div class="form-grid">
+        <div><label>Tipo</label><select id="nd-group" onchange="toggleFreqField()"><option value="tarjeta">Tarjeta de crédito</option><option value="prestamo">Préstamo en abonos</option></select></div>
+        <div><label>Nombre</label><input id="nd-name" placeholder="Ej. Banorte"></div>
+        <div id="nd-freq-wrap" style="display:none;"><label>Frecuencia de pago</label><select id="nd-freq" onchange="toggleFreqField()"><option value="mensual">Mensual</option><option value="quincenal">Quincenal</option></select></div>
+        <div id="nd-dueday-wrap"><label>Día de pago límite (1-31)</label><input id="nd-dueday" type="number" min="1" max="31"></div>
+        <div id="nd-anchor-wrap" style="display:none;"><label>Fecha del próximo pago</label><input id="nd-anchor" type="date"></div>
+        <div><label>Pago mínimo / cuota</label><input id="nd-min" type="number" step="0.01"></div>
+        <div><label>Pago sin intereses (opcional)</label><input id="nd-noint" type="number" step="0.01"></div>
+        <div><label>Saldo total (opcional)</label><input id="nd-total" type="number" step="0.01"></div>
+      </div>
+      <button class="btn-primary" onclick="addDebt()">Agregar</button>
+    </div>
+  `;
+}
+
+function toggleFreqField(){
+  const group = el('nd-group').value;
+  const freqWrap = el('nd-freq-wrap');
+  freqWrap.style.display = group==='prestamo' ? 'block' : 'none';
+  const freq = group==='prestamo' ? el('nd-freq').value : 'mensual';
+  const isQuincenal = group==='prestamo' && freq==='quincenal';
+  el('nd-dueday-wrap').style.display = isQuincenal ? 'none' : 'block';
+  el('nd-anchor-wrap').style.display = isQuincenal ? 'block' : 'none';
+}
+
+async function addDebt(){
+  const group = el('nd-group').value;
+  const name = el('nd-name').value.trim();
+  const freq = group==='prestamo' ? el('nd-freq').value : 'mensual';
+  const isQuincenal = freq==='quincenal';
+  const min = parseFloat(el('nd-min').value);
+  const id = 'd'+Date.now();
+  const noInt = parseFloat(el('nd-noint').value);
+  const total = parseFloat(el('nd-total').value);
+  const item = { id, group, name, notes:'' };
+
+  if(isQuincenal){
+    const anchor = el('nd-anchor').value;
+    if(!name || !anchor || isNaN(min)){ alert('Completa nombre, fecha del próximo pago y monto de cuota'); return; }
+    item.frequency = 'quincenal';
+    item.anchor = anchor;
+  } else {
+    const dueDay = parseInt(el('nd-dueday').value);
+    if(!name || !dueDay || isNaN(min)){ alert('Completa al menos nombre, día de pago y monto mínimo'); return; }
+    item.dueDay = dueDay;
+    item.interval = 1;
+  }
+
+  if(group==='tarjeta'){
+    item.minPayment = min;
+    item.noInterest = isNaN(noInt) ? null : noInt;
+    item.totalDebt = isNaN(total) ? null : total;
+  } else {
+    item.cuota = min;
+    item.cuotasPagadas = 0;
+    item.cuotasTotal = null;
+    item.totalDebt = isNaN(total) ? null : total;
+    item.pagado = 0;
+  }
+  state.debts.push(item);
+  await saveState();
+  renderDeudas();
+  renderResumen();
+}
+
+async function deleteDebt(id){
+  state.debts = state.debts.filter(d=>d.id!==id);
+  await saveState();
+  renderDeudas();
+  renderResumen();
+}
+
+function renderServicios(){
+  const view = el('view-servicios');
+  view.innerHTML = `
+    <h2 class="section-title">Servicios fijos</h2>
+    <table class="data-table">
+      <thead><tr><th>Servicio</th><th>Frecuencia</th><th>Día de pago</th><th>Monto</th><th></th></tr></thead>
+      <tbody>${state.services.map(s=>`
+        <tr>
+          <td><strong>${s.name}</strong>${s.notes?`<div class="small-muted">${s.notes}</div>`:''}</td>
+          <td>${s.interval===2?'Bimestral':'Mensual'}</td>
+          <td>día ${s.dueDay}</td>
+          <td>${money(s.amount)}</td>
+          <td><div class="row-actions"><button class="btn-ghost" onclick="deleteService('${s.id}')">Eliminar</button></div></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <h2 class="section-title">Presupuesto variable semanal</h2>
+    <table class="data-table">
+      <thead><tr><th>Concepto</th><th>Rango estimado</th></tr></thead>
+      <tbody>${state.weeklyBudgets.map(w=>`
+        <tr><td>${w.name}</td><td>${money(w.min)} – ${money(w.max)} por semana</td></tr>`).join('')}
+      </tbody>
+    </table>
+
+    <div class="card-panel">
+      <h3>Agregar servicio</h3>
+      <div class="form-grid">
+        <div><label>Nombre</label><input id="ns-name" placeholder="Ej. Internet"></div>
+        <div><label>Monto</label><input id="ns-amount" type="number" step="0.01"></div>
+        <div><label>Día de pago</label><input id="ns-dueday" type="number" min="1" max="31"></div>
+        <div><label>Frecuencia</label><select id="ns-interval"><option value="1">Mensual</option><option value="2">Bimestral</option></select></div>
+      </div>
+      <button class="btn-primary" onclick="addService()">Agregar</button>
+    </div>
+  `;
+}
+
+async function addService(){
+  const name = el('ns-name').value.trim();
+  const amount = parseFloat(el('ns-amount').value);
+  const dueDay = parseInt(el('ns-dueday').value);
+  const interval = parseInt(el('ns-interval').value);
+  if(!name || isNaN(amount) || !dueDay){ alert('Completa nombre, monto y día de pago'); return; }
+  state.services.push({id:'s'+Date.now(), name, amount, dueDay, interval, anchor: interval===2? todayStr(): null});
+  await saveState();
+  renderServicios();
+  renderResumen();
+}
+
+async function deleteService(id){
+  state.services = state.services.filter(s=>s.id!==id);
+  await saveState();
+  renderServicios();
+  renderResumen();
+}
+
+function renderGastos(){
+  const view = el('view-gastos');
+  const sorted = [...state.expenses].sort((a,b)=> b.date.localeCompare(a.date));
+  view.innerHTML = `
+    <div class="card-panel">
+      <h3>Registrar gasto</h3>
+      <div class="form-grid">
+        <div><label>Fecha</label><input id="ex-date" type="date" value="${todayStr()}"></div>
+        <div><label>Categoría</label><select id="ex-cat">${CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div><label>Descripción</label><input id="ex-desc" placeholder="Ej. Súper"></div>
+        <div><label>Monto</label><input id="ex-amount" type="number" step="0.01"></div>
+      </div>
+      <button class="btn-primary" onclick="addExpense()">Guardar gasto</button>
+    </div>
+    <h2 class="section-title">Movimientos recientes (${state.expenses.length})</h2>
+    <div class="card-panel">
+      <div class="expense-log" id="expense-log">
+        ${sorted.length===0 ? '<div class="empty-state">Aún no registras gastos.</div>' : sorted.map(e=>`
+          <div class="exp-row">
+            <div>
+              <span class="exp-cat-badge">${e.category}</span>
+              <span>${e.description || '—'}</span>
+              <div class="small-muted">${e.date}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="exp-amount">${money(e.amount)}</span>
+              <button class="btn-ghost" onclick="deleteExpense('${e.id}')">✕</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function addExpense(){
+  const date = el('ex-date').value;
+  const category = el('ex-cat').value;
+  const description = el('ex-desc').value.trim();
+  const amount = parseFloat(el('ex-amount').value);
+  if(!date || isNaN(amount)){ alert('Completa fecha y monto'); return; }
+  state.expenses.push({id:'e'+Date.now(), date, category, description, amount});
+  await saveState();
+  renderGastos();
+}
+
+async function deleteExpense(id){
+  state.expenses = state.expenses.filter(e=>e.id!==id);
+  await saveState();
+  renderGastos();
+}
+
+let chartCat, chartMonth;
+function renderStats(){
+  const view = el('view-stats');
+  view.innerHTML = `
+    <div class="chart-grid">
+      <div>
+        <h2 class="section-title">Gastos por categoría (mes actual)</h2>
+        <div id="legend-cat" class="legend-custom"></div>
+        <div class="chart-box"><canvas id="chart-cat" role="img" aria-label="Gráfico de pastel de gastos por categoría del mes actual"></canvas></div>
+      </div>
+      <div>
+        <h2 class="section-title">Gastos por mes</h2>
+        <div class="chart-box"><canvas id="chart-month" role="img" aria-label="Gráfico de barras de gastos totales por mes"></canvas></div>
+      </div>
+    </div>
+  `;
+  const now = new Date();
+  const curMonthKey = now.toISOString().slice(0,7);
+  const catTotals = {};
+  state.expenses.filter(e=>e.date.slice(0,7)===curMonthKey).forEach(e=>{
+    catTotals[e.category] = (catTotals[e.category]||0) + e.amount;
+  });
+  const catLabels = Object.keys(catTotals);
+  const catValues = Object.values(catTotals);
+  const palette = ['#2a78d6','#1baf7a','#eda100','#008300','#9085e9','#e34948','#e87ba4','#eb6834','#7C9CF5','#F0A93A'];
+
+  if(catLabels.length===0){
+    el('chart-cat').parentElement.innerHTML = '<div class="empty-state">Sin gastos registrados este mes.</div>';
+  } else {
+    const legend = el('legend-cat');
+    const total = catValues.reduce((a,b)=>a+b,0);
+    legend.innerHTML = catLabels.map((l,i)=>`<span><span class="legend-dot" style="background:${palette[i%palette.length]}"></span>${l} ${Math.round(catValues[i]/total*100)}%</span>`).join('');
+    if(chartCat) chartCat.destroy();
+    chartCat = new Chart(el('chart-cat'), {
+      type:'doughnut',
+      data:{labels:catLabels, datasets:[{data:catValues, backgroundColor:palette}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}}
+    });
+  }
+
+  const monthTotals = {};
+  state.expenses.forEach(e=>{
+    const k = e.date.slice(0,7);
+    monthTotals[k] = (monthTotals[k]||0) + e.amount;
+  });
+  const monthKeys = Object.keys(monthTotals).sort().slice(-6);
+  if(monthKeys.length===0){
+    el('chart-month').parentElement.innerHTML = '<div class="empty-state">Sin datos suficientes todavía.</div>';
+  } else {
+    const monthLabels = monthKeys.map(k=>{
+      const [y,m] = k.split('-');
+      return new Date(y,m-1,1).toLocaleDateString('es-MX',{month:'short',year:'2-digit'});
+    });
+    if(chartMonth) chartMonth.destroy();
+    chartMonth = new Chart(el('chart-month'), {
+      type:'bar',
+      data:{labels:monthLabels, datasets:[{label:'Gasto total', data:monthKeys.map(k=>monthTotals[k]), backgroundColor:'#2a78d6', borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{y:{beginAtZero:true, grid:{color:'#2A3744'}, ticks:{color:'#8FA0AF'}}, x:{grid:{display:false}, ticks:{color:'#8FA0AF'}}}
+      }
+    });
+  }
+}
+
+(async function init(){
+  await loadState();
+  render();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+  <h2 class="section-title">Servicios Recurrentes ({{ services().length }})</h2>
+  <button class="btn-primary" (click)="openModal()">+ Añadir Servicio</button>
+</div>
+
+@if (isModalOpen) {
+  <div class="modal-overlay" (click)="cancelEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>{{ editingId ? 'Editar Servicio' : 'Añadir Servicio' }}</h3>
+      <div class="form-grid">
+        <div><label>Nombre</label><input [(ngModel)]="svName" placeholder="Ej. Luz, Agua, Netflix"></div>
+        <div><label>Costo aprox.</label><input [(ngModel)]="svAmount" type="number" step="1"></div>
+        <div>
+          <label>Frecuencia de Pago</label>
+          <select [(ngModel)]="svFreq">
+            @for (f of frequencies; track f) {
+              <option [value]="f">{{f | titlecase}}</option>
+            }
+          </select>
+        </div>
+        <div><label>Próxima fecha de pago</label><input [(ngModel)]="svAnchor" type="date"></div>
+      </div>
+      <div style="margin-top: 10px;">
+        <label>Notas</label><input [(ngModel)]="svNotes" placeholder="Opcional">
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
+        <button class="btn-primary" (click)="saveService()">{{ editingId ? 'Actualizar Servicio' : 'Guardar Servicio' }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="card-panel" style="overflow-x: auto;">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Costo</th>
+        <th>Frecuencia</th>
+        <th>Próximo Pago</th>
+        <th>Días Restantes</th>
+        <th>Notas</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (services().length === 0) {
+        <tr><td colspan="6" class="empty-state">No hay servicios registrados.</td></tr>
+      } @else {
+        @for (s of services(); track s.id) {
+          <tr>
+            <td><strong>{{s.name}}</strong></td>
+            <td>{{money(s.amount)}}</td>
+            <td><span class="badge">{{s.frequency || 'mensual' | titlecase}}</span></td>
+            <td>{{formatDate(s.anchor)}}</td>
+            <td><strong>{{getDaysRemaining(s.anchor)}}</strong></td>
+            <td><span class="small-muted">{{s.notes}}</span></td>
+            <td style="text-align:right; min-width: 80px;">
+              <button class="btn-ghost" (click)="editService(s.id)" title="Editar">✏️</button>
+              <button class="btn-ghost" (click)="deleteService(s.id)" title="Eliminar">✕</button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

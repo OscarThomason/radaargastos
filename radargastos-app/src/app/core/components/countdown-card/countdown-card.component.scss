@@ -1,0 +1,35 @@
+.countdown-card {
+  background: var(--surface); 
+  border: 1px solid var(--border); 
+  border-left: 4px solid var(--safe);
+  border-radius: var(--radius); 
+  padding: 16px; 
+  position: relative;
+  height: 100%;
+
+  &.status-danger { border-left-color: var(--danger); }
+  &.status-warn { border-left-color: var(--warn); }
+  &.status-safe { border-left-color: var(--safe); }
+  
+  .days { font-family: 'Inter', sans-serif; font-size: 34px; font-weight: 700; line-height: 1; }
+  .days-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .name { font-weight: 600; margin-top: 12px; font-size: 14px; }
+  .meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .amount { font-weight: 700; margin-top: 10px; font-size: 16px; }
+  
+  .tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px;
+    margin-top: 8px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+  }
+  
+  .tag-tarjeta { background: var(--info-dim); color: var(--info); }
+  .tag-prestamo { background: var(--warn-dim); color: var(--warn); }
+  .tag-servicio { background: var(--safe-dim); color: var(--safe); }
+  
+  button.mark-paid {
+    margin-top: 12px; width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); font-size: 12px; font-weight: 600; padding: 8px; border-radius: 8px; cursor: pointer;
+    
+    &:hover { border-color: var(--safe); color: var(--safe); }
+  }
+}

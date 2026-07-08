@@ -1,0 +1,40 @@
+<div class="chart-grid">
+  <!-- Gastos -->
+  <div class="card-panel">
+    <h2 class="section-title" style="margin-top: 0">Gastos por categoría (mes actual)</h2>
+    @if (expCatData().labels.length === 0) {
+      <div class="empty-state">Sin gastos registrados este mes.</div>
+    } @else {
+      <div class="legend-custom">
+        @for (item of getLegendItems('exp'); track item.label) {
+          <span><span class="legend-dot" [style.backgroundColor]="item.color"></span>{{item.label}} {{item.percent}}%</span>
+        }
+      </div>
+      <div class="chart-box"><canvas #chartExpCat></canvas></div>
+    }
+  </div>
+
+  <!-- Ingresos -->
+  <div class="card-panel">
+    <h2 class="section-title" style="margin-top: 0">Ingresos por categoría (mes actual)</h2>
+    @if (incCatData().labels.length === 0) {
+      <div class="empty-state">Sin ingresos registrados este mes.</div>
+    } @else {
+      <div class="legend-custom">
+        @for (item of getLegendItems('inc'); track item.label) {
+          <span><span class="legend-dot" [style.backgroundColor]="item.color"></span>{{item.label}} {{item.percent}}%</span>
+        }
+      </div>
+      <div class="chart-box"><canvas #chartIncCat></canvas></div>
+    }
+  </div>
+</div>
+
+<div class="card-panel">
+  <h2 class="section-title" style="margin-top: 0">Flujo de Caja por Mes</h2>
+  @if (monthData().keys.length === 0) {
+    <div class="empty-state">Sin datos suficientes todavía.</div>
+  } @else {
+    <div class="chart-box-large"><canvas #chartMonth></canvas></div>
+  }
+</div>

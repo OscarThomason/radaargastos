@@ -1,0 +1,126 @@
+<div class="month-selector-bar">
+  <h2 class="section-title" style="margin: 0;">Resumen del mes</h2>
+  <div class="selector-wrapper">
+    <label>Historial Mensual: </label>
+    <select (change)="onMonthChange($event)" [value]="selectedMonth()">
+      @for (m of availableMonths(); track m) {
+        <option [value]="m">{{ formatMonth(m) }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+<div class="summary-strip">
+  <app-stat-card 
+    label="Total Ingresos" 
+    [value]="money(totalIncomes())"
+    valueClass="safe">
+  </app-stat-card>
+  <app-stat-card 
+    label="Total Gastos" 
+    [value]="money(totalExpenses())">
+  </app-stat-card>
+  <app-stat-card 
+    label="Balance Disponible" 
+    [value]="money(balance())" 
+    [valueClass]="balance() < 0 ? 'danger' : 'safe'">
+  </app-stat-card>
+</div>
+
+<div class="grid-2col">
+  <!-- Columna de Gastos -->
+  <div>
+    <div class="card-panel">
+      <h3>{{ editingExId ? 'Editar Gasto' : 'Registrar Gasto' }}</h3>
+      <div class="form-grid">
+        <div><label>Fecha</label><input [(ngModel)]="exDate" type="date"></div>
+        <div>
+          <label>Categoría</label>
+          <select [(ngModel)]="exCat">
+            @for (c of categories; track c) {
+              <option [value]="c">{{c}}</option>
+            }
+          </select>
+        </div>
+        <div><label>Descripción</label><input [(ngModel)]="exDesc" placeholder="Ej. Súper"></div>
+        <div><label>Monto</label><input [(ngModel)]="exAmount" type="number" step="0.01"></div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-primary" (click)="addExpense()">{{ editingExId ? 'Actualizar gasto' : 'Guardar gasto' }}</button>
+        @if (editingExId) {
+          <button class="btn-ghost" (click)="cancelExEdit()" style="margin-top:12px;">Cancelar</button>
+        }
+      </div>
+    </div>
+
+    <h2 class="section-title">Gastos del Mes ({{ expenses().length }})</h2>
+    <div class="card-panel">
+      <div class="expense-log">
+        @if (expenses().length === 0) {
+          <div class="empty-state">No hay gastos en este mes.</div>
+        } @else {
+          @for (e of expenses(); track e.id) {
+            <div class="exp-row hoverable" (click)="editExpense(e)" title="Clic para editar">
+              <div>
+                <span class="exp-cat-badge">{{e.category}}</span>
+                <span>{{e.description || '—'}}</span>
+                <div class="small-muted">{{e.date}}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="exp-amount">{{money(e.amount)}}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Columna de Ingresos -->
+  <div>
+    <div class="card-panel panel-safe">
+      <h3>{{ editingInId ? 'Editar Ingreso' : 'Registrar Ingreso' }}</h3>
+      <div class="form-grid">
+        <div><label>Fecha</label><input [(ngModel)]="inDate" type="date"></div>
+        <div>
+          <label>Categoría</label>
+          <select [(ngModel)]="inCat">
+            @for (c of incomeCategories; track c) {
+              <option [value]="c">{{c}}</option>
+            }
+          </select>
+        </div>
+        <div><label>Descripción</label><input [(ngModel)]="inDesc" placeholder="Ej. Quincena"></div>
+        <div><label>Monto</label><input [(ngModel)]="inAmount" type="number" step="0.01"></div>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-primary bg-safe" (click)="addIncome()">{{ editingInId ? 'Actualizar ingreso' : 'Guardar ingreso' }}</button>
+        @if (editingInId) {
+          <button class="btn-ghost" (click)="cancelInEdit()" style="margin-top:12px;">Cancelar</button>
+        }
+      </div>
+    </div>
+
+    <h2 class="section-title">Ingresos del Mes ({{ incomes().length }})</h2>
+    <div class="card-panel">
+      <div class="expense-log">
+        @if (incomes().length === 0) {
+          <div class="empty-state">No hay ingresos en este mes.</div>
+        } @else {
+          @for (i of incomes(); track i.id) {
+            <div class="exp-row hoverable" (click)="editIncome(i)" title="Clic para editar">
+              <div>
+                <span class="exp-cat-badge bg-safe-dim txt-safe">{{i.category || 'Ingreso'}}</span>
+                <span>{{i.description || '—'}}</span>
+                <div class="small-muted">{{i.date}}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="exp-amount txt-safe">+{{money(i.amount)}}</span>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

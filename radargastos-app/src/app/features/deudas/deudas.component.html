@@ -1,0 +1,110 @@
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center;">
+  <h2 class="section-title">Deudas Activas ({{ debts().length }})</h2>
+  <button class="btn-primary" (click)="openModal()">+ Añadir Deuda</button>
+</div>
+
+@if (isModalOpen) {
+  <div class="modal-overlay" (click)="cancelEdit()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>{{ editingId ? 'Editar Deuda' : 'Añadir Deuda' }}</h3>
+      <div class="tabs">
+        <button [class.active]="dGroup === 'prestamo'" (click)="dGroup = 'prestamo'">Préstamo / A plazos</button>
+        <button [class.active]="dGroup === 'tarjeta'" (click)="dGroup = 'tarjeta'">Tarjeta de Crédito</button>
+      </div>
+
+      <div class="form-grid" style="margin-top: 15px;">
+        <div><label>Nombre de la deuda</label><input [(ngModel)]="dName"></div>
+        
+        @if (dGroup === 'prestamo') {
+          <div><label>Deuda total (aprox)</label><input [(ngModel)]="dTotal" type="number"></div>
+          <div><label>Monto pagado a la fecha</label><input [(ngModel)]="dPagado" type="number"></div>
+          <div><label>Monto por cuota</label><input [(ngModel)]="dCuota" type="number"></div>
+          <div><label>Pagos realizados (progreso)</label><input [(ngModel)]="dCuotasPagadas" type="number"></div>
+          <div><label>Total de pagos acordados</label><input [(ngModel)]="dCuotasTotal" type="number"></div>
+        } @else {
+          <div><label>Pago mínimo (aprox)</label><input [(ngModel)]="dMinPayment" type="number"></div>
+          <div><label>Pago para no generar intereses</label><input [(ngModel)]="dNoInterest" type="number"></div>
+          <div><label>Deuda total actual</label><input [(ngModel)]="dDebtTotal" type="number"></div>
+        }
+        
+        <div>
+          <label>Frecuencia de Pago</label>
+          <select [(ngModel)]="dFreq">
+            @for (f of frequencies; track f) {
+              <option [value]="f">{{f | titlecase}}</option>
+            }
+          </select>
+        </div>
+        <div><label>Próxima fecha de pago</label><input [(ngModel)]="dAnchor" type="date"></div>
+      </div>
+      
+      <div style="margin-top: 10px;">
+        <label>Notas</label><input [(ngModel)]="dNotes" placeholder="Info extra">
+      </div>
+      
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
+        <button class="btn-primary" (click)="saveDebt()">{{ editingId ? 'Actualizar Deuda' : 'Guardar Deuda' }}</button>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="card-panel" style="overflow-x: auto;">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Frecuencia</th>
+        <th>Próx. Pago</th>
+        <th>Días Restantes</th>
+        <th>Costo/Cuota</th>
+        <th>Progreso Pagos</th>
+        <th>Total/Saldo</th>
+        <th>Avance ($)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (debts().length === 0) {
+        <tr><td colspan="9" class="empty-state">No hay deudas registradas.</td></tr>
+      } @else {
+        @for (d of debts(); track d.id) {
+          <tr>
+            <td><strong>{{d.name}}</strong></td>
+            <td><span class="badge">{{d.group | titlecase}}</span></td>
+            <td><span class="badge">{{d.frequency || 'mensual' | titlecase}}</span></td>
+            <td>{{formatDate(d.anchor)}}</td>
+            <td><strong>{{getDaysRemaining(d.anchor)}}</strong></td>
+            <td>{{ d.group === 'prestamo' ? money(d.cuota || 0) : money(d.minPayment || 0) }}</td>
+            
+            <!-- Progreso en Pagos -->
+            <td>
+              @if (d.group === 'prestamo' && d.cuotasTotal) {
+                {{ d.cuotasPagadas || 0 }} / {{ d.cuotasTotal }}
+              } @else {
+                —
+              }
+            </td>
+
+            <td>{{ d.group === 'prestamo' ? money(d.total || 0) : money(d.debt || 0) }}</td>
+            
+            <!-- Avance Monetario -->
+            <td>
+              @if (d.group === 'prestamo' && d.total) {
+                {{ ((d.pagado || 0) / d.total * 100) | number:'1.0-0' }}%
+              } @else {
+                —
+              }
+            </td>
+            <td style="text-align:right; min-width: 80px;">
+              <button class="btn-ghost" (click)="editDebt(d.id)" title="Editar">✏️</button>
+              <button class="btn-ghost" (click)="deleteDebt(d.id)" title="Eliminar">✕</button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

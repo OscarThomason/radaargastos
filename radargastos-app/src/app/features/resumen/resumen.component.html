@@ -1,0 +1,31 @@
+<div class="summary-strip">
+  <app-stat-card 
+    label="Compromiso este ciclo" 
+    [value]="money(totalMin() + totalServ())">
+  </app-stat-card>
+  <app-stat-card 
+    label="Deuda viva total" 
+    [value]="money(totalDeudaViva())" 
+    valueClass="danger">
+  </app-stat-card>
+  <app-stat-card 
+    label="Pagos vencidos" 
+    [value]="vencidos().toString()" 
+    [valueClass]="vencidos() > 0 ? 'danger' : 'safe'">
+  </app-stat-card>
+  <app-stat-card 
+    label="Próximos 30 días" 
+    [value]="next30().length.toString()">
+  </app-stat-card>
+</div>
+
+<h2 class="section-title">Cuenta regresiva de pagos</h2>
+<div class="countdown-grid">
+  @if (next30().length === 0) {
+    <div class="empty-state">No hay pagos programados en los próximos 30 días.</div>
+  } @else {
+    @for (item of next30(); track item.id) {
+      <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
+    }
+  }
+</div>
