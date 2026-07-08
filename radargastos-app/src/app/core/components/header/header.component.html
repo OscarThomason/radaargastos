@@ -3,7 +3,18 @@
     <h1>Radar de Pagos</h1>
     <p>Tu control de deudas, servicios y gastos</p>
   </div>
-  <div class="today-chip">{{ todayStr }}</div>
+  <div style="display: flex; align-items: center; gap: 20px;">
+    <div class="today-chip">{{ todayStr }}</div>
+    @if (authService.userSignal()) {
+      <div class="user-profile">
+        <img [src]="authService.userSignal()?.photoURL" alt="Avatar" class="avatar">
+        <div class="user-info">
+          <span class="user-name">{{ authService.userSignal()?.displayName }}</span>
+          <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+        </div>
+      </div>
+    }
+  </div>
 </header>
 <nav class="tabs">
   <a routerLink="/resumen" routerLinkActive="active">Resumen</a>

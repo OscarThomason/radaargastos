@@ -1,4 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
+import { Firestore, doc, setDoc, onSnapshot } from '@angular/fire/firestore';
+import { AuthService } from './auth.service';
 import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudget } from '../models/finance.model';
 
 const CATEGORIES = ['Servicios','Deudas','Transporte','Alimentos','Restaurantes','Oscio','Salud','nutricion y gym','ropa o accesorios','casa','viaje','mascota','Otros'];
@@ -35,27 +37,71 @@ const DEFAULT_STATE: AppState = {
   providedIn: 'root'
 })
 export class FinanceService {
-  state = signal<AppState>(this.loadState());
+  state = signal<AppState>(JSON.parse(JSON.stringify(DEFAULT_STATE)));
   categories = CATEGORIES;
 
-  constructor() {}
+  private firestore = inject(Firestore);
+  private authService = inject(AuthService);
+  private unsubSnapshot: any = null;
 
-  private loadState(): AppState {
-    const saved = localStorage.getItem('finanzas:state');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return { ...DEFAULT_STATE, ...parsed };
-      } catch (e) {
-        console.error('Error parsing state', e);
+  constructor() {
+    effect(() => {
+      const user = this.authService.userSignal();
+      if (user) {
+        this.listenToCloudState(user.uid);
+      } else {
+        if (this.unsubSnapshot) {
+          this.unsubSnapshot();
+          this.unsubSnapshot = null;
+        }
+        this.state.set(JSON.parse(JSON.stringify(DEFAULT_STATE)));
       }
-    }
-    return JSON.parse(JSON.stringify(DEFAULT_STATE));
+    });
   }
 
-  private saveState(newState: AppState) {
-    localStorage.setItem('finanzas:state', JSON.stringify(newState));
+  private listenToCloudState(uid: string) {
+    const userDocRef = doc(this.firestore, `users/${uid}`);
+    
+    this.unsubSnapshot = onSnapshot(userDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        // Cargar datos de la nube
+        const data = snapshot.data() as AppState;
+        this.state.set({ ...DEFAULT_STATE, ...data });
+        // Sincronizar cache local por seguridad
+        localStorage.setItem('finanzas:state', JSON.stringify(data));
+      } else {
+        // MIGRACIÓN: Si la nube está vacía, subir los datos locales
+        const saved = localStorage.getItem('finanzas:state');
+        let dataToUpload = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        if (saved) {
+          try {
+            dataToUpload = { ...DEFAULT_STATE, ...JSON.parse(saved) };
+          } catch (e) {
+            console.error('Error parseando estado local para migración', e);
+          }
+        }
+        setDoc(userDocRef, dataToUpload);
+      }
+    });
+  }
+
+  private async saveState(newState: AppState) {
+    // Actualización inmediata en memoria para UI rápida
     this.state.set(newState);
+    
+    // Caché local (offline fallback)
+    localStorage.setItem('finanzas:state', JSON.stringify(newState));
+
+    // Persistencia en la nube
+    const user = this.authService.userSignal();
+    if (user) {
+      try {
+        const userDocRef = doc(this.firestore, `users/${user.uid}`);
+        await setDoc(userDocRef, newState);
+      } catch (err) {
+        console.error('Error guardando en Firestore', err);
+      }
+    }
   }
 
   // Helpers

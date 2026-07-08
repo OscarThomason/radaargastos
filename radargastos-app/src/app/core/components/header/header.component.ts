@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -9,6 +10,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './header.component.scss'
 })
 export class HeaderComponent {
+  authService = inject(AuthService);
+
   get todayStr(): string {
     return new Date().toLocaleDateString('es-MX', {
       weekday: 'long',
@@ -16,5 +19,9 @@ export class HeaderComponent {
       month: 'long',
       year: 'numeric'
     });
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

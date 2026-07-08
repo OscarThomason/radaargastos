@@ -5,12 +5,16 @@ import { ServiciosComponent } from './features/servicios/servicios.component';
 import { GastosComponent } from './features/gastos/gastos.component';
 import { EstadisticasComponent } from './features/estadisticas/estadisticas.component';
 
+import { LoginComponent } from './features/auth/login.component';
+import { authGuard } from './core/services/auth.guard';
+
 export const routes: Routes = [
   { path: '', redirectTo: 'resumen', pathMatch: 'full' },
-  { path: 'resumen', component: ResumenComponent },
-  { path: 'deudas', component: DeudasComponent },
-  { path: 'servicios', component: ServiciosComponent },
-  { path: 'gastos', component: GastosComponent },
-  { path: 'estadisticas', component: EstadisticasComponent },
+  { path: 'login', component: LoginComponent },
+  { path: 'resumen', component: ResumenComponent, canActivate: [authGuard] },
+  { path: 'deudas', component: DeudasComponent, canActivate: [authGuard] },
+  { path: 'servicios', component: ServiciosComponent, canActivate: [authGuard] },
+  { path: 'gastos', component: GastosComponent, canActivate: [authGuard] },
+  { path: 'estadisticas', component: EstadisticasComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'resumen' }
 ];

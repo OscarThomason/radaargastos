@@ -1,5 +1,7 @@
 <div id="app">
+  @if (authService.userSignal()) {
   <app-header></app-header>
+}
   <main>
     <router-outlet></router-outlet>
   </main>
