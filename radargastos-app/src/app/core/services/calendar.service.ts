@@ -47,7 +47,7 @@ export class CalendarService {
         let nextDateStr = '';
         if ((serv as any).anchor) {
           nextDateStr = (serv as any).anchor;
-        } else {
+        } else if (serv.dueDay) {
           // Fallback a calcular el próximo dueDay en el mes actual o siguiente
           const today = new Date();
           let month = today.getMonth() + 1;
