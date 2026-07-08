@@ -68,6 +68,7 @@
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
                 <span class="exp-amount">{{money(e.amount)}}</span>
+                <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="$event.stopPropagation(); deleteExpense(e.id)" title="Eliminar gasto">✕</button>
               </div>
             </div>
           }
@@ -116,6 +117,7 @@
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
                 <span class="exp-amount txt-safe">+{{money(i.amount)}}</span>
+                <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="$event.stopPropagation(); deleteIncome(i.id)" title="Eliminar ingreso">✕</button>
               </div>
             </div>
           }
