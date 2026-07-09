@@ -3,7 +3,7 @@ import { Firestore, doc, setDoc, onSnapshot } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudget } from '../models/finance.model';
 
-const CATEGORIES = ['Servicios','Deudas','Transporte','Alimentos','Restaurantes','Oscio','Salud','nutricion y gym','ropa o accesorios','casa','viaje','mascota','Otros'];
+const CATEGORIES = ['Servicios', 'Deudas', 'Transporte', 'Alimentos', 'Restaurantes', 'Oscio', 'Salud', 'nutricion y gym', 'ropa o accesorios', 'casa', 'viaje', 'mascota', 'Otros'];
 
 const DEFAULT_STATE: AppState = {
   debts: [],
@@ -42,7 +42,7 @@ export class FinanceService {
 
   private listenToCloudState(uid: string) {
     const userDocRef = doc(this.firestore, `users/${uid}`);
-    
+
     this.unsubSnapshot = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
         // Cargar datos de la nube
@@ -69,7 +69,7 @@ export class FinanceService {
   private async saveState(newState: AppState) {
     // Actualización inmediata en memoria para UI rápida
     this.state.set(newState);
-    
+
     // Caché local (offline fallback)
     localStorage.setItem('finanzas:state', JSON.stringify(newState));
 
@@ -96,20 +96,23 @@ export class FinanceService {
   }
 
   nextOccurrence(dueDay: number | undefined, interval: number = 1, anchor: string | null | undefined, frequency?: string): Date {
+    const today = new Date(); 
+    today.setHours(0, 0, 0, 0);
+    
     if (anchor) {
+      // Si hay anchor, esa es la fecha de cobro actual. Si no se paga, se queda en el pasado (atrasado).
       return new Date(anchor + 'T00:00:00');
     }
     
-    // Si no hay anchor, estimamos en el mes actual
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return new Date(today.getFullYear(), today.getMonth(), dueDay || 1);
+    let candidate = new Date(today.getFullYear(), today.getMonth(), dueDay || 1);
+    if (candidate < today) { candidate.setMonth(candidate.getMonth() + 1); }
+    return candidate;
   }
 
   daysBetween(date: Date): number {
-    const today = new Date(); 
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const d = new Date(date); 
+    const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     return Math.round((d.getTime() - today.getTime()) / 86400000);
   }
@@ -123,33 +126,33 @@ export class FinanceService {
   getUpcomingItems(): UpcomingItem[] {
     const current = this.state();
     const items: UpcomingItem[] = [];
-    
+
     current.debts.forEach(d => {
       const due = this.nextOccurrence(d.dueDay, d.interval, d.anchor, d.frequency);
       const amount = d.group === 'prestamo' ? (d.cuota || 0) : (d.minPayment || 0);
       items.push({
-        id: d.id, 
-        kind: d.group, 
-        name: d.name, 
-        amount, 
+        id: d.id,
+        kind: d.group,
+        name: d.name,
+        amount,
         due,
-        days: this.daysBetween(due), 
+        days: this.daysBetween(due),
         noInterest: d.noInterest
       });
     });
-    
+
     current.services.forEach(s => {
       const due = this.nextOccurrence(s.dueDay, s.interval, s.anchor);
       items.push({
-        id: s.id, 
-        kind: 'servicio', 
-        name: s.name, 
-        amount: s.amount, 
-        due, 
+        id: s.id,
+        kind: 'servicio',
+        name: s.name,
+        amount: s.amount,
+        due,
         days: this.daysBetween(due)
       });
     });
-    
+
     items.sort((a, b) => a.days - b.days);
     return items;
   }
@@ -158,39 +161,39 @@ export class FinanceService {
     const current = { ...this.state() };
     let name = '';
     let amount = 0;
-    
+
     if (kind === 'servicio') {
       const idx = current.services.findIndex(s => s.id === id);
       if (idx === -1) return;
       const svc = { ...current.services[idx] };
-      
+
       const due = this.nextOccurrence(svc.dueDay, svc.interval, svc.anchor, svc.frequency);
       this.advanceDateByFrequency(due, svc.frequency);
       svc.anchor = due.toISOString().slice(0, 10);
-      
+
       current.services = [...current.services];
       current.services[idx] = svc;
-      
+
       name = svc.name;
       amount = svc.amount;
     } else {
       const idx = current.debts.findIndex(d => d.id === id);
       if (idx === -1) return;
       const debt = { ...current.debts[idx] };
-      
+
       if (debt.group === 'prestamo') {
         debt.pagado = (debt.pagado || 0) + (debt.cuota || 0);
         debt.cuotasPagadas = (debt.cuotasPagadas || 0) + 1;
       }
-      
+
       const due = this.nextOccurrence(debt.dueDay, debt.interval, debt.anchor, debt.frequency);
       this.advanceDateByFrequency(due, debt.frequency);
       debt.anchor = due.toISOString().slice(0, 10);
       amount = debt.group === 'prestamo' ? (debt.cuota || 0) : (debt.minPayment || 0);
-      
+
       current.debts = [...current.debts];
       current.debts[idx] = debt;
-      
+
       name = debt.name;
     }
 

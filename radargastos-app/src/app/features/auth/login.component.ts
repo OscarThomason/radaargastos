@@ -213,34 +213,25 @@ import { AuthService } from '../../core/services/auth.service';
 
     @media (max-width: 768px) {
       .notebook-page {
-        padding: 40px 16px 40px 32px;
+        padding: 40px 15px 40px 30px;
         background-image: 
-          linear-gradient(90deg, transparent 16px, #E53935 16px, #E53935 18px, transparent 18px),
+          linear-gradient(90deg, transparent 15px, #E53935 15px, #E53935 17px, transparent 17px),
           linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
           linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
         box-shadow: 6px 6px 0px rgba(0,0,0,1);
-        transform: rotate(0deg); /* Quitar rotación en móvil para evitar que se corte por los bordes */
-      }
-      .notebook-page:hover {
-        transform: rotate(0deg);
-      }
-      .slide-in {
-        animation: slideDownFadeMobile 0.5s ease-out forwards;
-      }
-      @keyframes slideDownFadeMobile {
-        0% { opacity: 0; transform: translateY(-30px); }
-        100% { opacity: 1; transform: translateY(0); }
+        border-width: 1px;
       }
       .logo {
         font-size: 24px;
       }
       .subtitle {
-        font-size: 14px;
+        font-size: 15px;
         margin-bottom: 24px;
       }
       .btn-google {
-        font-size: 13px;
+        font-size: 14px;
         padding: 12px;
+        box-shadow: 3px 3px 0px var(--border);
       }
       .holes {
         left: 4px;
@@ -249,6 +240,22 @@ import { AuthService } from '../../core/services/auth.service';
         width: 8px;
         height: 8px;
       }
+      .draw-anim {
+        animation: scribble-mobile 1.5s infinite alternate ease-in-out;
+      }
+      .draw-line {
+        animation: drawLine-mobile 1.5s infinite alternate ease-in-out;
+      }
+    }
+
+    @keyframes scribble-mobile {
+      0% { transform: translateX(-20px) rotate(-10deg); }
+      50% { transform: translateX(0px) rotate(-5deg); }
+      100% { transform: translateX(20px) rotate(10deg); }
+    }
+    @keyframes drawLine-mobile {
+      0% { width: 0%; margin-left: -40px; }
+      100% { width: 40px; margin-left: 0; }
     }
   `]
 })
