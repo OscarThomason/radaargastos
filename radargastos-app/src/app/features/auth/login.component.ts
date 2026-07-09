@@ -213,29 +213,41 @@ import { AuthService } from '../../core/services/auth.service';
 
     @media (max-width: 768px) {
       .notebook-page {
-        padding: 30px 20px 30px 40px;
+        padding: 40px 16px 40px 32px;
         background-image: 
-          linear-gradient(90deg, transparent 20px, #E53935 20px, #E53935 22px, transparent 22px),
+          linear-gradient(90deg, transparent 16px, #E53935 16px, #E53935 18px, transparent 18px),
           linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
           linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
+        box-shadow: 6px 6px 0px rgba(0,0,0,1);
+        transform: rotate(0deg); /* Quitar rotación en móvil para evitar que se corte por los bordes */
+      }
+      .notebook-page:hover {
+        transform: rotate(0deg);
+      }
+      .slide-in {
+        animation: slideDownFadeMobile 0.5s ease-out forwards;
+      }
+      @keyframes slideDownFadeMobile {
+        0% { opacity: 0; transform: translateY(-30px); }
+        100% { opacity: 1; transform: translateY(0); }
       }
       .logo {
-        font-size: 26px;
+        font-size: 24px;
       }
       .subtitle {
-        font-size: 15px;
+        font-size: 14px;
         margin-bottom: 24px;
       }
       .btn-google {
-        font-size: 14px;
+        font-size: 13px;
         padding: 12px;
       }
       .holes {
-        left: 5px;
+        left: 4px;
       }
       .hole {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
       }
     }
   `]

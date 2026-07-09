@@ -216,6 +216,15 @@ h2.section-title:first-child { margin-top: 0; }
     padding: 16px;
   }
 
+  /* Ajuste de modal para móvil */
+  .modal-content {
+    padding: 16px;
+    max-height: 85vh;
+  }
+  .modal-overlay {
+    padding: 10px;
+  }
+
   /* Transformar tablas en tarjetas en móvil */
   table.data-table, table.data-table tbody, table.data-table tr {
     display: block;

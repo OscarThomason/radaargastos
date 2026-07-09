@@ -96,20 +96,14 @@ export class FinanceService {
   }
 
   nextOccurrence(dueDay: number | undefined, interval: number = 1, anchor: string | null | undefined, frequency?: string): Date {
-    const today = new Date(); 
-    today.setHours(0, 0, 0, 0);
-    
     if (anchor) {
-      let d = new Date(anchor + 'T00:00:00');
-      while (d < today) {
-        this.advanceDateByFrequency(d, frequency);
-      }
-      return d;
+      return new Date(anchor + 'T00:00:00');
     }
     
-    let candidate = new Date(today.getFullYear(), today.getMonth(), dueDay || 1);
-    if (candidate < today) { candidate.setMonth(candidate.getMonth() + 1); }
-    return candidate;
+    // Si no hay anchor, estimamos en el mes actual
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(today.getFullYear(), today.getMonth(), dueDay || 1);
   }
 
   daysBetween(date: Date): number {
