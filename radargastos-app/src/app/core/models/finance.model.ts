@@ -57,6 +57,8 @@ export interface AppState {
   expenses: Expense[];
   incomes: Income[];
   weeklyBudgets: WeeklyBudget[];
+  customExpenseCategories?: string[];
+  customIncomeCategories?: string[];
 }
 
 export interface UpcomingItem {

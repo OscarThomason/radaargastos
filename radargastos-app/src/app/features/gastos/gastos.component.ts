@@ -15,8 +15,8 @@ import { StatCardComponent } from '../../core/components/stat-card/stat-card.com
 export class GastosComponent {
   private financeService = inject(FinanceService);
 
-  categories = this.financeService.categories;
-  incomeCategories = ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'];
+  categories = this.financeService.expenseCategories;
+  incomeCategories = this.financeService.incomeCategories;
   
   allExpenses = computed(() => this.financeService.state().expenses);
   allIncomes = computed(() => this.financeService.state().incomes);
@@ -48,13 +48,13 @@ export class GastosComponent {
   balance = computed(() => this.totalIncomes() - this.totalExpenses());
 
   exDate = new Date().toISOString().slice(0, 10);
-  exCat = this.categories[0];
+  exCat = this.categories()[0];
   exDesc = '';
   exAmount: number | null = null;
   editingExId: string | null = null;
 
   inDate = new Date().toISOString().slice(0, 10);
-  inCat = this.incomeCategories[0];
+  inCat = this.incomeCategories()[0];
   inDesc = '';
   inAmount: number | null = null;
   editingInId: string | null = null;

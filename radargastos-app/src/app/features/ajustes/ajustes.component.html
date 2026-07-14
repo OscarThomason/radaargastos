@@ -1,0 +1,59 @@
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <button class="btn-ghost" (click)="goBack()" style="padding: 6px 10px; border-color: transparent;">
+      <span class="material-symbols-outlined">arrow_back</span>
+    </button>
+    <h2 class="section-title" style="margin: 0;">Ajustes de Categorías</h2>
+  </div>
+  <button class="btn-primary" style="margin: 0;" (click)="save()">Guardar Cambios</button>
+</div>
+
+<div class="grid-2col">
+  <!-- Categorías de Gastos -->
+  <div class="card-panel">
+    <h3>Categorías de Gastos</h3>
+    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <input [(ngModel)]="newExCat" placeholder="Ej. Suscripciones" (keyup.enter)="addExpenseCat()">
+      <button class="btn-primary" style="margin-top: 0; padding: 10px 16px;" (click)="addExpenseCat()">+</button>
+    </div>
+    
+    <div class="cat-list">
+      @if (expenseCats().length === 0) {
+        <div class="empty-state">No hay categorías. Añade una para empezar.</div>
+      } @else {
+        @for (cat of expenseCats(); track cat) {
+          <div class="cat-row">
+            <span>{{cat}}</span>
+            <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="removeExpenseCat(cat)">
+              <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <!-- Categorías de Ingresos -->
+  <div class="card-panel panel-safe">
+    <h3>Categorías de Ingresos</h3>
+    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+      <input [(ngModel)]="newInCat" placeholder="Ej. Bonos" (keyup.enter)="addIncomeCat()">
+      <button class="btn-primary bg-safe" style="margin-top: 0; padding: 10px 16px;" (click)="addIncomeCat()">+</button>
+    </div>
+    
+    <div class="cat-list">
+      @if (incomeCats().length === 0) {
+        <div class="empty-state">No hay categorías. Añade una para empezar.</div>
+      } @else {
+        @for (cat of incomeCats(); track cat) {
+          <div class="cat-row">
+            <span>{{cat}}</span>
+            <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="removeIncomeCat(cat)">
+              <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            </button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

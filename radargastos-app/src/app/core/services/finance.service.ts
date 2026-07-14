@@ -10,7 +10,9 @@ const DEFAULT_STATE: AppState = {
   services: [],
   expenses: [],
   incomes: [],
-  weeklyBudgets: []
+  weeklyBudgets: [],
+  customExpenseCategories: [...CATEGORIES],
+  customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías']
 };
 
 @Injectable({
@@ -18,7 +20,20 @@ const DEFAULT_STATE: AppState = {
 })
 export class FinanceService {
   state = signal<AppState>(JSON.parse(JSON.stringify(DEFAULT_STATE)));
-  categories = CATEGORIES;
+  
+  expenseCategories = computed(() => {
+    const s = this.state();
+    return s.customExpenseCategories && s.customExpenseCategories.length > 0 
+      ? s.customExpenseCategories 
+      : [...CATEGORIES];
+  });
+
+  incomeCategories = computed(() => {
+    const s = this.state();
+    return s.customIncomeCategories && s.customIncomeCategories.length > 0 
+      ? s.customIncomeCategories 
+      : ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'];
+  });
 
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
@@ -294,6 +309,18 @@ export class FinanceService {
   deleteIncome(id: string) {
     const current = { ...this.state() };
     current.incomes = current.incomes.filter(i => i.id !== id);
+    this.saveState(current);
+  }
+
+  updateExpenseCategories(categories: string[]) {
+    const current = { ...this.state() };
+    current.customExpenseCategories = [...categories];
+    this.saveState(current);
+  }
+
+  updateIncomeCategories(categories: string[]) {
+    const current = { ...this.state() };
+    current.customIncomeCategories = [...categories];
     this.saveState(current);
   }
 }

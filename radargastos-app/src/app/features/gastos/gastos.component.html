@@ -37,7 +37,7 @@
         <div>
           <label>Categoría</label>
           <select [(ngModel)]="exCat">
-            @for (c of categories; track c) {
+            @for (c of categories(); track c) {
               <option [value]="c">{{c}}</option>
             }
           </select>
@@ -86,7 +86,7 @@
         <div>
           <label>Categoría</label>
           <select [(ngModel)]="inCat">
-            @for (c of incomeCategories; track c) {
+            @for (c of incomeCategories(); track c) {
               <option [value]="c">{{c}}</option>
             }
           </select>
