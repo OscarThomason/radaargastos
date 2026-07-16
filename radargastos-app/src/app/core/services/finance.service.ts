@@ -12,7 +12,8 @@ const DEFAULT_STATE: AppState = {
   incomes: [],
   weeklyBudgets: [],
   customExpenseCategories: [...CATEGORIES],
-  customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías']
+  customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'],
+  history: []
 };
 
 @Injectable({
@@ -98,6 +99,21 @@ export class FinanceService {
         console.error('Error guardando en Firestore', err);
       }
     }
+  }
+
+  private logAction(current: AppState, action: string) {
+    if (!current.history) current.history = [];
+    
+    // Obtener fecha y hora en formato local (Ej. 14/07/2026, 17:30)
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('es-MX') + ' ' + now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+    const newLog = {
+      id: 'h' + Date.now() + Math.random().toString(36).substr(2, 5),
+      timestamp: formattedDate,
+      action
+    };
+    current.history = [newLog, ...current.history].slice(0, 50);
   }
 
   // Helpers
@@ -221,18 +237,22 @@ export class FinanceService {
     };
     current.expenses = [...current.expenses, newExpense];
 
+    this.logAction(current, `Se registró el pago de ${name}`);
     this.saveState(current);
   }
 
   addDebt(debt: Debt) {
     const current = { ...this.state() };
     current.debts = [...current.debts, debt];
+    this.logAction(current, `Se añadió la deuda: ${debt.name}`);
     this.saveState(current);
   }
 
   deleteDebt(id: string) {
     const current = { ...this.state() };
-    current.debts = current.debts.filter(d => d.id !== id);
+    const d = current.debts.find(x => x.id === id);
+    current.debts = current.debts.filter(x => x.id !== id);
+    this.logAction(current, `Se eliminó la deuda: ${d?.name || 'Desconocida'}`);
     this.saveState(current);
   }
 
@@ -242,6 +262,7 @@ export class FinanceService {
     if (idx !== -1) {
       current.debts = [...current.debts];
       current.debts[idx] = debt;
+      this.logAction(current, `Se actualizó la deuda: ${debt.name}`);
       this.saveState(current);
     }
   }
@@ -249,12 +270,15 @@ export class FinanceService {
   addService(service: ServiceItem) {
     const current = { ...this.state() };
     current.services = [...current.services, service];
+    this.logAction(current, `Se añadió el servicio: ${service.name}`);
     this.saveState(current);
   }
 
   deleteService(id: string) {
     const current = { ...this.state() };
-    current.services = current.services.filter(s => s.id !== id);
+    const s = current.services.find(x => x.id === id);
+    current.services = current.services.filter(x => x.id !== id);
+    this.logAction(current, `Se eliminó el servicio: ${s?.name || 'Desconocido'}`);
     this.saveState(current);
   }
 
@@ -264,6 +288,7 @@ export class FinanceService {
     if (idx !== -1) {
       current.services = [...current.services];
       current.services[idx] = service;
+      this.logAction(current, `Se actualizó el servicio: ${service.name}`);
       this.saveState(current);
     }
   }
@@ -271,6 +296,7 @@ export class FinanceService {
   addExpense(expense: Expense) {
     const current = { ...this.state() };
     current.expenses = [...current.expenses, expense];
+    this.logAction(current, `Se registró un gasto de ${expense.amount} en ${expense.category}`);
     this.saveState(current);
   }
 
@@ -280,19 +306,23 @@ export class FinanceService {
     if (idx !== -1) {
       current.expenses = [...current.expenses];
       current.expenses[idx] = expense;
+      this.logAction(current, `Se actualizó el gasto: ${expense.description}`);
       this.saveState(current);
     }
   }
 
   deleteExpense(id: string) {
     const current = { ...this.state() };
-    current.expenses = current.expenses.filter(e => e.id !== id);
+    const e = current.expenses.find(x => x.id === id);
+    current.expenses = current.expenses.filter(x => x.id !== id);
+    this.logAction(current, `Se eliminó el gasto de ${e?.amount || ''}`);
     this.saveState(current);
   }
 
   addIncome(income: Income) {
     const current = { ...this.state() };
     current.incomes = [...current.incomes, income];
+    this.logAction(current, `Se registró un ingreso de ${income.amount} por ${income.category}`);
     this.saveState(current);
   }
 
@@ -302,25 +332,30 @@ export class FinanceService {
     if (idx !== -1) {
       current.incomes = [...current.incomes];
       current.incomes[idx] = income;
+      this.logAction(current, `Se actualizó el ingreso: ${income.description}`);
       this.saveState(current);
     }
   }
 
   deleteIncome(id: string) {
     const current = { ...this.state() };
-    current.incomes = current.incomes.filter(i => i.id !== id);
+    const i = current.incomes.find(x => x.id === id);
+    current.incomes = current.incomes.filter(x => x.id !== id);
+    this.logAction(current, `Se eliminó el ingreso de ${i?.amount || ''}`);
     this.saveState(current);
   }
 
   updateExpenseCategories(categories: string[]) {
     const current = { ...this.state() };
     current.customExpenseCategories = [...categories];
+    this.logAction(current, `Se modificaron las categorías de gastos`);
     this.saveState(current);
   }
 
   updateIncomeCategories(categories: string[]) {
     const current = { ...this.state() };
     current.customIncomeCategories = [...categories];
+    this.logAction(current, `Se modificaron las categorías de ingresos`);
     this.saveState(current);
   }
 }

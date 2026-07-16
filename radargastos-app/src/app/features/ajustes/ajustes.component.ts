@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
@@ -18,6 +18,9 @@ export class AjustesComponent {
   // Load current categories
   expenseCats = signal<string[]>([...this.financeService.expenseCategories()]);
   incomeCats = signal<string[]>([...this.financeService.incomeCategories()]);
+
+  // Load history
+  history = computed(() => this.financeService.state().history || []);
 
   newExCat = '';
   newInCat = '';

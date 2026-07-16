@@ -2,6 +2,11 @@
   <div class="title-box">
     <h1>Radar de Pagos</h1>
     <p>Tu control de deudas, servicios y gastos</p>
+    @if (lastModification()) {
+      <p style="font-size: 11px; margin-top: 4px; color: var(--text-muted); font-weight: 500;">
+        Última act: {{ lastModification() }}
+      </p>
+    }
   </div>
   <div style="display: flex; align-items: center; gap: 20px;">
     <div class="today-chip">{{ todayStr }}</div>

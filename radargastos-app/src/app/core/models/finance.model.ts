@@ -59,6 +59,13 @@ export interface AppState {
   weeklyBudgets: WeeklyBudget[];
   customExpenseCategories?: string[];
   customIncomeCategories?: string[];
+  history?: HistoryLog[];
+}
+
+export interface HistoryLog {
+  id: string;
+  timestamp: string;
+  action: string;
 }
 
 export interface UpcomingItem {
