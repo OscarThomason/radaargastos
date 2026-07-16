@@ -22,6 +22,11 @@ export class GastosComponent {
   allIncomes = computed(() => this.financeService.state().incomes);
 
   selectedMonth = signal<string>(new Date().toISOString().slice(0, 7));
+  showTotals = signal(true);
+
+  toggleTotals() {
+    this.showTotals.set(!this.showTotals());
+  }
 
   availableMonths = computed(() => {
     const months = new Set<string>();

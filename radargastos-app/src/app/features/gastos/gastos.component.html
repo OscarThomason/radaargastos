@@ -1,5 +1,10 @@
 <div class="month-selector-bar">
-  <h2 class="section-title" style="margin: 0;">Resumen del mes</h2>
+  <div style="display: flex; align-items: center; gap: 8px;">
+    <h2 class="section-title" style="margin: 0;">Resumen del mes</h2>
+    <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;" (click)="toggleTotals()">
+      <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off' }}</span>
+    </button>
+  </div>
   <div class="selector-wrapper">
     <label>Historial Mensual: </label>
     <select (change)="onMonthChange($event)" [value]="selectedMonth()">
@@ -13,16 +18,16 @@
 <div class="summary-strip">
   <app-stat-card 
     label="Total Ingresos" 
-    [value]="money(totalIncomes())"
+    [value]="showTotals() ? money(totalIncomes()) : '****'"
     valueClass="safe">
   </app-stat-card>
   <app-stat-card 
     label="Total Gastos" 
-    [value]="money(totalExpenses())">
+    [value]="showTotals() ? money(totalExpenses()) : '****'">
   </app-stat-card>
   <app-stat-card 
     label="Balance Disponible" 
-    [value]="money(balance())" 
+    [value]="showTotals() ? money(balance()) : '****'" 
     [valueClass]="balance() < 0 ? 'danger' : 'safe'">
   </app-stat-card>
 </div>
@@ -68,7 +73,7 @@
                 <div class="small-muted">{{e.date}}</div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <span class="exp-amount">{{money(e.amount)}}</span>
+                <span class="exp-amount">{{ showTotals() ? money(e.amount) : '****' }}</span>
               </div>
             </div>
           }
@@ -117,7 +122,7 @@
                 <div class="small-muted">{{i.date}}</div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <span class="exp-amount txt-safe">+{{money(i.amount)}}</span>
+                <span class="exp-amount txt-safe">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>
               </div>
             </div>
           }

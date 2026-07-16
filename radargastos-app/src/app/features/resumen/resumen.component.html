@@ -1,11 +1,18 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <h2 class="section-title" style="margin: 0;">Resumen General</h2>
+  <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;" (click)="toggleTotals()">
+    <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off' }}</span>
+  </button>
+</div>
+
 <div class="summary-strip">
   <app-stat-card 
     label="Compromiso este ciclo" 
-    [value]="money(compromisoCiclo())">
+    [value]="showTotals() ? money(compromisoCiclo()) : '****'">
   </app-stat-card>
   <app-stat-card 
     label="Deuda viva total" 
-    [value]="money(totalDeudaViva())" 
+    [value]="showTotals() ? money(totalDeudaViva()) : '****'" 
     valueClass="danger">
   </app-stat-card>
   <app-stat-card 

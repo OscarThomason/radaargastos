@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FinanceService } from '../../core/services/finance.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,12 @@ export class ResumenComponent {
 
   upcomingItems = computed(() => this.financeService.getUpcomingItems());
   
+  showTotals = signal(true);
+
+  toggleTotals() {
+    this.showTotals.set(!this.showTotals());
+  }
+
   next30 = computed(() => this.upcomingItems().filter(i => i.days <= 30));
   vencidos = computed(() => this.upcomingItems().filter(i => i.days < 0).length);
 
