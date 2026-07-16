@@ -1,7 +1,7 @@
 import { Injectable, signal, inject, effect, computed } from '@angular/core';
 import { Firestore, doc, setDoc, onSnapshot } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
-import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudget } from '../models/finance.model';
+import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudget, Card } from '../models/finance.model';
 
 const CATEGORIES = ['Servicios', 'Deudas', 'Transporte', 'Alimentos', 'Restaurantes', 'Oscio', 'Salud', 'nutricion y gym', 'ropa o accesorios', 'casa', 'viaje', 'mascota', 'Otros'];
 
@@ -13,6 +13,7 @@ const DEFAULT_STATE: AppState = {
   weeklyBudgets: [],
   customExpenseCategories: [...CATEGORIES],
   customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'],
+  cards: [],
   history: []
 };
 
@@ -34,6 +35,32 @@ export class FinanceService {
     return s.customIncomeCategories && s.customIncomeCategories.length > 0 
       ? s.customIncomeCategories 
       : ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'];
+  });
+
+  cardsWithBalance = computed(() => {
+    const s = this.state();
+    const cards = s.cards || [];
+    const expenses = s.expenses || [];
+    const incomes = s.incomes || [];
+
+    return cards.map(c => {
+      let currentBalance = c.balance || 0;
+      const relatedEx = expenses.filter(e => e.paymentMethod === c.id);
+      const relatedIn = incomes.filter(i => i.paymentMethod === c.id);
+
+      const totalSpent = relatedEx.reduce((sum, e) => sum + e.amount, 0);
+      const totalIn = relatedIn.reduce((sum, i) => sum + i.amount, 0);
+
+      if (c.type === 'credito') {
+        // En crédito, los gastos suben la deuda y los ingresos (pagos) la bajan
+        currentBalance = currentBalance + totalSpent - totalIn;
+      } else {
+        // En débito, los gastos bajan el dinero y los ingresos lo suben
+        currentBalance = currentBalance - totalSpent + totalIn;
+      }
+
+      return { ...c, computedBalance: currentBalance };
+    });
   });
 
   private firestore = inject(Firestore);
@@ -356,6 +383,35 @@ export class FinanceService {
     const current = { ...this.state() };
     current.customIncomeCategories = [...categories];
     this.logAction(current, `Se modificaron las categorías de ingresos`);
+    this.saveState(current);
+  }
+
+  addCard(card: Card) {
+    const current = { ...this.state() };
+    if (!current.cards) current.cards = [];
+    current.cards = [...current.cards, card];
+    this.logAction(current, `Se añadió la tarjeta: ${card.name}`);
+    this.saveState(current);
+  }
+
+  updateCard(id: string, card: Card) {
+    const current = { ...this.state() };
+    if (!current.cards) current.cards = [];
+    const idx = current.cards.findIndex(c => c.id === id);
+    if (idx !== -1) {
+      current.cards = [...current.cards];
+      current.cards[idx] = card;
+      this.logAction(current, `Se actualizó la tarjeta: ${card.name}`);
+      this.saveState(current);
+    }
+  }
+
+  deleteCard(id: string) {
+    const current = { ...this.state() };
+    if (!current.cards) current.cards = [];
+    const c = current.cards.find(x => x.id === id);
+    current.cards = current.cards.filter(x => x.id !== id);
+    this.logAction(current, `Se eliminó la tarjeta: ${c?.name || ''}`);
     this.saveState(current);
   }
 }

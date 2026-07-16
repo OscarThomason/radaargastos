@@ -34,6 +34,7 @@ export interface Expense {
   category: string;
   description: string;
   amount: number;
+  paymentMethod?: string; // id de tarjeta o 'efectivo'
 }
 
 export interface Income {
@@ -42,6 +43,15 @@ export interface Income {
   category: string;
   description: string;
   amount: number;
+  paymentMethod?: string; // id de tarjeta o 'efectivo'
+}
+
+export interface Card {
+  id: string;
+  name: string;
+  type: 'credito' | 'debito';
+  limit?: number;
+  balance: number; // deuda actual (crédito) o dinero disponible (débito)
 }
 
 export interface WeeklyBudget {
@@ -59,6 +69,7 @@ export interface AppState {
   weeklyBudgets: WeeklyBudget[];
   customExpenseCategories?: string[];
   customIncomeCategories?: string[];
+  cards?: Card[];
   history?: HistoryLog[];
 }
 

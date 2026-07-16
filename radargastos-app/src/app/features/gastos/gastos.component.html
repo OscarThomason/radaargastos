@@ -49,6 +49,15 @@
         </div>
         <div><label>Descripción</label><input [(ngModel)]="exDesc" placeholder="Ej. Súper"></div>
         <div><label>Monto</label><input [(ngModel)]="exAmount" type="number" step="0.01"></div>
+        <div style="grid-column: 1 / -1;">
+          <label>Método de Pago</label>
+          <select [(ngModel)]="exPaymentMethod">
+            <option value="efectivo">Efectivo</option>
+            @for (c of cards(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
       </div>
       <div style="display:flex; gap:10px; align-items: center;">
         <button class="btn-primary" (click)="addExpense()">{{ editingExId ? 'Actualizar' : 'Guardar' }}</button>
@@ -70,7 +79,7 @@
               <div>
                 <span class="exp-cat-badge">{{e.category}}</span>
                 <span>{{e.description || '—'}}</span>
-                <div class="small-muted">{{e.date}}</div>
+                <div class="small-muted">{{e.date}} &bull; {{getCardName(e.paymentMethod)}}</div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
                 <span class="exp-amount">{{ showTotals() ? money(e.amount) : '****' }}</span>
@@ -98,6 +107,15 @@
         </div>
         <div><label>Descripción</label><input [(ngModel)]="inDesc" placeholder="Ej. Quincena"></div>
         <div><label>Monto</label><input [(ngModel)]="inAmount" type="number" step="0.01"></div>
+        <div style="grid-column: 1 / -1;">
+          <label>Método de Cobro/Depósito</label>
+          <select [(ngModel)]="inPaymentMethod">
+            <option value="efectivo">Efectivo</option>
+            @for (c of cards(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
       </div>
       <div style="display:flex; gap:10px; align-items: center;">
         <button class="btn-primary bg-safe" (click)="addIncome()">{{ editingInId ? 'Actualizar' : 'Guardar' }}</button>
@@ -119,7 +137,7 @@
               <div>
                 <span class="exp-cat-badge bg-safe-dim txt-safe">{{i.category || 'Ingreso'}}</span>
                 <span>{{i.description || '—'}}</span>
-                <div class="small-muted">{{i.date}}</div>
+                <div class="small-muted">{{i.date}} &bull; {{getCardName(i.paymentMethod)}}</div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
                 <span class="exp-amount txt-safe">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>

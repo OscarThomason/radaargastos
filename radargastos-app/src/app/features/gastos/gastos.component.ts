@@ -20,6 +20,7 @@ export class GastosComponent {
   
   allExpenses = computed(() => this.financeService.state().expenses);
   allIncomes = computed(() => this.financeService.state().incomes);
+  cards = computed(() => this.financeService.state().cards || []);
 
   selectedMonth = signal<string>(new Date().toISOString().slice(0, 7));
   showTotals = signal(true);
@@ -56,12 +57,14 @@ export class GastosComponent {
   exCat = this.categories()[0];
   exDesc = '';
   exAmount: number | null = null;
+  exPaymentMethod = 'efectivo';
   editingExId: string | null = null;
 
   inDate = new Date().toISOString().slice(0, 10);
   inCat = this.incomeCategories()[0];
   inDesc = '';
   inAmount: number | null = null;
+  inPaymentMethod = 'efectivo';
   editingInId: string | null = null;
 
   editExpense(item: Expense) {
@@ -70,6 +73,7 @@ export class GastosComponent {
     this.exCat = item.category;
     this.exDesc = item.description;
     this.exAmount = item.amount;
+    this.exPaymentMethod = item.paymentMethod || 'efectivo';
   }
 
   editIncome(item: Income) {
@@ -78,6 +82,7 @@ export class GastosComponent {
     this.inCat = item.category;
     this.inDesc = item.description;
     this.inAmount = item.amount;
+    this.inPaymentMethod = item.paymentMethod || 'efectivo';
   }
 
   addExpense() {
@@ -90,7 +95,8 @@ export class GastosComponent {
       date: this.exDate,
       category: this.exCat,
       description: this.exDesc.trim(),
-      amount: this.exAmount
+      amount: this.exAmount,
+      paymentMethod: this.exPaymentMethod
     };
 
     if (this.editingExId) {
@@ -109,6 +115,7 @@ export class GastosComponent {
     this.exDate = new Date().toISOString().slice(0, 10);
     this.exDesc = '';
     this.exAmount = null;
+    this.exPaymentMethod = 'efectivo';
   }
 
   deleteExpense(id: string) {
@@ -125,7 +132,8 @@ export class GastosComponent {
       date: this.inDate,
       category: this.inCat,
       description: this.inDesc.trim(),
-      amount: this.inAmount
+      amount: this.inAmount,
+      paymentMethod: this.inPaymentMethod
     };
 
     if (this.editingInId) {
@@ -144,6 +152,7 @@ export class GastosComponent {
     this.inDate = new Date().toISOString().slice(0, 10);
     this.inDesc = '';
     this.inAmount = null;
+    this.inPaymentMethod = 'efectivo';
   }
 
   deleteIncome(id: string) {
@@ -164,5 +173,11 @@ export class GastosComponent {
 
   money(amount: number) {
     return '$' + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  getCardName(id?: string) {
+    if (!id || id === 'efectivo') return 'Efectivo';
+    const c = this.cards().find(x => x.id === id);
+    return c ? c.name : 'Efectivo';
   }
 }

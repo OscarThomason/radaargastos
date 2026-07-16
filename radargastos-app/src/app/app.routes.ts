@@ -5,6 +5,7 @@ import { ServiciosComponent } from './features/servicios/servicios.component';
 import { GastosComponent } from './features/gastos/gastos.component';
 import { EstadisticasComponent } from './features/estadisticas/estadisticas.component';
 import { AjustesComponent } from './features/ajustes/ajustes.component';
+import { TarjetasComponent } from './features/tarjetas/tarjetas.component';
 
 import { LoginComponent } from './features/auth/login.component';
 import { authGuard } from './core/services/auth.guard';
@@ -18,5 +19,6 @@ export const routes: Routes = [
   { path: 'gastos', component: GastosComponent, canActivate: [authGuard] },
   { path: 'estadisticas', component: EstadisticasComponent, canActivate: [authGuard] },
   { path: 'ajustes', component: AjustesComponent, canActivate: [authGuard] },
+  { path: 'tarjetas', component: TarjetasComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: 'resumen' }
 ];

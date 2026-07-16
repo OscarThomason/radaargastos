@@ -1,0 +1,98 @@
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+  <h2 class="section-title" style="margin: 0;">Mis Tarjetas</h2>
+  <button class="btn-primary" style="margin: 0;" (click)="isAdding = true" *ngIf="!isAdding">+ Añadir Tarjeta</button>
+</div>
+
+<!-- Formulario para agregar -->
+@if (isAdding) {
+  <div class="card-panel" style="margin-bottom: 20px;">
+    <h3>Nueva Tarjeta</h3>
+    <div class="form-grid">
+      <div>
+        <label>Nombre de la Tarjeta</label>
+        <input [(ngModel)]="newName" placeholder="Ej. Nu, Banamex Clásica">
+      </div>
+      <div>
+        <label>Tipo</label>
+        <select [(ngModel)]="newType">
+          <option value="credito">Crédito</option>
+          <option value="debito">Débito</option>
+        </select>
+      </div>
+
+      @if (newType === 'credito') {
+        <div>
+          <label>Límite de Crédito</label>
+          <input [(ngModel)]="newLimit" type="number" placeholder="Ej. 10000">
+        </div>
+        <div>
+          <label>Deuda Inicial (Si ya tienes deuda)</label>
+          <input [(ngModel)]="newBalance" type="number" placeholder="Ej. 0">
+        </div>
+      } @else {
+        <div style="grid-column: 1 / -1;">
+          <label>Saldo Inicial Disponible</label>
+          <input [(ngModel)]="newBalance" type="number" placeholder="Ej. 5000">
+        </div>
+      }
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
+      <button class="btn-primary" (click)="addCard()">Guardar</button>
+      <button class="btn-ghost" (click)="cancelAdd()">Cancelar</button>
+    </div>
+  </div>
+}
+
+<div class="grid-2col">
+  <!-- Tarjetas de Crédito -->
+  <div>
+    <h3 style="margin-top: 0;">Tarjetas de Crédito</h3>
+    @if (creditCards().length === 0) {
+      <div class="empty-state">No hay tarjetas de crédito.</div>
+    }
+    @for (c of creditCards(); track c.id) {
+      <div class="card-panel" style="margin-bottom: 15px; position: relative; border-left: 4px solid var(--danger);">
+        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="deleteCard(c.id)">
+          <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+        </button>
+        <div style="font-weight: 600; font-size: 18px; margin-bottom: 5px;">{{ c.name }}</div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span style="color: var(--text-muted);">Deuda Actual:</span>
+          <span class="txt-danger" style="font-weight: 600;">{{ money(c.computedBalance || 0) }}</span>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span style="color: var(--text-muted);">Límite Total:</span>
+          <span>{{ money(c.limit || 0) }}</span>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; padding-top: 5px; border-top: 1px dashed var(--border);">
+          <span style="color: var(--text-muted);">Crédito Disponible:</span>
+          <span class="txt-safe" style="font-weight: 600;">{{ money((c.limit || 0) - (c.computedBalance || 0)) }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Tarjetas de Débito -->
+  <div>
+    <h3 style="margin-top: 0;">Tarjetas de Débito</h3>
+    @if (debitCards().length === 0) {
+      <div class="empty-state">No hay tarjetas de débito.</div>
+    }
+    @for (c of debitCards(); track c.id) {
+      <div class="card-panel panel-safe" style="margin-bottom: 15px; position: relative;">
+        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="deleteCard(c.id)">
+          <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+        </button>
+        <div style="font-weight: 600; font-size: 18px; margin-bottom: 5px;">{{ c.name }}</div>
+        
+        <div style="display: flex; justify-content: space-between; padding-top: 5px;">
+          <span style="color: var(--text-muted);">Saldo Disponible:</span>
+          <span class="txt-safe" style="font-weight: 600; font-size: 16px;">{{ money(c.computedBalance || 0) }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</div>
