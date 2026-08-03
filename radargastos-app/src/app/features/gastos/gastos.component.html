@@ -17,6 +17,11 @@
 
 <div class="summary-strip">
   <app-stat-card 
+    label="Saldo Anterior" 
+    [value]="showTotals() ? money(pastBalance()) : '****'"
+    [valueClass]="pastBalance() < 0 ? 'danger' : 'safe'">
+  </app-stat-card>
+  <app-stat-card 
     label="Total Ingresos" 
     [value]="showTotals() ? money(totalIncomes()) : '****'"
     valueClass="safe">
@@ -39,6 +44,7 @@
       <h3>{{ editingExId ? 'Editar Gasto' : 'Registrar Gasto' }}</h3>
       <div class="form-grid">
         <div><label>Fecha</label><input [(ngModel)]="exDate" type="date"></div>
+        <div><label>Hora Aprox.</label><input [(ngModel)]="exTime" type="time"></div>
         <div>
           <label>Categoría</label>
           <select [(ngModel)]="exCat">
@@ -79,7 +85,7 @@
               <div>
                 <span class="exp-cat-badge">{{e.category}}</span>
                 <span>{{e.description || '—'}}</span>
-                <div class="small-muted">{{e.date}} &bull; {{getCardName(e.paymentMethod)}}</div>
+                <div class="small-muted">{{e.date}} @if (e.time) { &bull; {{e.time}} } &bull; {{getCardName(e.paymentMethod)}}</div>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
                 <span class="exp-amount">{{ showTotals() ? money(e.amount) : '****' }}</span>

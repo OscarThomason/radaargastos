@@ -1,7 +1,21 @@
-<div class="chart-grid">
+<div class="card-panel" style="margin-bottom: 24px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+    <h2 class="section-title" style="margin: 0; text-transform: uppercase;">Estadísticas Mensuales</h2>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <label style="font-weight: 600; font-size: 13px; color: var(--text-muted);">Filtrar por Mes:</label>
+      <select [value]="selectedMonthKey()" (change)="onMonthChange($event)" style="width: auto; border: 2px solid var(--border); font-weight: bold; background: var(--surface); box-shadow: 2px 2px 0px var(--border); cursor: pointer;">
+        @for (m of availableMonths(); track m.key) {
+          <option [value]="m.key">{{ m.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="chart-grid" style="margin-bottom: 24px;">
   <!-- Gastos -->
   <div class="card-panel">
-    <h2 class="section-title" style="margin-top: 0">Gastos por categoría (mes actual)</h2>
+    <h2 class="section-title" style="margin-top: 0">Gastos por categoría ({{ selectedMonthLabel() }})</h2>
     @if (expCatData().labels.length === 0) {
       <div class="empty-state">Sin gastos registrados este mes.</div>
     } @else {
@@ -16,7 +30,7 @@
 
   <!-- Ingresos -->
   <div class="card-panel">
-    <h2 class="section-title" style="margin-top: 0">Ingresos por categoría (mes actual)</h2>
+    <h2 class="section-title" style="margin-top: 0">Ingresos por categoría ({{ selectedMonthLabel() }})</h2>
     @if (incCatData().labels.length === 0) {
       <div class="empty-state">Sin ingresos registrados este mes.</div>
     } @else {
@@ -28,6 +42,62 @@
       <div class="chart-box"><canvas #chartIncCat></canvas></div>
     }
   </div>
+</div>
+
+<!-- Análisis de Gastos Recurrentes -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <h2 class="section-title" style="margin-top: 0;">Análisis de Gastos Recurrentes ({{ selectedMonthLabel() }})</h2>
+  <p class="small-muted" style="margin-top: -8px; margin-bottom: 20px;">
+    Se consideran gastos recurrentes aquellos registrados bajo las categorías de "Servicios" o "Deudas".
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 20px;">
+    <div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
+        <span>Recurrentes (Servicios y Deudas)</span>
+        <span>{{ money(recurrentExpenses().total) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
+        <span>Variables (Otros Gastos)</span>
+        <span>{{ money(variableExpenses()) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; border-top: 2px solid var(--border); padding-top: 8px;">
+        <span>Total Gastos del Mes</span>
+        <span>{{ money(recurrentExpenses().total + variableExpenses()) }}</span>
+      </div>
+    </div>
+
+    <!-- Barra de progreso/comparativa visual (tipo bosquejo) -->
+    <div style="display: flex; flex-direction: column; justify-content: center; gap: 8px;">
+      @if (recurrentExpenses().total + variableExpenses() > 0) {
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
+          <span>Porcentaje Recurrente</span>
+          <span>{{ recurrentPercentage() }}%</span>
+        </div>
+        <div style="height: 24px; border: 2px solid var(--border); background: var(--surface2); position: relative; box-shadow: 3px 3px 0px var(--border); overflow: hidden;">
+          <div [style.width.%]="recurrentPercentage()" style="height: 100%; background: var(--text); border-right: 2px solid var(--border);"></div>
+        </div>
+      } @else {
+        <div class="empty-state" style="padding: 10px; border: 2px dashed var(--border); text-align: center; margin: 0;">Sin gastos registrados en este periodo.</div>
+      }
+    </div>
+  </div>
+
+  @if (recurrentExpenses().list.length > 0) {
+    <h3 style="font-size: 14px; margin-top: 20px; border-bottom: 2px solid var(--border); padding-bottom: 6px; text-transform: uppercase;">Detalle de Pagos Recurrentes Realizados</h3>
+    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 6px;">
+      @for (item of recurrentExpenses().list; track item.id) {
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid var(--border); background: var(--surface2); box-shadow: 2px 2px 0px var(--border); font-size: 13px;">
+          <div>
+            <span style="font-weight: bold; background: var(--safe-dim); border: 1px solid var(--border); padding: 2px 6px; font-size: 10px; text-transform: uppercase; margin-right: 8px; display: inline-block;">{{ item.category }}</span>
+            <span>{{ item.description || 'Sin descripción' }}</span>
+            <div class="small-muted" style="margin-top: 2px;">{{ item.date }}</div>
+          </div>
+          <span style="font-weight: bold;">{{ money(item.amount) }}</span>
+        </div>
+      }
+    </div>
+  }
 </div>
 
 <div class="card-panel">

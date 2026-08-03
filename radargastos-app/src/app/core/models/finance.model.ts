@@ -31,6 +31,7 @@ export interface ServiceItem {
 export interface Expense {
   id: string;
   date: string;
+  time?: string; // formato "HH:MM" (opcional)
   category: string;
   description: string;
   amount: number;

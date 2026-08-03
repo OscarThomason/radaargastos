@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, computed, inject, effect } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, computed, inject, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend, BarController, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { FinanceService } from '../../core/services/finance.service';
@@ -25,13 +25,53 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   paletteExp = ['#2a78d6','#1baf7a','#eda100','#008300','#9085e9','#e34948','#e87ba4','#eb6834','#7C9CF5','#F0A93A'];
   paletteInc = ['#35D0A8', '#1baf7a', '#7C9CF5', '#008300'];
   
-  expCatData = computed(() => {
+  selectedMonthKey = signal<string>(new Date().toISOString().slice(0, 7));
+
+  availableMonths = computed(() => {
+    const monthsSet = new Set<string>();
+    
+    // Asegurar mes actual y anterior
     const now = new Date();
     const curMonthKey = now.toISOString().slice(0, 7);
+    monthsSet.add(curMonthKey);
+
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthKey = lastMonth.toISOString().slice(0, 7);
+    monthsSet.add(lastMonthKey);
+
+    // Agregar meses de transacciones
+    this.financeService.state().expenses.forEach(e => {
+      if (e.date) monthsSet.add(e.date.slice(0, 7));
+    });
+    this.financeService.state().incomes.forEach(i => {
+      if (i.date) monthsSet.add(i.date.slice(0, 7));
+    });
+
+    return Array.from(monthsSet)
+      .sort((a, b) => b.localeCompare(a))
+      .map(k => {
+        const [y, m] = k.split('-');
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+        const label = dateObj.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+        const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+        return { key: k, label: capitalizedLabel };
+      });
+  });
+
+  selectedMonthLabel = computed(() => {
+    const key = this.selectedMonthKey();
+    const [y, m] = key.split('-');
+    const dateObj = new Date(parseInt(y), parseInt(m) - 1, 1);
+    const label = dateObj.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  });
+
+  expCatData = computed(() => {
+    const monthKey = this.selectedMonthKey();
     const catTotals: Record<string, number> = {};
     
     this.financeService.state().expenses
-      .filter(e => e.date.slice(0, 7) === curMonthKey)
+      .filter(e => e.date.slice(0, 7) === monthKey)
       .forEach(e => {
         catTotals[e.category] = (catTotals[e.category] || 0) + e.amount;
       });
@@ -44,12 +84,11 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   });
 
   incCatData = computed(() => {
-    const now = new Date();
-    const curMonthKey = now.toISOString().slice(0, 7);
+    const monthKey = this.selectedMonthKey();
     const catTotals: Record<string, number> = {};
     
     this.financeService.state().incomes
-      .filter(i => i.date.slice(0, 7) === curMonthKey)
+      .filter(i => i.date.slice(0, 7) === monthKey)
       .forEach(i => {
         const cat = i.category || 'Otros';
         catTotals[cat] = (catTotals[cat] || 0) + i.amount;
@@ -61,6 +100,35 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     
     return { labels, values, total };
   });
+
+  recurrentExpenses = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    const recurrentList = this.financeService.state().expenses
+      .filter(e => e.date.slice(0, 7) === monthKey && (e.category === 'Servicios' || e.category === 'Deudas'));
+    const total = recurrentList.reduce((acc, curr) => acc + curr.amount, 0);
+    return { list: recurrentList, total };
+  });
+
+  variableExpenses = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    const total = this.financeService.state().expenses
+      .filter(e => e.date.slice(0, 7) === monthKey && e.category !== 'Servicios' && e.category !== 'Deudas')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    return total;
+  });
+
+  recurrentPercentage = computed(() => {
+    const rec = this.recurrentExpenses().total;
+    const variable = this.variableExpenses();
+    const total = rec + variable;
+    if (total === 0) return 0;
+    return Math.round((rec / total) * 100);
+  });
+
+  onMonthChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.selectedMonthKey.set(select.value);
+  }
 
   monthData = computed(() => {
     const expTotals: Record<string, number> = {};
@@ -163,5 +231,9 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
       color: palette[i % palette.length],
       percent: Math.round(data.values[i] / data.total * 100)
     }));
+  }
+
+  money(amount: number) {
+    return '$' + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }

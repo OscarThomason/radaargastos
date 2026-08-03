@@ -129,6 +129,7 @@ export class ResumenComponent {
       this.financeService.addExpense({
         id: 'e' + Date.now(),
         date: today,
+        time: new Date().toTimeString().slice(0, 5),
         category: 'Deudas',
         description: `Pago: ${debt.name}`,
         amount: amountPaid

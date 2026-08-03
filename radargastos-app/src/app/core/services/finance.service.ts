@@ -258,6 +258,7 @@ export class FinanceService {
     const newExpense: Expense = {
       id: 'e' + Date.now(),
       date: new Date().toISOString().slice(0, 10),
+      time: new Date().toTimeString().slice(0, 5),
       category: kind === 'servicio' ? 'Servicios' : 'Deudas',
       description: `Pago de ${name}`,
       amount: amount

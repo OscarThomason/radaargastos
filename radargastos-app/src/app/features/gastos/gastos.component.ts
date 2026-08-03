@@ -49,11 +49,23 @@ export class GastosComponent {
       .sort((a, b) => b.date.localeCompare(a.date));
   });
 
+  pastBalance = computed(() => {
+    const activeMonth = this.selectedMonth();
+    const pastIn = this.allIncomes()
+      .filter(i => i.date.slice(0, 7) < activeMonth)
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    const pastEx = this.allExpenses()
+      .filter(e => e.date.slice(0, 7) < activeMonth)
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    return pastIn - pastEx;
+  });
+
   totalIncomes = computed(() => this.incomes().reduce((acc, curr) => acc + curr.amount, 0));
   totalExpenses = computed(() => this.expenses().reduce((acc, curr) => acc + curr.amount, 0));
-  balance = computed(() => this.totalIncomes() - this.totalExpenses());
+  balance = computed(() => this.pastBalance() + this.totalIncomes() - this.totalExpenses());
 
   exDate = new Date().toISOString().slice(0, 10);
+  exTime = '';
   exCat = this.categories()[0];
   exDesc = '';
   exAmount: number | null = null;
@@ -70,6 +82,7 @@ export class GastosComponent {
   editExpense(item: Expense) {
     this.editingExId = item.id;
     this.exDate = item.date;
+    this.exTime = item.time || '';
     this.exCat = item.category;
     this.exDesc = item.description;
     this.exAmount = item.amount;
@@ -93,6 +106,7 @@ export class GastosComponent {
     const item: Expense = {
       id: this.editingExId || 'e' + Date.now(),
       date: this.exDate,
+      time: this.exTime || undefined,
       category: this.exCat,
       description: this.exDesc.trim(),
       amount: this.exAmount,
@@ -108,11 +122,13 @@ export class GastosComponent {
     
     this.exDesc = '';
     this.exAmount = null;
+    this.exTime = '';
   }
 
   cancelExEdit() {
     this.editingExId = null;
     this.exDate = new Date().toISOString().slice(0, 10);
+    this.exTime = '';
     this.exDesc = '';
     this.exAmount = null;
     this.exPaymentMethod = 'efectivo';
