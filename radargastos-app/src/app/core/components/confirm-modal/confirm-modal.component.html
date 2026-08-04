@@ -1,0 +1,36 @@
+@if (isOpen) {
+  <div class="confirm-overlay" (click)="cancel.emit()">
+    <div class="confirm-modal-box" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="cancel.emit()" title="Cerrar">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+
+      <div class="confirm-header">
+        <div class="danger-icon-badge">
+          <span class="material-symbols-outlined">delete_forever</span>
+        </div>
+        <h3>{{ title }}</h3>
+      </div>
+
+      <div class="confirm-body">
+        <p class="confirm-desc">{{ message }}</p>
+        @if (itemName) {
+          <div class="item-name-tag">
+            <span class="material-symbols-outlined">label</span>
+            <strong>{{ itemName }}</strong>
+          </div>
+        }
+      </div>
+
+      <div class="confirm-footer">
+        <button class="btn-cancel" (click)="cancel.emit()">
+          Cancelar
+        </button>
+        <button class="btn-delete" (click)="confirm.emit()">
+          <span class="material-symbols-outlined">delete</span>
+          Sí, eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}

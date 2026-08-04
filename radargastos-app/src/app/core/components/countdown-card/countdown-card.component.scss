@@ -1,35 +1,235 @@
-.countdown-card {
-  background: var(--surface); 
-  border: 1px solid var(--border); 
-  border-left: 4px solid var(--safe);
-  border-radius: var(--radius); 
-  padding: 16px; 
+.countdown-card-minimal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
   position: relative;
-  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.18s ease;
+  min-height: 150px;
 
-  &.status-danger { border-left-color: var(--danger); }
-  &.status-warn { border-left-color: var(--warn); }
-  &.status-safe { border-left-color: var(--safe); }
-  
-  .days { font-family: 'Inter', sans-serif; font-size: 34px; font-weight: 700; line-height: 1; }
-  .days-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
-  .name { font-weight: 600; margin-top: 12px; font-size: 14px; }
-  .meta { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
-  .amount { font-weight: 700; margin-top: 10px; font-size: 16px; }
-  
-  .tag {
-    display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 999px;
-    margin-top: 8px; text-transform: uppercase; letter-spacing: 0.03em; font-weight: 600;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    border-color: var(--text-muted);
   }
-  
-  .tag-tarjeta { background: var(--info-dim); color: var(--info); }
-  .tag-prestamo { background: var(--warn-dim); color: var(--warn); }
-  .tag-servicio { background: var(--safe-dim); color: var(--safe); }
-  
-  button.mark-paid {
-    margin-top: 12px; width: 100%; background: var(--surface2); border: 1px solid var(--border);
-    color: var(--text); font-size: 12px; font-weight: 600; padding: 8px; border-radius: 8px; cursor: pointer;
-    
-    &:hover { border-color: var(--safe); color: var(--safe); }
+
+  // Franja lateral sutil
+  &.status-danger {
+    border-left: 4px solid #DC2626;
+  }
+
+  &.status-warn {
+    border-left: 4px solid #D97706;
+  }
+
+  &.status-safe {
+    border-left: 4px solid var(--border);
+  }
+}
+
+// Encabezado
+.card-header-minimal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+// Badge numérico de días sobrio
+.days-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+
+  .days-num {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'Sora', sans-serif;
+    line-height: 1;
+  }
+
+  .days-unit {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  &.status-danger {
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid rgba(220, 38, 38, 0.15);
+  }
+
+  &.status-warn {
+    background: #FFFBEB;
+    color: #D97706;
+    border: 1px solid rgba(217, 119, 6, 0.15);
+  }
+
+  &.status-safe {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+}
+
+// Cuerpo
+.card-body-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+
+  .item-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .item-due-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+
+    strong {
+      color: var(--text);
+    }
+  }
+
+  .meta-no-interest {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+}
+
+// Pie de tarjeta
+.card-footer-minimal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+
+  .amount-container {
+    display: flex;
+    flex-direction: column;
+
+    .amount-label {
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .amount-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text);
+    }
+  }
+}
+
+// Botón de Palomita Minimalista y Sencillo
+.btn-check-minimal {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover {
+    border-color: #059669;
+    background: #ECFDF5;
+    color: #059669;
+    transform: scale(1.08);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// ========================================
+// AJUSTES COMPACTOS PARA MÓVIL
+// ========================================
+@media (max-width: 600px) {
+  .countdown-card-minimal {
+    padding: 10px 12px;
+    border-radius: 12px;
+    gap: 8px;
+    min-height: auto;
+  }
+
+  .days-badge {
+    padding: 3px 8px;
+    border-radius: 6px;
+
+    .days-num {
+      font-size: 16px;
+    }
+
+    .days-unit {
+      font-size: 9px;
+    }
+  }
+
+  .card-body-minimal {
+    gap: 2px;
+
+    .item-name {
+      font-size: 13px;
+    }
+
+    .item-due-date {
+      font-size: 11px;
+    }
+  }
+
+  .card-footer-minimal {
+    padding-top: 6px;
+
+    .amount-container {
+      .amount-label {
+        font-size: 8px;
+      }
+
+      .amount-value {
+        font-size: 14px;
+      }
+    }
+  }
+
+  .btn-check-minimal {
+    width: 28px;
+    height: 28px;
+
+    .material-symbols-outlined {
+      font-size: 16px;
+    }
   }
 }

@@ -52,25 +52,63 @@
     }
     @for (c of creditCards(); track c.id) {
       <div class="card-panel" style="margin-bottom: 15px; position: relative; border-left: 4px solid var(--danger);">
-        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="deleteCard(c.id)">
+        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="askDeleteCard(c.id, c.name)">
           <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
         </button>
-        <div style="font-weight: 600; font-size: 18px; margin-bottom: 5px;">{{ c.name }}</div>
-        
+        <div style="font-weight: 600; font-size: 18px; margin-bottom: 10px;">{{ c.name }}</div>
+
         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
           <span style="color: var(--text-muted);">Deuda Actual:</span>
           <span class="txt-danger" style="font-weight: 600;">{{ money(c.computedBalance || 0) }}</span>
         </div>
-        
+
         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
           <span style="color: var(--text-muted);">Límite Total:</span>
           <span>{{ money(c.limit || 0) }}</span>
         </div>
-        
-        <div style="display: flex; justify-content: space-between; padding-top: 5px; border-top: 1px dashed var(--border);">
+
+        <div style="display: flex; justify-content: space-between; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border);">
           <span style="color: var(--text-muted);">Crédito Disponible:</span>
           <span class="txt-safe" style="font-weight: 600;">{{ money((c.limit || 0) - (c.computedBalance || 0)) }}</span>
         </div>
+
+        <!-- Detalle de pagos vinculado a deuda -->
+        @if (getLinkedDebt(c.name)) {
+          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;">
+            Detalle de pagos
+            @if (getLinkedDebt(c.name)!.cat) {
+              <span style="color: #1D4ED8; font-weight: 600; margin-left: 6px;">CAT {{ getLinkedDebt(c.name)!.cat }}%</span>
+            }
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span style="color: var(--text-muted);">Pago mínimo:</span>
+            <span style="font-weight: 700;">
+              {{ money(calcMinPayment(c.name, c.computedBalance || 0) || getLinkedDebt(c.name)!.minPayment || 0) }}
+              @if (getLinkedDebt(c.name)!.cat) {
+                <span style="font-size: 10px; color: #1D4ED8; margin-left: 4px;">con CAT</span>
+              }
+            </span>
+          </div>
+
+          @if (getLinkedDebt(c.name)!.noInterest) {
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span style="color: var(--text-muted);">Sin intereses:</span>
+              <span style="font-weight: 600; color: #059669;">{{ money(getLinkedDebt(c.name)!.noInterest || 0) }}</span>
+            </div>
+          }
+
+          @if (getLinkedDebt(c.name)!.creditTerm) {
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Plazo restante:</span>
+              <span>{{ getLinkedDebt(c.name)!.creditTerm }} meses</span>
+            </div>
+          }
+        } @else {
+          <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">
+            Agrega esta tarjeta en "Deudas" para ver el cálculo del pago mínimo.
+          </div>
+        }
       </div>
     }
   </div>
@@ -83,7 +121,7 @@
     }
     @for (c of debitCards(); track c.id) {
       <div class="card-panel panel-safe" style="margin-bottom: 15px; position: relative;">
-        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="deleteCard(c.id)">
+        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="askDeleteCard(c.id, c.name)">
           <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
         </button>
         <div style="font-weight: 600; font-size: 18px; margin-bottom: 5px;">{{ c.name }}</div>
@@ -96,3 +134,12 @@
     }
   </div>
 </div>
+
+<app-confirm-modal 
+  [isOpen]="!!confirmDeleteId" 
+  [itemName]="confirmDeleteName" 
+  message="¿Estás seguro de eliminar esta tarjeta? Esta acción no se puede deshacer." 
+  (confirm)="confirmDeleteCard()" 
+  (cancel)="cancelDeleteCard()">
+</app-confirm-modal>
+

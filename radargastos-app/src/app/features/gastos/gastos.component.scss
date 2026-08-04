@@ -18,9 +18,14 @@
 
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }
 
 .panel-safe {
@@ -70,8 +75,102 @@
 
 .hoverable {
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, padding 0.2s;
 }
 .hoverable:hover {
   background: var(--surface2);
+}
+
+.minimal-row {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--grid-line);
+
+  &:hover {
+    padding-left: 14px;
+  }
+}
+
+.truncate-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ========================================
+// BOTONES DE ACCIÓN PRINCIPAL (STICKER)
+// ========================================
+.action-buttons-bar {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.btn-action-expense,
+.btn-action-income {
+  flex: 1;
+  min-width: 160px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  box-shadow: 3px 3px 0px var(--border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  .material-symbols-outlined {
+    font-size: 22px;
+  }
+
+  &:hover {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 4px 4px 0px var(--border);
+  }
+
+  &:active {
+    transform: translateY(1px);
+    box-shadow: 1.5px 1.5px 0px var(--border);
+  }
+}
+
+.btn-action-expense {
+  background: #FEF2F2;
+  color: #DC2626;
+  border-color: rgba(220, 38, 38, 0.35);
+  transform: rotate(-0.6deg);
+
+  &:hover {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+  }
+}
+
+.btn-action-income {
+  background: #ECFDF5;
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.35);
+  transform: rotate(0.6deg);
+
+  &:hover {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-action-expense,
+  .btn-action-income {
+    padding: 12px 14px;
+    font-size: 13px;
+  }
 }

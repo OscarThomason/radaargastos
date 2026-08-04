@@ -1,96 +1,91 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
   <h2 class="section-title" style="margin: 0;">Resumen General</h2>
-  <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;" (click)="toggleTotals()">
-    <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off' }}</span>
+  <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;"
+    (click)="toggleTotals()">
+    <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off'
+      }}</span>
   </button>
 </div>
 
 <div class="summary-strip">
-  <app-stat-card 
-    label="Compromiso este ciclo" 
-    [value]="showTotals() ? money(compromisoCiclo()) : '****'">
+  <app-stat-card label="Compromiso este ciclo" [value]="showTotals() ? money(compromisoCiclo()) : '****'"
+    icon="payments">
   </app-stat-card>
-  <app-stat-card 
-    label="Deuda viva total" 
-    [value]="showTotals() ? money(totalDeudaViva()) : '****'" 
-    valueClass="danger">
+  <app-stat-card label="Deuda viva total" [value]="showTotals() ? money(totalDeudaViva()) : '****'" valueClass="danger"
+    icon="account_balance_wallet">
   </app-stat-card>
-  <app-stat-card 
-    label="Pagos vencidos" 
-    [value]="vencidos().toString()" 
-    [valueClass]="vencidos() > 0 ? 'danger' : 'safe'">
+  <app-stat-card label="Pagos vencidos" [value]="vencidos().toString()"
+    [valueClass]="vencidos() > 0 ? 'danger' : 'safe'" icon="warning">
   </app-stat-card>
-  <app-stat-card 
-    label="Próximos 30 días" 
-    [value]="next30().length.toString()">
+  <app-stat-card label="Próximos 30 días" [value]="next30().length.toString()" icon="event">
   </app-stat-card>
 </div>
 
 <h2 class="section-title">Cuenta regresiva de pagos</h2>
 <div>
   @if (next30Grouped().length === 0) {
-    <div class="empty-state">No hay pagos programados en los próximos 30 días.</div>
+  <div class="empty-state">No hay pagos programados en los próximos 30 días.</div>
   } @else {
-    @for (group of next30Grouped(); track group.month) {
-      <div class="month-separator">
-        <h3>{{ group.month }}</h3>
-      </div>
-      <div class="countdown-grid">
-        @for (item of group.items; track item.id) {
-          <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
-        }
-      </div>
+  @for (group of next30Grouped(); track group.month) {
+  <div class="month-separator">
+    <h3>{{ group.month }}</h3>
+  </div>
+  <div class="countdown-grid">
+    @for (item of group.items; track item.id) {
+    <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
     }
+  </div>
+  }
   }
 </div>
 
 @if (isPayModalOpen && payingDebt) {
-  <div class="modal-overlay" (click)="cancelPay()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>Pagar: {{ payingDebt.name }}</h3>
-      
-      <div class="form-grid" style="margin-top: 15px;">
-        @if (payingDebt.group === 'tarjeta') {
-          <div style="grid-column: 1 / -1;">
-            <label>¿Cuánto pagaste?</label>
-            <select [(ngModel)]="payAmountType" style="margin-bottom: 10px;">
-              <option value="minimo">Pago Mínimo ({{ money(payingDebt.minPayment || 0) }})</option>
-              <option value="noInterest">Para no generar intereses ({{ money(payingDebt.noInterest || 0) }})</option>
-              <option value="otro">Otro monto manual</option>
-            </select>
-          </div>
-          @if (payAmountType === 'otro') {
-            <div style="grid-column: 1 / -1;">
-              <label>Monto Pagado</label>
-              <input [(ngModel)]="payCustomAmount" type="number" placeholder="Ej. 1500">
-            </div>
-          }
-        } @else if (payingDebt.group === 'servicio') {
-          <div style="grid-column: 1 / -1;">
-            <label>¿Cuánto pagaste por este servicio?</label>
-            <input [(ngModel)]="payCustomAmount" type="number">
-            <small class="hint">Por defecto es el costo registrado de {{ money(payingDebt.amount || 0) }}</small>
-          </div>
-        } @else {
-          <div style="grid-column: 1 / -1;">
-            <label>¿Monto a abonar al préstamo?</label>
-            <input [(ngModel)]="payCustomAmount" type="number">
-            <small class="hint">Por defecto es tu cuota regular de {{ money(payingDebt.cuota || 0) }}</small>
-          </div>
-        }
-      </div>
+<div class="modal-overlay" (click)="cancelPay()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Pagar: {{ payingDebt.name }}</h3>
 
-      <div style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius);">
-        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
-          <input type="checkbox" [(ngModel)]="payRegisterAsExpense" style="width: 20px; height: 20px;">
-          <span>Registrar como "Gasto" (Restará de tu efectivo mensual)</span>
-        </label>
+    <div class="form-grid" style="margin-top: 15px;">
+      @if (payingDebt.group === 'tarjeta') {
+      <div style="grid-column: 1 / -1;">
+        <label>¿Cuánto pagaste?</label>
+        <select [(ngModel)]="payAmountType" style="margin-bottom: 10px;">
+          <option value="minimo">Pago Mínimo ({{ money(payingDebt.minPayment || 0) }})</option>
+          <option value="noInterest">Para no generar intereses ({{ money(payingDebt.noInterest || 0) }})</option>
+          <option value="otro">Otro monto manual</option>
+        </select>
       </div>
-      
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button class="btn-ghost" (click)="cancelPay()">Cancelar</button>
-        <button class="btn-primary" (click)="submitPayment()">Confirmar Pago</button>
+      @if (payAmountType === 'otro') {
+      <div style="grid-column: 1 / -1;">
+        <label>Monto Pagado</label>
+        <input [(ngModel)]="payCustomAmount" type="number" placeholder="Ej. 1500">
       </div>
+      }
+      } @else if (payingDebt.group === 'servicio') {
+      <div style="grid-column: 1 / -1;">
+        <label>¿Cuánto pagaste por este servicio?</label>
+        <input [(ngModel)]="payCustomAmount" type="number">
+        <small class="hint">Por defecto es el costo registrado de {{ money(payingDebt.amount || 0) }}</small>
+      </div>
+      } @else {
+      <div style="grid-column: 1 / -1;">
+        <label>¿Monto a abonar al préstamo?</label>
+        <input [(ngModel)]="payCustomAmount" type="number">
+        <small class="hint">Por defecto es tu cuota regular de {{ money(payingDebt.cuota || 0) }}</small>
+      </div>
+      }
+    </div>
+
+    <div style="margin-top: 20px; padding: 10px; background: var(--surface2); border-radius: var(--radius);">
+      <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+        <input type="checkbox" [(ngModel)]="payRegisterAsExpense" style="width: 20px; height: 20px;">
+        <span>Registrar como "Gasto" (Restará de tu efectivo mensual)</span>
+      </label>
+    </div>
+
+    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="btn-ghost" (click)="cancelPay()">Cancelar</button>
+      <button class="btn-primary" (click)="submitPayment()">Confirmar Pago</button>
     </div>
   </div>
+</div>
 }

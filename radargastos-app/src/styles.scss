@@ -34,7 +34,7 @@ body {
   background-size: 100% 100%, 24px 24px, 24px 24px;
   background-position: left top;
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Sora', sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -42,8 +42,7 @@ h1,
 h2,
 h3,
 .display {
-  font-family: 'Montserrat', sans-serif;
-  text-transform: uppercase;
+  font-family: 'Sora', sans-serif;
   letter-spacing: -0.02em;
 }
 
@@ -73,7 +72,7 @@ select {
   border-radius: var(--radius);
   padding: 10px 12px;
   font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 input:focus,
@@ -119,21 +118,23 @@ button.btn-ghost:hover {
   color: var(--bg);
 }
 
-/* Card Panels */
+/* Card Panels (Ligeros y flotantes) */
 .card-panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 14px;
   padding: 24px;
   margin-bottom: 24px;
-  box-shadow: 4px 4px 0px var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
 }
 
 .card-panel h3 {
   margin: 0 0 16px;
   font-size: 16px;
-  border-bottom: 2px solid var(--border);
-  padding-bottom: 8px;
+  font-weight: 700;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 10px;
 }
 
 .form-grid {
@@ -149,32 +150,112 @@ button.btn-ghost:hover {
   margin-bottom: 4px;
 }
 
-/* Data Tables */
+/* Data Tables — Modern Table Layout (Filas cápsula redondeadas) */
 table.data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0 8px;
   font-size: 13px;
 }
 
 table.data-table th {
   text-align: left;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  border: none;
+}
+
+table.data-table tbody tr {
+  background: var(--surface);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s, background 0.18s;
+  border: 1px solid var(--border);
+}
+
+table.data-table tbody tr.row-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  background: var(--surface);
 }
 
 table.data-table td {
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 14px;
+  border: none;
   vertical-align: middle;
 }
 
-table.data-table tr:last-child td {
-  border-bottom: none;
+table.data-table tbody tr td:first-child {
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+
+table.data-table tbody tr td:last-child {
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+table.data-table tbody tr.row-expanded {
+  background: rgba(0, 0, 0, 0.03);
+  box-shadow: none;
+}
+
+table.data-table tbody tr.row-expanded td:first-child {
+  border-bottom-left-radius: 0;
+}
+
+table.data-table tbody tr.row-expanded td:last-child {
+  border-bottom-right-radius: 0;
+}
+
+/* Accent Badges (Inspirados en el Modern Table Layout) */
+.accent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.accent-pill-purple {
+  background: #8B5CF6;
+  color: #ffffff;
+}
+
+.accent-pill-blue {
+  background: #4F46E5;
+  color: #ffffff;
+}
+
+.accent-pill-sky {
+  background: #0284C7;
+  color: #ffffff;
+}
+
+.accent-pill-cyan {
+  background: #06B6D4;
+  color: #ffffff;
+}
+
+.accent-pill-emerald {
+  background: #059669;
+  color: #ffffff;
+}
+
+.accent-pill-amber {
+  background: #D97706;
+  color: #ffffff;
+}
+
+.accent-pill-danger {
+  background: #DC2626;
+  color: #ffffff;
 }
 
 .row-actions {
@@ -276,78 +357,166 @@ h2.section-title:first-child {
 /* --- MOBILE SPECIFIC --- */
 @media (max-width: 768px) {
   main {
-    /* Espacio para la bottom bar */
-    padding-bottom: 80px;
+    padding-bottom: 84px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .summary-strip {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .grid-2col {
+    grid-template-columns: 1fr !important;
   }
 
   .form-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
   .card-panel {
     padding: 16px;
+    border-radius: 12px;
   }
 
-  /* Transformar tablas en tarjetas en móvil */
-  table.data-table,
-  table.data-table tbody,
-  table.data-table tr {
-    display: block;
-    width: 100%;
-  }
-
-  table.data-table thead {
-    display: none;
-  }
-
-  table.data-table tr {
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
-    background: var(--surface);
-    box-shadow: 2px 2px 0px var(--border);
-  }
-
-  table.data-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: right;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  table.data-table td:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  table.data-table td::before {
-    content: "•";
-    color: var(--text-muted);
-    font-size: 14px;
-    margin-right: 10px;
-  }
-
-  .row-actions {
-    width: 100%;
-    justify-content: flex-end;
+  .modal-content {
+    padding: 20px;
+    width: 92vw;
+    max-width: 460px;
+    max-height: 88vh;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    margin: 0;
   }
 
   /* Ajuste de libreta para móviles */
   body {
     background-image:
-      linear-gradient(90deg, transparent 20px, #E53935 20px, #E53935 22px, transparent 22px),
+      linear-gradient(90deg, transparent 16px, #E53935 16px, #E53935 18px, transparent 18px),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   }
+}
 
-  .modal-content {
-    padding: 20px;
-    width: calc(100% - 20px);
-    max-height: 85vh;
-    box-shadow: 4px 4px 0px rgba(0,0,0,1);
-    margin: 10px;
+// ========================================
+// FILAS EXPANDIBLES CON PANEL DE DETALLE
+// ========================================
+
+tr.row-clickable {
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.025);
+  }
+
+  &.row-expanded {
+    background: rgba(0, 0, 0, 0.04);
+    border-bottom: none;
+  }
+}
+
+tr.detail-row td {
+  border-top: none !important;
+}
+
+.detail-panel {
+  border-bottom: 2px solid var(--border);
+  background: var(--surface2);
+  overflow: hidden;
+}
+
+.detail-panel-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 20px 14px 48px;
+  flex-wrap: wrap;
+}
+
+.detail-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  flex: 1;
+}
+
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+
+.detail-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.detail-value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: all 0.15s;
+  letter-spacing: 0.01em;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+
+  &.action-pay {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+
+    &:hover {
+      background: #333;
+    }
+  }
+
+  &.action-edit {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+
+    &:hover {
+      background: var(--text);
+      color: var(--surface);
+    }
+  }
+
+  &.action-delete {
+    background: var(--surface);
+    color: #D32F2F;
+    border-color: #D32F2F;
+
+    &:hover {
+      background: #D32F2F;
+      color: #fff;
+    }
   }
 }

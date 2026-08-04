@@ -18,9 +18,10 @@ export class AjustesComponent {
   // Load current categories
   expenseCats = signal<string[]>([...this.financeService.expenseCategories()]);
   incomeCats = signal<string[]>([...this.financeService.incomeCategories()]);
+  timeFormat = signal<'12h' | '24h'>(this.financeService.timeFormat());
 
-  // Load history
-  history = computed(() => this.financeService.state().history || []);
+  // Load history (máximo 60 registros)
+  history = computed(() => (this.financeService.state().history || []).slice(0, 60));
 
   newExCat = '';
   newInCat = '';
@@ -49,10 +50,27 @@ export class AjustesComponent {
     this.incomeCats.update(c => c.filter(x => x !== cat));
   }
 
+  setTimeFormat(fmt: '12h' | '24h') {
+    this.timeFormat.set(fmt);
+  }
+
   save() {
     this.financeService.updateExpenseCategories(this.expenseCats());
     this.financeService.updateIncomeCategories(this.incomeCats());
+    this.financeService.updateTimeFormat(this.timeFormat());
     this.location.back();
+  }
+
+  formatTimestamp(ts: string): string {
+    if (!ts) return '';
+    const parts = ts.split(' ');
+    if (parts.length < 2) return ts;
+    const formattedTime = this.financeService.formatTime(parts[1]);
+    return `${parts[0]} ${formattedTime}`;
+  }
+
+  exportExcel() {
+    this.financeService.exportDataToExcel();
   }
 
   goBack() {

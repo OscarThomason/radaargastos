@@ -1,15 +1,22 @@
 <header class="topbar">
   <div class="title-box">
-    <h1>Radar de Pagos</h1>
-    <p>Tu control de deudas, servicios y gastos</p>
-    @if (lastModification()) {
-      <p style="font-size: 11px; margin-top: 4px; color: var(--text-muted); font-weight: 500;">
-        Última act: {{ lastModification() }}
+    <div class="beige-tape"></div>
+    <h1 style="display: flex; align-items: center; gap: 8px;">📌 MI BITÁCORA FINANCIERA</h1>
+    <p>TUS DEUDAS, SERVICIOS Y GASTOS AL DÍA EN UN SOLO LUGAR</p>
+    @if (lastModificationText()) {
+      <p style="font-size: 11px; margin-top: 6px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 4px; text-transform: uppercase;">
+        <span class="material-symbols-outlined" style="font-size: 13px;">sync</span>
+        {{ lastModificationText() }}
       </p>
     }
   </div>
+
   <div style="display: flex; align-items: center; gap: 20px;">
-    <div class="today-chip">{{ todayStr }}</div>
+    <div class="today-chip-sticker">
+      <div class="beige-tape"></div>
+      <span class="material-symbols-outlined" style="font-size: 16px;">calendar_today</span>
+      <span style="text-transform: uppercase;">{{ todayStr }}</span>
+    </div>
     @if (authService.userSignal()) {
       <div class="user-profile">
         <img [src]="authService.userSignal()?.photoURL" alt="Avatar" class="avatar">

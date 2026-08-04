@@ -40,8 +40,7 @@
         <th>Frecuencia</th>
         <th>Próximo Pago</th>
         <th>Días Restantes</th>
-        <th>Notas</th>
-        <th></th>
+        <th style="width: 32px;"></th>
       </tr>
     </thead>
     <tbody>
@@ -49,24 +48,78 @@
         <tr><td colspan="6" class="empty-state">No hay servicios registrados.</td></tr>
       } @else {
         @for (s of services(); track s.id) {
-          <tr>
-            <td><strong>{{s.name}}</strong></td>
-            <td>{{money(s.amount)}}</td>
+          <!-- Fila principal clickeable -->
+          <tr class="row-clickable" [class.row-expanded]="expandedId === s.id" (click)="toggleExpand(s.id)" style="cursor: pointer;">
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted); transition: transform 0.2s;"
+                  [style.transform]="expandedId === s.id ? 'rotate(90deg)' : 'rotate(0deg)'">
+                  chevron_right
+                </span>
+                <span class="accent-pill accent-pill-blue">Servicio</span>
+                <strong style="font-size: 14px;">{{s.name}}</strong>
+              </div>
+            </td>
+            <td><strong>{{money(s.amount)}}</strong></td>
             <td><span class="badge">{{s.frequency || 'mensual' | titlecase}}</span></td>
             <td>{{formatDate(s.anchor)}}</td>
-            <td><strong>{{getDaysRemaining(s.anchor)}}</strong></td>
-            <td><span class="small-muted">{{s.notes}}</span></td>
-            <td style="text-align:right; min-width: 80px; display: flex; justify-content: flex-end; gap: 4px;">
-              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center;" (click)="editService(s.id)" title="Editar">
-                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
-              </button>
-              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center; color: var(--danger);" (click)="deleteService(s.id)" title="Eliminar">
-                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
-              </button>
+            <td>
+              <strong [style.color]="getDaysClass(s.anchor)">{{getDaysRemaining(s.anchor)}}</strong>
             </td>
+            <td></td>
           </tr>
+
+          <!-- Panel de detalles expandible -->
+          @if (expandedId === s.id) {
+            <tr class="detail-row">
+              <td colspan="6" style="padding: 0; border: none;">
+                <div class="detail-panel">
+                  <div class="detail-panel-inner">
+                    <!-- Info del servicio -->
+                    <div class="detail-info">
+                      @if (s.notes) {
+                        <div class="detail-field">
+                          <span class="detail-label">Notas</span>
+                          <span class="detail-value">{{ s.notes }}</span>
+                        </div>
+                      }
+                      <div class="detail-field">
+                        <span class="detail-label">Próx. fecha</span>
+                        <span class="detail-value">{{ formatDate(s.anchor) }}</span>
+                      </div>
+                      <div class="detail-field">
+                        <span class="detail-label">Frecuencia</span>
+                        <span class="detail-value">{{ s.frequency || 'mensual' | titlecase }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="detail-actions">
+                      <button class="action-btn action-edit" (click)="$event.stopPropagation(); editService(s.id)">
+                        <span class="material-symbols-outlined">edit</span>
+                        Editar
+                      </button>
+                      <button class="action-btn action-delete" (click)="$event.stopPropagation(); askDeleteService(s.id, s.name)">
+                        <span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         }
       }
     </tbody>
   </table>
 </div>
+
+<app-confirm-modal 
+  [isOpen]="!!confirmDeleteId" 
+  [itemName]="confirmDeleteName" 
+  message="¿Estás seguro de eliminar este servicio? Esta acción no se puede deshacer." 
+  (confirm)="confirmDeleteService()" 
+  (cancel)="cancelDeleteService()">
+</app-confirm-modal>
+

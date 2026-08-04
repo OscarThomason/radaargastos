@@ -1,16 +1,42 @@
-<div class="countdown-card" [ngClass]="statusClass">
-  <div class="days" [style.color]="statusColorVar">{{ dayLabel }}</div>
-  <div class="days-label">{{ formattedDate }}</div>
-  <div class="name">{{ item.name }}</div>
-  <div class="amount">{{ money(item.amount) }}</div>
-  
-  @if (item.noInterest) {
-    <div class="meta">Sin intereses: {{ money(item.noInterest) }}</div>
-  }
-  
-  <span class="tag" [ngClass]="'tag-' + (item.kind === 'servicio' ? 'servicio' : item.kind)">{{ item.kind }}</span>
-  
-  <button class="mark-paid" style="display: flex; align-items: center; justify-content: center; gap: 4px;" (click)="markPaid.emit({id: item.id, kind: item.kind})">
-    <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> Marcar pagado
-  </button>
+<div class="countdown-card-minimal" [ngClass]="statusClass">
+  <!-- Encabezado con Días bien visibles + Tag del tipo -->
+  <div class="card-header-minimal">
+    <div class="days-badge" [ngClass]="statusClass">
+      <span class="days-num">{{ absDays }}</span>
+      <span class="days-unit">{{ dayUnitLabel }}</span>
+    </div>
+    
+    <span class="accent-pill" [ngClass]="kindBadgeClass" style="font-size: 10px; padding: 3px 8px;">
+      {{ item.kind | titlecase }}
+    </span>
+  </div>
+
+  <!-- Cuerpo: Nombre e información -->
+  <div class="card-body-minimal">
+    <div class="item-name" [title]="item.name">{{ item.name }}</div>
+    <div class="item-due-date">
+      <span class="material-symbols-outlined" style="font-size: 13px; color: var(--text-muted);">schedule</span>
+      <span>Vence: <strong>{{ formattedDate }}</strong></span>
+    </div>
+    
+    @if (item.noInterest) {
+      <div class="meta-no-interest">
+        Sin int.: <strong>{{ money(item.noInterest) }}</strong>
+      </div>
+    }
+  </div>
+
+  <!-- Pie: Monto + Botón de Palomita Minimalista -->
+  <div class="card-footer-minimal">
+    <div class="amount-container">
+      <span class="amount-label">PAGO REQUERIDO</span>
+      <span class="amount-value">{{ money(item.amount) }}</span>
+    </div>
+
+    <button class="btn-check-minimal" 
+            (click)="markPaid.emit({id: item.id, kind: item.kind})" 
+            title="Registrar Pago">
+      <span class="material-symbols-outlined">check</span>
+    </button>
+  </div>
 </div>

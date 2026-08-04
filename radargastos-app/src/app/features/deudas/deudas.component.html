@@ -14,19 +14,94 @@
 
       <div class="form-grid" style="margin-top: 15px;">
         <div><label>Nombre de la deuda</label><input [(ngModel)]="dName"></div>
-        
+
         @if (dGroup === 'prestamo') {
-          <div><label>Deuda total (aprox)</label><input [(ngModel)]="dTotal" type="number"></div>
-          <div><label>Monto pagado a la fecha</label><input [(ngModel)]="dPagado" type="number"></div>
-          <div><label>Monto por cuota</label><input [(ngModel)]="dCuota" type="number"></div>
-          <div><label>Pagos realizados (progreso)</label><input [(ngModel)]="dCuotasPagadas" type="number"></div>
-          <div><label>Total de pagos acordados</label><input [(ngModel)]="dCuotasTotal" type="number"></div>
+          <!-- Modo cuotas variables -->
+          <div style="grid-column: 1 / -1;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+              <input type="checkbox" [(ngModel)]="dUseVariableInstallments" style="width: 18px; height: 18px;">
+              <span style="font-weight: 600;">Cuotas de importe variable (cada pago tiene diferente monto)</span>
+            </label>
+          </div>
+
+          @if (dUseVariableInstallments) {
+            <!-- Cuotas variables -->
+            <div style="grid-column: 1 / -1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin:0;">Detalle de cuotas</label>
+                <button class="btn-ghost" style="padding: 4px 10px; font-size: 12px;" (click)="addInstallment()">+ Agregar cuota</button>
+              </div>
+              @if (dInstallments.length === 0) {
+                <div class="empty-state" style="padding: 10px; font-size: 13px;">Agrega al menos una cuota con su monto.</div>
+              }
+              @for (inst of dInstallments; track $index) {
+                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                  <span style="min-width: 24px; color: var(--text-muted); font-size: 13px;">{{ $index + 1 }}.</span>
+                  <input type="number" [(ngModel)]="inst.amount" placeholder="Monto" style="flex: 1;">
+                  <label style="display: flex; align-items: center; gap: 4px; margin:0; cursor:pointer; font-size: 12px; white-space: nowrap;">
+                    <input type="checkbox" [(ngModel)]="inst.paid" style="width: 16px; height: 16px;"> Pagada
+                  </label>
+                  <button class="btn-ghost" style="padding: 4px; color: #D32F2F;" (click)="removeInstallment($index)">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
+                  </button>
+                </div>
+              }
+              @if (dInstallments.length > 0) {
+                <div style="margin-top: 8px; padding: 8px 12px; background: var(--surface2); border-radius: 6px; font-size: 13px; display: flex; justify-content: space-between;">
+                  <span>{{ dInstallments.length }} cuotas definidas</span>
+                  <strong>Total: {{ money(totalInstallmentsAmount) }}</strong>
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- Cuota fija -->
+            <div><label>Deuda total (aprox)</label><input [(ngModel)]="dTotal" type="number"></div>
+            <div><label>Monto pagado a la fecha</label><input [(ngModel)]="dPagado" type="number"></div>
+            <div><label>Monto por cuota</label><input [(ngModel)]="dCuota" type="number"></div>
+            <div><label>Pagos realizados</label><input [(ngModel)]="dCuotasPagadas" type="number"></div>
+            <div><label>Total de pagos acordados</label><input [(ngModel)]="dCuotasTotal" type="number"></div>
+          }
+
         } @else {
-          <div><label>Pago mínimo (aprox)</label><input [(ngModel)]="dMinPayment" type="number"></div>
-          <div><label>Pago para no generar intereses</label><input [(ngModel)]="dNoInterest" type="number"></div>
+          <!-- Tarjeta de Crédito -->
           <div><label>Deuda total actual</label><input [(ngModel)]="dDebtTotal" type="number"></div>
+          <div><label>Pago para no generar intereses</label><input [(ngModel)]="dNoInterest" type="number"></div>
+
+          <!-- Sección CAT -->
+          <div style="grid-column: 1 / -1; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 4px;">
+            <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+              Cálculo automático de pago mínimo con CAT (opcional)
+            </label>
+          </div>
+          <div>
+            <label>CAT Anual (%)</label>
+            <input [(ngModel)]="dCat" type="number" step="0.1" placeholder="Ej. 89.9">
+            <small class="hint">Costo Anual Total de tu tarjeta. Lo encuentras en tu estado de cuenta.</small>
+          </div>
+          <div>
+            <label>Plazo restante (meses)</label>
+            <input [(ngModel)]="dCreditTerm" type="number" placeholder="Ej. 12">
+            <small class="hint">Meses que faltan para liquidar la deuda.</small>
+          </div>
+
+          <!-- Resultado del cálculo en tiempo real -->
+          @if (usingCatFormula) {
+            <div style="grid-column: 1 / -1; padding: 12px 14px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px;">
+              <div style="font-size: 12px; color: #1E40AF; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;">
+                ✦ Pago mínimo calculado con CAT {{ dCat }}%
+              </div>
+              <div style="font-size: 22px; font-weight: 700; color: #1D4ED8;">{{ money(calculatedMinPayment) }}</div>
+              <div style="font-size: 11px; color: #1E40AF; margin-top: 4px;">por mes durante {{ dCreditTerm }} meses</div>
+            </div>
+          } @else {
+            <div>
+              <label>Pago mínimo (manual, como referencia)</label>
+              <input [(ngModel)]="dMinPayment" type="number" placeholder="Ej. 500">
+              <small class="hint">Se usará este monto si no capturas el CAT.</small>
+            </div>
+          }
         }
-        
+
         <div>
           <label>Frecuencia de Pago</label>
           <select [(ngModel)]="dFreq">
@@ -37,11 +112,11 @@
         </div>
         <div><label>Próxima fecha de pago</label><input [(ngModel)]="dAnchor" type="date"></div>
       </div>
-      
+
       <div style="margin-top: 10px;">
         <label>Notas</label><input [(ngModel)]="dNotes" placeholder="Info extra">
       </div>
-      
+
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
         <button class="btn-ghost" (click)="cancelEdit()">Cancelar</button>
         <button class="btn-primary" (click)="saveDebt()">{{ editingId ? 'Actualizar Deuda' : 'Guardar Deuda' }}</button>
@@ -99,64 +174,156 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>Nombre</th>
-        <th>Tipo</th>
+        <th>Deuda</th>
         <th>Frecuencia</th>
+        <th>Próx. Cuota / Pago Mín.</th>
         <th>Próx. Pago</th>
-        <th>Días Restantes</th>
-        <th>Costo/Cuota</th>
-        <th>Progreso Pagos</th>
-        <th>Total/Saldo</th>
-        <th>Avance ($)</th>
-        <th></th>
+        <th>Días Rest.</th>
+        <th>Progreso</th>
+        <th style="width: 32px;"></th>
       </tr>
     </thead>
     <tbody>
       @if (debts().length === 0) {
-        <tr><td colspan="9" class="empty-state">No hay deudas registradas.</td></tr>
+        <tr><td colspan="7" class="empty-state">No hay deudas registradas.</td></tr>
       } @else {
         @for (d of debts(); track d.id) {
-          <tr>
-            <td><strong>{{d.name}}</strong></td>
-            <td><span class="badge">{{d.group | titlecase}}</span></td>
-            <td><span class="badge">{{d.frequency || 'mensual' | titlecase}}</span></td>
-            <td>{{formatDate(d.anchor)}}</td>
-            <td><strong>{{getDaysRemaining(d.anchor)}}</strong></td>
-            <td>{{ d.group === 'prestamo' ? money(d.cuota || 0) : money(d.minPayment || 0) }}</td>
-            
-            <!-- Progreso en Pagos -->
+          <!-- Fila principal clickeable -->
+          <tr class="row-clickable" [class.row-expanded]="expandedId === d.id" (click)="toggleExpand(d.id)" style="cursor: pointer;">
             <td>
-              @if (d.group === 'prestamo' && d.cuotasTotal) {
-                {{ d.cuotasPagadas || 0 }} / {{ d.cuotasTotal }}
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted); transition: transform 0.2s;"
+                  [style.transform]="expandedId === d.id ? 'rotate(90deg)' : 'rotate(0deg)'">
+                  chevron_right
+                </span>
+                <span class="accent-pill" [class.accent-pill-purple]="d.group === 'prestamo'" [class.accent-pill-sky]="d.group === 'tarjeta'">
+                  {{ d.group === 'prestamo' ? 'Préstamo' : 'Tarjeta' }}
+                </span>
+                <div>
+                  <strong style="font-size: 14px;">{{d.name}}</strong>
+                  <div style="display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap;">
+                    @if (d.useVariableInstallments) {
+                      <span class="badge" style="font-size: 9px; background: #EDE9FE; color: #7C3AED;">variable</span>
+                    }
+                    @if (d.cat) {
+                      <span class="badge" style="font-size: 9px; background: #EFF6FF; color: #1D4ED8;">CAT {{ d.cat }}%</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge">{{d.frequency || 'mensual' | titlecase}}</span></td>
+
+            <!-- Próxima cuota / Pago mínimo -->
+            <td>
+              @if (d.group === 'prestamo') {
+                <strong>{{ money(getNextUnpaidForDebt(d)) }}</strong>
+                @if (d.useVariableInstallments) {
+                  <div style="font-size: 10px; color: var(--text-muted);">cuota {{ getPaidCount(d) + 1 }}/{{ getTotalCount(d) }}</div>
+                }
               } @else {
-                —
+                <strong>{{ money(calcMinPaymentForDebt(d)) }}</strong>
+                @if (d.cat) {
+                  <div style="font-size: 10px; color: #1D4ED8;">con CAT</div>
+                }
               }
             </td>
 
-            <td>{{ d.group === 'prestamo' ? money(d.total || 0) : money(d.debt || 0) }}</td>
-            
-            <!-- Avance Monetario -->
+            <td>{{formatDate(d.anchor)}}</td>
             <td>
-              @if (d.group === 'prestamo' && d.total) {
-                {{ ((d.pagado || 0) / d.total * 100) | number:'1.0-0' }}%
+              <strong [style.color]="getDaysClass(d.anchor)">{{getDaysRemaining(d.anchor)}}</strong>
+            </td>
+
+            <!-- Progreso en Pagos -->
+            <td>
+              @if (d.group === 'prestamo') {
+                <div style="font-size: 12px;">{{ getPaidCount(d) }}/{{ getTotalCount(d) }}</div>
               } @else {
                 —
               }
             </td>
-            <td style="text-align:right; min-width: 120px; display: flex; justify-content: flex-end; gap: 4px;">
-              <button class="btn-primary" style="padding: 4px 8px; display: flex; align-items: center; gap: 4px;" (click)="openPayModal(d.id)" title="Registrar Pago">
-                <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span> Pagar
-              </button>
-              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center;" (click)="editDebt(d.id)" title="Editar">
-                <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
-              </button>
-              <button class="btn-ghost" style="padding: 4px; display: flex; align-items: center; color: var(--danger);" (click)="deleteDebt(d.id)" title="Eliminar">
-                <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
-              </button>
-            </td>
+            <td></td>
           </tr>
+
+          <!-- Panel de detalle expandible -->
+          @if (expandedId === d.id) {
+            <tr class="detail-row">
+              <td colspan="7" style="padding: 0; border: none;">
+                <div class="detail-panel">
+                  <div class="detail-panel-inner">
+                    <!-- Info de la deuda -->
+                    <div class="detail-info">
+                      <div class="detail-field">
+                        <span class="detail-label">Frecuencia</span>
+                        <span class="detail-value">{{ d.frequency || 'mensual' | titlecase }}</span>
+                      </div>
+                      @if (d.group === 'prestamo') {
+                        <div class="detail-field">
+                          <span class="detail-label">Total deuda</span>
+                          <span class="detail-value">{{ money(d.total || 0) }}</span>
+                        </div>
+                        <div class="detail-field">
+                          <span class="detail-label">Pagado</span>
+                          <span class="detail-value" style="color: #059669;">{{ money(d.pagado || 0) }} ({{ d.total ? ((d.pagado || 0) / d.total * 100 | number:'1.0-0') : 0 }}%)</span>
+                        </div>
+                      } @else {
+                        <div class="detail-field">
+                          <span class="detail-label">Saldo deuda</span>
+                          <span class="detail-value" style="color: #D32F2F;">{{ money(d.debt || 0) }}</span>
+                        </div>
+                        @if (d.noInterest) {
+                          <div class="detail-field">
+                            <span class="detail-label">Sin intereses</span>
+                            <span class="detail-value" style="color: #059669;">{{ money(d.noInterest) }}</span>
+                          </div>
+                        }
+                        @if (d.creditTerm) {
+                          <div class="detail-field">
+                            <span class="detail-label">Plazo rest.</span>
+                            <span class="detail-value">{{ d.creditTerm }} meses</span>
+                          </div>
+                        }
+                      }
+                      @if (d.notes) {
+                        <div class="detail-field">
+                          <span class="detail-label">Notas</span>
+                          <span class="detail-value">{{ d.notes }}</span>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="detail-actions">
+                      <button class="action-btn action-pay" (click)="$event.stopPropagation(); openPayModal(d.id)">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Pagar
+                      </button>
+                      <button class="action-btn action-edit" (click)="$event.stopPropagation(); editDebt(d.id)">
+                        <span class="material-symbols-outlined">edit</span>
+                        Editar
+                      </button>
+                      <button class="action-btn action-delete" (click)="$event.stopPropagation(); askDeleteDebt(d.id, d.name)">
+                        <span class="material-symbols-outlined">delete</span>
+                        Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         }
       }
     </tbody>
   </table>
 </div>
+
+<app-confirm-modal 
+  [isOpen]="!!confirmDeleteId" 
+  [itemName]="confirmDeleteName" 
+  message="¿Estás seguro de eliminar esta deuda? Esta acción no se puede deshacer." 
+  (confirm)="confirmDeleteDebt()" 
+  (cancel)="cancelDeleteDebt()">
+</app-confirm-modal>
+
+

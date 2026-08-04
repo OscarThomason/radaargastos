@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
 import { Expense, Income } from '../../core/models/finance.model';
 import { StatCardComponent } from '../../core/components/stat-card/stat-card.component';
+import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatCardComponent],
+  imports: [CommonModule, FormsModule, StatCardComponent, ConfirmModalComponent],
   templateUrl: './gastos.component.html',
   styleUrl: './gastos.component.scss'
 })
@@ -64,6 +65,11 @@ export class GastosComponent {
   totalExpenses = computed(() => this.expenses().reduce((acc, curr) => acc + curr.amount, 0));
   balance = computed(() => this.pastBalance() + this.totalIncomes() - this.totalExpenses());
 
+  // Modales
+  isExpenseModalOpen = false;
+  isIncomeModalOpen = false;
+  selectedDetailItem: { type: 'expense' | 'income'; data: any } | null = null;
+
   exDate = new Date().toISOString().slice(0, 10);
   exTime = '';
   exCat = this.categories()[0];
@@ -78,6 +84,67 @@ export class GastosComponent {
   inAmount: number | null = null;
   inPaymentMethod = 'efectivo';
   editingInId: string | null = null;
+
+  openAddExpenseModal() {
+    this.editingExId = null;
+    this.exDate = new Date().toISOString().slice(0, 10);
+    this.exTime = new Date().toTimeString().slice(0, 5);
+    this.exCat = this.categories()[0] || 'General';
+    this.exDesc = '';
+    this.exAmount = null;
+    this.exPaymentMethod = 'efectivo';
+    this.isExpenseModalOpen = true;
+  }
+
+  openAddIncomeModal() {
+    this.editingInId = null;
+    this.inDate = new Date().toISOString().slice(0, 10);
+    this.inCat = this.incomeCategories()[0] || 'Ingreso';
+    this.inDesc = '';
+    this.inAmount = null;
+    this.inPaymentMethod = 'efectivo';
+    this.isIncomeModalOpen = true;
+  }
+
+  get selectedDetailData() {
+    return this.selectedDetailItem?.data;
+  }
+
+  get selectedDetailIsExpense() {
+    return this.selectedDetailItem?.type === 'expense';
+  }
+
+  showItemDetails(type: 'expense' | 'income', item: Expense | Income) {
+    this.selectedDetailItem = { type, data: item };
+  }
+
+  closeItemDetails() {
+    this.selectedDetailItem = null;
+  }
+
+  editFromDetails() {
+    if (!this.selectedDetailItem) return;
+    const { type, data } = this.selectedDetailItem;
+    this.closeItemDetails();
+    if (type === 'expense') {
+      this.editExpense(data as Expense);
+      this.isExpenseModalOpen = true;
+    } else {
+      this.editIncome(data as Income);
+      this.isIncomeModalOpen = true;
+    }
+  }
+
+  deleteFromDetails() {
+    if (!this.selectedDetailItem) return;
+    const { type, data } = this.selectedDetailItem;
+    this.closeItemDetails();
+    if (type === 'expense') {
+      this.askDeleteExpense(data.id, (data as Expense).description);
+    } else {
+      this.askDeleteIncome(data.id, (data as Income).description);
+    }
+  }
 
   editExpense(item: Expense) {
     this.editingExId = item.id;
@@ -120,9 +187,7 @@ export class GastosComponent {
       this.financeService.addExpense(item);
     }
     
-    this.exDesc = '';
-    this.exAmount = null;
-    this.exTime = '';
+    this.cancelExEdit();
   }
 
   cancelExEdit() {
@@ -132,10 +197,7 @@ export class GastosComponent {
     this.exDesc = '';
     this.exAmount = null;
     this.exPaymentMethod = 'efectivo';
-  }
-
-  deleteExpense(id: string) {
-    this.financeService.deleteExpense(id);
+    this.isExpenseModalOpen = false;
   }
 
   addIncome() {
@@ -159,8 +221,7 @@ export class GastosComponent {
       this.financeService.addIncome(item);
     }
     
-    this.inDesc = '';
-    this.inAmount = null;
+    this.cancelInEdit();
   }
 
   cancelInEdit() {
@@ -169,10 +230,40 @@ export class GastosComponent {
     this.inDesc = '';
     this.inAmount = null;
     this.inPaymentMethod = 'efectivo';
+    this.isIncomeModalOpen = false;
   }
 
-  deleteIncome(id: string) {
-    this.financeService.deleteIncome(id);
+  // -- Modal de Confirmación de Eliminar --
+  confirmDeleteId: string | null = null;
+  confirmDeleteName = '';
+  confirmDeleteType: 'expense' | 'income' = 'expense';
+
+  askDeleteExpense(id: string, desc: string) {
+    this.confirmDeleteId = id;
+    this.confirmDeleteName = desc || 'este gasto';
+    this.confirmDeleteType = 'expense';
+  }
+
+  askDeleteIncome(id: string, desc: string) {
+    this.confirmDeleteId = id;
+    this.confirmDeleteName = desc || 'este ingreso';
+    this.confirmDeleteType = 'income';
+  }
+
+  confirmDelete() {
+    if (this.confirmDeleteId) {
+      if (this.confirmDeleteType === 'expense') {
+        this.financeService.deleteExpense(this.confirmDeleteId);
+      } else {
+        this.financeService.deleteIncome(this.confirmDeleteId);
+      }
+      this.cancelDelete();
+    }
+  }
+
+  cancelDelete() {
+    this.confirmDeleteId = null;
+    this.confirmDeleteName = '';
   }
 
   onMonthChange(event: Event) {
@@ -195,5 +286,9 @@ export class GastosComponent {
     if (!id || id === 'efectivo') return 'Efectivo';
     const c = this.cards().find(x => x.id === id);
     return c ? c.name : 'Efectivo';
+  }
+
+  formatTime(timeStr?: string) {
+    return this.financeService.formatTime(timeStr);
   }
 }

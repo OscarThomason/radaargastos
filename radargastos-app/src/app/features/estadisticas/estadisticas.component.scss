@@ -1,7 +1,222 @@
-.chart-box { position: relative; height: 250px; margin-bottom: 8px; }
-.chart-box-large { position: relative; height: 350px; margin-bottom: 8px; }
+.chart-box {
+  position: relative;
+  height: 240px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0px 8px 16px rgba(0, 0, 0, 0.08));
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+}
+
+.chart-box-large {
+  position: relative;
+  height: 320px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0px 8px 16px rgba(0, 0, 0, 0.06));
+}
+
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media (max-width: 700px) { .chart-grid { grid-template-columns: 1fr; } }
 .legend-custom { display: flex; flex-wrap: wrap; gap: 10px 16px; font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
 .legend-custom span { display: flex; align-items: center; gap: 5px; }
 .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+
+// ========================================
+// ASISTENTE DE IA FINANCIERO SCSS
+// ========================================
+.ai-card-panel {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.03) 0%, rgba(5, 150, 105, 0.03) 100%), var(--surface);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 12px;
+}
+
+.ai-avatar-minimal {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.ai-carousel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.insight-card-slide {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  animation: slideFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 80px;
+
+  &.insight-warning {
+    background: #FEF2F2;
+    border-color: rgba(220, 38, 38, 0.25);
+
+    .insight-icon {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+  }
+
+  &.insight-opportunity {
+    background: #EFF6FF;
+    border-color: rgba(37, 99, 235, 0.25);
+
+    .insight-icon {
+      background: #DBEAFE;
+      color: #2563EB;
+    }
+  }
+
+  &.insight-success {
+    background: #ECFDF5;
+    border-color: rgba(5, 150, 105, 0.25);
+
+    .insight-icon {
+      background: #D1FAE5;
+      color: #059669;
+    }
+  }
+
+  &.insight-tip {
+    background: #FFFBEB;
+    border-color: rgba(217, 119, 6, 0.25);
+
+    .insight-icon {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+  }
+}
+
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.insight-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.insight-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.insight-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.insight-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+// Controles y Paginación del Carrusel
+.ai-carousel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+}
+
+.ai-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.carousel-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.carousel-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.carousel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: var(--text);
+    width: 18px;
+    border-radius: 4px;
+  }
+}

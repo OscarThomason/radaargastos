@@ -8,34 +8,94 @@
 }
 
 .title-box {
-  border: 2px solid #82B1FF;
-  border-radius: 8px;
-  padding: 12px 20px;
+  position: relative;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 24px;
   background: var(--surface);
+  box-shadow: 3px 3px 0px var(--border), 0 8px 20px rgba(0, 0, 0, 0.04);
+  transform: rotate(-0.8deg);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 4.5px 4.5px 0px var(--border), 0 12px 24px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Cinta adhesiva beige (Washi / Masking Tape) */
+.beige-tape {
+  position: absolute;
+  top: -9px;
+  right: 18px;
+  width: 42px;
+  height: 20px;
+  background: rgba(243, 229, 203, 0.92);
+  border: 1px dashed rgba(185, 160, 125, 0.65);
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14);
+  transform: rotate(26deg);
+  pointer-events: none;
+  z-index: 5;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  }
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  text-transform: uppercase;
 }
 
 .topbar p {
-  margin: 5px 0 0;
+  margin: 4px 0 0;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 
-.today-chip {
+.today-chip-sticker {
+  position: relative;
   background: var(--surface);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  border: 2px solid #82B1FF;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text);
+  border: 1.5px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: 2.5px 2.5px 0px var(--border);
+  transform: rotate(0.8deg);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-transform: uppercase;
+
+  &:hover {
+    transform: rotate(0deg) translateY(-2px);
+    box-shadow: 3.5px 3.5px 0px var(--border);
+  }
+
+  .beige-tape {
+    top: -8px;
+    right: 12px;
+    width: 32px;
+    height: 16px;
+  }
 }
 
 .user-profile {
@@ -96,7 +156,7 @@
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
   text-transform: uppercase;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Sora', sans-serif;
 }
 
 .tabs a svg {

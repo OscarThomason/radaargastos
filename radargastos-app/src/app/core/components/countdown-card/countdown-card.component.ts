@@ -14,25 +14,30 @@ export class CountdownCardComponent {
   @Output() markPaid = new EventEmitter<{id: string, kind: string}>();
 
   get statusClass() {
-    if (this.item.days <= 3) return 'status-danger';
-    if (this.item.days <= 7) return 'status-warn';
+    if (this.item.days < 0) return 'status-danger';
+    if (this.item.days <= 2) return 'status-warn';
     return 'status-safe';
   }
 
-  get statusColorVar() {
-    if (this.item.days <= 3) return 'var(--danger)';
-    if (this.item.days <= 7) return 'var(--warn)';
-    return 'var(--safe)';
+  get absDays() {
+    return Math.abs(this.item.days);
   }
 
-  get dayLabel() {
-    if (this.item.days < 0) return `${Math.abs(this.item.days)}d vencido`;
-    if (this.item.days === 0) return 'Hoy';
-    return `${this.item.days}d`;
+  get dayUnitLabel() {
+    if (this.item.days < 0) return 'días vencido';
+    if (this.item.days === 0) return 'HOY';
+    if (this.item.days === 1) return 'día';
+    return 'días';
   }
 
   get formattedDate() {
     return this.item.due.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+  }
+
+  get kindBadgeClass() {
+    if (this.item.kind === 'prestamo') return 'accent-pill-purple';
+    if (this.item.kind === 'tarjeta') return 'accent-pill-sky';
+    return 'accent-pill-blue';
   }
 
   money(amount: number) {

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
 import { ServiceItem } from '../../core/models/finance.model';
+import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-servicios',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent],
   templateUrl: './servicios.component.html',
   styleUrl: './servicios.component.scss'
 })
@@ -17,6 +18,7 @@ export class ServiciosComponent {
   services = computed(() => this.financeService.state().services);
   
   editingId: string | null = null;
+  expandedId: string | null = null;
   
   svName = '';
   svAmount: number | null = null;
@@ -26,6 +28,10 @@ export class ServiciosComponent {
   isModalOpen = false;
 
   frequencies = ['semanal', 'quincenal', 'mensual', 'bimestral', 'anual'];
+
+  toggleExpand(id: string) {
+    this.expandedId = this.expandedId === id ? null : id;
+  }
 
   openModal() {
     this.cancelEdit();
@@ -78,11 +84,26 @@ export class ServiciosComponent {
     this.isModalOpen = false;
   }
 
-  deleteService(id: string) {
-    if (confirm('¿Eliminar servicio?')) {
-      this.financeService.deleteService(id);
-      if (this.editingId === id) this.cancelEdit();
+  // -- Modal de Confirmación de Eliminar --
+  confirmDeleteId: string | null = null;
+  confirmDeleteName = '';
+
+  askDeleteService(id: string, name: string) {
+    this.confirmDeleteId = id;
+    this.confirmDeleteName = name;
+  }
+
+  confirmDeleteService() {
+    if (this.confirmDeleteId) {
+      this.financeService.deleteService(this.confirmDeleteId);
+      if (this.editingId === this.confirmDeleteId) this.cancelEdit();
+      this.cancelDeleteService();
     }
+  }
+
+  cancelDeleteService() {
+    this.confirmDeleteId = null;
+    this.confirmDeleteName = '';
   }
 
   money(amount: number) {
@@ -103,9 +124,19 @@ export class ServiciosComponent {
     today.setHours(0, 0, 0, 0);
     const diffTime = anchorDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
     if (diffDays < 0) return `${Math.abs(diffDays)}d vencido`;
     if (diffDays === 0) return 'Hoy';
     return `${diffDays}d`;
+  }
+
+  getDaysClass(anchorStr?: string): string {
+    if (!anchorStr) return 'inherit';
+    const anchorDate = new Date(anchorStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((anchorDate.getTime() - today.getTime()) / 86400000);
+    if (diffDays < 0) return '#D32F2F';
+    if (diffDays <= 2) return '#92400E';
+    return 'inherit';
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, signal, inject, effect, computed } from '@angular/core';
 import { Firestore, doc, setDoc, onSnapshot } from '@angular/fire/firestore';
 import { AuthService } from './auth.service';
 import { AppState, Debt, Expense, Income, ServiceItem, UpcomingItem, WeeklyBudget, Card } from '../models/finance.model';
+import * as XLSX from 'xlsx';
 
 const CATEGORIES = ['Servicios', 'Deudas', 'Transporte', 'Alimentos', 'Restaurantes', 'Oscio', 'Salud', 'nutricion y gym', 'ropa o accesorios', 'casa', 'viaje', 'mascota', 'Otros'];
 
@@ -23,6 +24,8 @@ const DEFAULT_STATE: AppState = {
 export class FinanceService {
   state = signal<AppState>(JSON.parse(JSON.stringify(DEFAULT_STATE)));
   
+  timeFormat = computed(() => this.state().timeFormat || '12h');
+
   expenseCategories = computed(() => {
     const s = this.state();
     return s.customExpenseCategories && s.customExpenseCategories.length > 0 
@@ -36,6 +39,25 @@ export class FinanceService {
       ? s.customIncomeCategories 
       : ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'];
   });
+
+  /** Formatea una hora en formato 'HH:MM' según la preferencia del usuario ('12h' o '24h') */
+  formatTime(timeStr?: string): string {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1].padStart(2, '0');
+    if (isNaN(hours)) return timeStr;
+
+    if (this.timeFormat() === '24h') {
+      return `${hours.toString().padStart(2, '0')}:${minutes}`;
+    } else {
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
+      return `${hours}:${minutes} ${ampm}`;
+    }
+  }
 
   cardsWithBalance = computed(() => {
     const s = this.state();
@@ -138,9 +160,10 @@ export class FinanceService {
     const newLog = {
       id: 'h' + Date.now() + Math.random().toString(36).substr(2, 5),
       timestamp: formattedDate,
+      timeMs: now.getTime(),
       action
     };
-    current.history = [newLog, ...current.history].slice(0, 50);
+    current.history = [newLog, ...current.history].slice(0, 60);
   }
 
   // Helpers
@@ -176,8 +199,8 @@ export class FinanceService {
   }
 
   statusFor(days: number): 'danger' | 'warn' | 'safe' {
-    if (days <= 3) return 'danger';
-    if (days <= 7) return 'warn';
+    if (days < 0) return 'danger';
+    if (days <= 2) return 'warn';
     return 'safe';
   }
 
@@ -413,6 +436,95 @@ export class FinanceService {
     const c = current.cards.find(x => x.id === id);
     current.cards = current.cards.filter(x => x.id !== id);
     this.logAction(current, `Se eliminó la tarjeta: ${c?.name || ''}`);
+    this.saveState(current);
+  }
+
+  updateTimeFormat(format: '12h' | '24h') {
+    const current = { ...this.state() };
+    current.timeFormat = format;
+    this.logAction(current, `Se cambió el formato de hora a ${format}`);
+    this.saveState(current);
+  }
+
+  exportDataToExcel() {
+    const state = this.state();
+    const wb = XLSX.utils.book_new();
+
+    const getCardName = (id?: string) => {
+      if (!id || id === 'efectivo') return 'Efectivo';
+      const c = state.cards?.find(x => x.id === id);
+      return c ? c.name : 'Efectivo';
+    };
+
+    // 1. Hoja de Resumen General
+    const summaryData = [
+      { 'Métrica / Registro': 'Fecha de Generación del Reporte', 'Valor': new Date().toLocaleDateString('es-MX') + ' ' + new Date().toLocaleTimeString('es-MX') },
+      { 'Métrica / Registro': 'Total Gastos del Registro', 'Valor': `$${state.expenses.reduce((acc, e) => acc + e.amount, 0).toLocaleString('es-MX', {minimumFractionDigits:2})}` },
+      { 'Métrica / Registro': 'Total Ingresos del Registro', 'Valor': `$${state.incomes.reduce((acc, i) => acc + i.amount, 0).toLocaleString('es-MX', {minimumFractionDigits:2})}` },
+      { 'Métrica / Registro': 'Cantidad de Deudas Registradas', 'Valor': state.debts.length.toString() },
+      { 'Métrica / Registro': 'Cantidad de Servicios Activos', 'Valor': state.services.length.toString() }
+    ];
+    const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumen');
+
+    // 2. Hoja de Gastos
+    const gastosData = state.expenses.map(e => ({
+      'Fecha': e.date,
+      'Hora': this.formatTime(e.time),
+      'Categoría': e.category || 'General',
+      'Descripción': e.description || '',
+      'Monto ($)': e.amount,
+      'Método / Cuenta': getCardName(e.paymentMethod)
+    }));
+    const wsGastos = XLSX.utils.json_to_sheet(gastosData.length ? gastosData : [{'Mensaje': 'No hay gastos registrados'}]);
+    XLSX.utils.book_append_sheet(wb, wsGastos, 'Gastos');
+
+    // 3. Hoja de Ingresos
+    const ingresosData = state.incomes.map(i => ({
+      'Fecha': i.date,
+      'Hora': this.formatTime(i.time),
+      'Categoría': i.category || 'General',
+      'Descripción': i.description || '',
+      'Monto ($)': i.amount,
+      'Método / Cuenta': getCardName(i.paymentMethod)
+    }));
+    const wsIngresos = XLSX.utils.json_to_sheet(ingresosData.length ? ingresosData : [{'Mensaje': 'No hay ingresos registrados'}]);
+    XLSX.utils.book_append_sheet(wb, wsIngresos, 'Ingresos');
+
+    // 4. Hoja de Deudas
+    const deudasData = state.debts.map(d => {
+      const isLoan = d.group === 'prestamo';
+      return {
+        'Nombre de Deuda': d.name,
+        'Tipo': isLoan ? 'Préstamo' : 'Tarjeta de Crédito',
+        'Monto Total / Deuda ($)': isLoan ? (d.total || 0) : (d.debt || 0),
+        'Cuota / Pago Mínimo ($)': isLoan ? (d.cuota || 0) : (d.minPayment || 0),
+        'Pago sin Intereses ($)': d.noInterest || 'N/A',
+        'CAT (%)': d.cat ? `${d.cat}%` : 'N/A',
+        'Frecuencia': d.frequency || 'mensual',
+        'Próximo Vencimiento': d.anchor || 'N/A'
+      };
+    });
+    const wsDeudas = XLSX.utils.json_to_sheet(deudasData.length ? deudasData : [{'Mensaje': 'No hay deudas registradas'}]);
+    XLSX.utils.book_append_sheet(wb, wsDeudas, 'Deudas');
+
+    // 5. Hoja de Servicios
+    const serviciosData = state.services.map(s => ({
+      'Nombre del Servicio': s.name,
+      'Costo ($)': s.amount,
+      'Frecuencia': s.frequency || 'mensual',
+      'Próximo Pago': s.anchor || 'N/A'
+    }));
+    const wsServicios = XLSX.utils.json_to_sheet(serviciosData.length ? serviciosData : [{'Mensaje': 'No hay servicios registrados'}]);
+    XLSX.utils.book_append_sheet(wb, wsServicios, 'Servicios');
+
+    // Descargar archivo Excel .xlsx
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Reporte_Financiero_Radargastos_${today}.xlsx`);
+
+    // Log action
+    const current = { ...this.state() };
+    this.logAction(current, `Se exportó la información a Excel (.xlsx)`);
     this.saveState(current);
   }
 }

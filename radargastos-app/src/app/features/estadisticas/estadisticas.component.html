@@ -1,13 +1,126 @@
+<!-- Encabezado y Selección de Mes -->
 <div class="card-panel" style="margin-bottom: 24px;">
   <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-    <h2 class="section-title" style="margin: 0; text-transform: uppercase;">Estadísticas Mensuales</h2>
+    <div>
+      <h2 class="section-title" style="margin: 0; text-transform: uppercase;">Estadísticas & Análisis Inteligente</h2>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+        Análisis automático de patrones de gasto, diagnóstico de necesidades y asesoría IA.
+      </p>
+    </div>
     <div style="display: flex; align-items: center; gap: 8px;">
-      <label style="font-weight: 600; font-size: 13px; color: var(--text-muted);">Filtrar por Mes:</label>
-      <select [value]="selectedMonthKey()" (change)="onMonthChange($event)" style="width: auto; border: 2px solid var(--border); font-weight: bold; background: var(--surface); box-shadow: 2px 2px 0px var(--border); cursor: pointer;">
+      <label style="font-weight: 600; font-size: 13px; color: var(--text-muted);">Periodo:</label>
+      <select [value]="selectedMonthKey()" (change)="onMonthChange($event)" style="width: auto; border: 1px solid var(--border); font-weight: bold; background: var(--surface); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
         @for (m of availableMonths(); track m.key) {
           <option [value]="m.key">{{ m.label }}</option>
         }
       </select>
+    </div>
+  </div>
+</div>
+
+<!-- Asistente de IA Financiero -->
+<div class="card-panel ai-card-panel" style="margin-bottom: 24px;">
+  <div class="ai-header">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div class="ai-avatar-minimal">
+        <span class="material-symbols-outlined">smart_toy</span>
+      </div>
+      <div>
+        <h3 style="margin: 0; border: none; padding: 0; font-size: 16px;">Asistente de IA Financiero</h3>
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">Diagnóstico automático de {{ selectedMonthLabel() }}</span>
+      </div>
+    </div>
+    <span class="accent-pill accent-pill-emerald" style="font-size: 10px; padding: 4px 10px;">IA Activa</span>
+  </div>
+
+  <div class="ai-carousel-container">
+    @if (aiInsights().length === 0) {
+      <div class="empty-state" style="padding: 16px;">Sin datos suficientes para generar recomendaciones este mes.</div>
+    } @else {
+      @for (insight of aiInsights(); track insight.id; let idx = $index) {
+        @if (activeInsightIndex() === idx) {
+          <div class="insight-card-slide" [class]="'insight-' + insight.type">
+            <div class="insight-icon">
+              <span class="material-symbols-outlined">{{ insight.icon }}</span>
+            </div>
+            <div class="insight-content">
+              <strong class="insight-title">{{ insight.title }}</strong>
+              <p class="insight-desc">{{ insight.description }}</p>
+            </div>
+          </div>
+        }
+      }
+
+      <!-- Controles del Carrusel de Consejos -->
+      <div class="ai-carousel-footer">
+        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
+          Consejo {{ activeInsightIndex() + 1 }} de {{ aiInsights().length }}
+        </span>
+
+        <div class="ai-carousel-controls">
+          <button class="carousel-nav-btn" (click)="prevInsight()" [disabled]="aiInsights().length <= 1" title="Anterior consejo">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          
+          <div class="carousel-dots">
+            @for (insight of aiInsights(); track insight.id; let idx = $index) {
+              <span class="carousel-dot" [class.active]="activeInsightIndex() === idx" (click)="setInsightIndex(idx)"></span>
+            }
+          </div>
+
+          <button class="carousel-nav-btn" (click)="nextInsight()" [disabled]="aiInsights().length <= 1" title="Siguiente consejo">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Análisis de Gastos Esenciales vs No Esenciales -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <h2 class="section-title" style="margin-top: 0;">Clasificación de Gastos: Esenciales vs. No Esenciales</h2>
+  <p style="font-size: 13px; color: var(--text-muted); margin-top: -8px; margin-bottom: 20px;">
+    Separa tus necesidades primarias (alimentos, salud, servicios) de consumos prescindibles (ocio, restaurantes).
+  </p>
+
+  <div class="grid-2col" style="align-items: center;">
+    <!-- Gráfico de Donut Esenciales -->
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      @if (essentialAnalysis().essentialTotal === 0 && essentialAnalysis().nonEssentialTotal === 0) {
+        <div class="empty-state">No hay gastos en este mes.</div>
+      } @else {
+        <div class="chart-box" style="height: 220px; width: 100%;"><canvas #chartEssential></canvas></div>
+        <div style="display: flex; gap: 16px; margin-top: 14px;">
+          <span style="font-size: 12px; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 4px;">
+            ● Esenciales ({{ essentialAnalysis().essentialPercent }}%)
+          </span>
+          <span style="font-size: 12px; font-weight: 700; color: #DC2626; display: flex; align-items: center; gap: 4px;">
+            ● No Esenciales ({{ essentialAnalysis().nonEssentialPercent }}%)
+          </span>
+        </div>
+      }
+    </div>
+
+    <!-- Desglose Porcentual -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <!-- Esenciales -->
+      <div style="background: #ECFDF5; border: 1px solid rgba(5,150,105,0.2); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 12px; font-weight: 700; color: #059669;">🟢 GASTOS ESENCIALES</span>
+          <strong style="font-size: 15px; color: #059669;">{{ money(essentialAnalysis().essentialTotal) }}</strong>
+        </div>
+        <p style="font-size: 11px; color: #047857; margin: 0;">Alimentos, Servicios, Salud, Deudas primarias</p>
+      </div>
+
+      <!-- No Esenciales -->
+      <div style="background: #FEF2F2; border: 1px solid rgba(220,38,38,0.2); border-radius: 12px; padding: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 12px; font-weight: 700; color: #DC2626;">🔴 GASTOS NO ESENCIALES</span>
+          <strong style="font-size: 15px; color: #DC2626;">{{ money(essentialAnalysis().nonEssentialTotal) }}</strong>
+        </div>
+        <p style="font-size: 11px; color: #B91C1C; margin: 0;">Restaurantes, Ocio, Compras impulsivas, Suscripciones</p>
+      </div>
     </div>
   </div>
 </div>
@@ -44,67 +157,12 @@
   </div>
 </div>
 
-<!-- Análisis de Gastos Recurrentes -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <h2 class="section-title" style="margin-top: 0;">Análisis de Gastos Recurrentes ({{ selectedMonthLabel() }})</h2>
-  <p class="small-muted" style="margin-top: -8px; margin-bottom: 20px;">
-    Se consideran gastos recurrentes aquellos registrados bajo las categorías de "Servicios" o "Deudas".
-  </p>
-
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 20px;">
-    <div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
-        <span>Recurrentes (Servicios y Deudas)</span>
-        <span>{{ money(recurrentExpenses().total) }}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px;">
-        <span>Variables (Otros Gastos)</span>
-        <span>{{ money(variableExpenses()) }}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; border-top: 2px solid var(--border); padding-top: 8px;">
-        <span>Total Gastos del Mes</span>
-        <span>{{ money(recurrentExpenses().total + variableExpenses()) }}</span>
-      </div>
-    </div>
-
-    <!-- Barra de progreso/comparativa visual (tipo bosquejo) -->
-    <div style="display: flex; flex-direction: column; justify-content: center; gap: 8px;">
-      @if (recurrentExpenses().total + variableExpenses() > 0) {
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted);">
-          <span>Porcentaje Recurrente</span>
-          <span>{{ recurrentPercentage() }}%</span>
-        </div>
-        <div style="height: 24px; border: 2px solid var(--border); background: var(--surface2); position: relative; box-shadow: 3px 3px 0px var(--border); overflow: hidden;">
-          <div [style.width.%]="recurrentPercentage()" style="height: 100%; background: var(--text); border-right: 2px solid var(--border);"></div>
-        </div>
-      } @else {
-        <div class="empty-state" style="padding: 10px; border: 2px dashed var(--border); text-align: center; margin: 0;">Sin gastos registrados en este periodo.</div>
-      }
-    </div>
-  </div>
-
-  @if (recurrentExpenses().list.length > 0) {
-    <h3 style="font-size: 14px; margin-top: 20px; border-bottom: 2px solid var(--border); padding-bottom: 6px; text-transform: uppercase;">Detalle de Pagos Recurrentes Realizados</h3>
-    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 6px;">
-      @for (item of recurrentExpenses().list; track item.id) {
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid var(--border); background: var(--surface2); box-shadow: 2px 2px 0px var(--border); font-size: 13px;">
-          <div>
-            <span style="font-weight: bold; background: var(--safe-dim); border: 1px solid var(--border); padding: 2px 6px; font-size: 10px; text-transform: uppercase; margin-right: 8px; display: inline-block;">{{ item.category }}</span>
-            <span>{{ item.description || 'Sin descripción' }}</span>
-            <div class="small-muted" style="margin-top: 2px;">{{ item.date }}</div>
-          </div>
-          <span style="font-weight: bold;">{{ money(item.amount) }}</span>
-        </div>
-      }
-    </div>
-  }
-</div>
-
 <div class="card-panel">
-  <h2 class="section-title" style="margin-top: 0">Flujo de Caja por Mes</h2>
+  <h2 class="section-title" style="margin-top: 0">Evolución Histórica (Gastos vs. Ingresos - 6 Meses)</h2>
   @if (monthData().keys.length === 0) {
     <div class="empty-state">Sin datos suficientes todavía.</div>
   } @else {
     <div class="chart-box-large"><canvas #chartMonth></canvas></div>
   }
 </div>
+

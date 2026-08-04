@@ -1,31 +1,67 @@
-<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
   <div style="display: flex; align-items: center; gap: 12px;">
     <button class="btn-ghost" (click)="goBack()" style="padding: 6px 10px; border-color: transparent;">
       <span class="material-symbols-outlined">arrow_back</span>
     </button>
-    <h2 class="section-title" style="margin: 0;">Ajustes de Categorías</h2>
+    <h2 class="section-title" style="margin: 0;">Ajustes del Sistema</h2>
   </div>
   <button class="btn-primary" style="margin: 0;" (click)="save()">Guardar Cambios</button>
+</div>
+
+<!-- Configuración de Formato de Hora -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <h3>Formato de Hora</h3>
+  <p style="font-size: 13px; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px;">
+    Selecciona cómo prefieres ver la hora en los registros de gastos e ingresos.
+  </p>
+  <div class="segmented-control">
+    <button [class.active]="timeFormat() === '12h'" (click)="setTimeFormat('12h')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">schedule</span>
+      12 Horas (AM / PM)
+    </button>
+    <button [class.active]="timeFormat() === '24h'" (click)="setTimeFormat('24h')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">laps</span>
+      24 Horas (00:00 - 23:59)
+    </button>
+  </div>
+</div>
+
+<!-- Exportar Información en Excel -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h3 style="margin-bottom: 4px; border: none; padding: 0;">Exportar Reporte a Excel</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+        Descarga un archivo <strong>.xlsx</strong> completo con pestañas organizadas para Resumen, Gastos, Ingresos, Deudas y Servicios.
+      </p>
+    </div>
+    <button class="btn-primary" style="margin: 0; background: #059669; border-color: #059669; color: #ffffff; display: flex; align-items: center; gap: 8px;" (click)="exportExcel()">
+      <span class="material-symbols-outlined">table_view</span>
+      Exportar a Excel (.xlsx)
+    </button>
+  </div>
 </div>
 
 <div class="grid-2col">
   <!-- Categorías de Gastos -->
   <div class="card-panel">
     <h3>Categorías de Gastos</h3>
-    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-      <input [(ngModel)]="newExCat" placeholder="Ej. Suscripciones" (keyup.enter)="addExpenseCat()">
-      <button class="btn-primary" style="margin-top: 0; padding: 10px 16px;" (click)="addExpenseCat()">+</button>
+    <div class="minimal-input-group">
+      <input [(ngModel)]="newExCat" placeholder="Añadir nueva categoría..." (keyup.enter)="addExpenseCat()">
+      <button (click)="addExpenseCat()" title="Agregar">
+        <span class="material-symbols-outlined">add</span>
+      </button>
     </div>
     
-    <div class="cat-list">
+    <div class="chips-container">
       @if (expenseCats().length === 0) {
         <div class="empty-state">No hay categorías. Añade una para empezar.</div>
       } @else {
         @for (cat of expenseCats(); track cat) {
-          <div class="cat-row">
+          <div class="cat-chip">
             <span>{{cat}}</span>
-            <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="removeExpenseCat(cat)">
-              <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            <button (click)="removeExpenseCat(cat)" title="Eliminar categoría">
+              <span class="material-symbols-outlined">close</span>
             </button>
           </div>
         }
@@ -36,20 +72,22 @@
   <!-- Categorías de Ingresos -->
   <div class="card-panel panel-safe">
     <h3>Categorías de Ingresos</h3>
-    <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-      <input [(ngModel)]="newInCat" placeholder="Ej. Bonos" (keyup.enter)="addIncomeCat()">
-      <button class="btn-primary bg-safe" style="margin-top: 0; padding: 10px 16px;" (click)="addIncomeCat()">+</button>
+    <div class="minimal-input-group">
+      <input [(ngModel)]="newInCat" placeholder="Añadir nueva categoría..." (keyup.enter)="addIncomeCat()">
+      <button class="btn-safe-add" (click)="addIncomeCat()" title="Agregar">
+        <span class="material-symbols-outlined">add</span>
+      </button>
     </div>
     
-    <div class="cat-list">
+    <div class="chips-container">
       @if (incomeCats().length === 0) {
         <div class="empty-state">No hay categorías. Añade una para empezar.</div>
       } @else {
         @for (cat of incomeCats(); track cat) {
-          <div class="cat-row">
+          <div class="cat-chip chip-safe">
             <span>{{cat}}</span>
-            <button class="btn-ghost" style="color: var(--danger); padding: 4px;" (click)="removeIncomeCat(cat)">
-              <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            <button (click)="removeIncomeCat(cat)" title="Eliminar categoría">
+              <span class="material-symbols-outlined">close</span>
             </button>
           </div>
         }
@@ -58,20 +96,28 @@
   </div>
 </div>
 
-<!-- Panel de Historial (ancho completo) -->
-<h2 class="section-title" style="margin-top: 32px;">Historial de Modificaciones</h2>
-<div class="card-panel">
-  <div class="cat-list" style="max-height: 500px;">
+<!-- Panel de Historial de Modificaciones -->
+<div style="margin-top: 32px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+  <h2 class="section-title" style="margin: 0;">Historial de Modificaciones</h2>
+  <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; background: var(--surface2); padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);">
+    {{ history().length }} / 60 registros
+  </span>
+</div>
+
+<div class="card-panel" style="padding: 0; overflow: hidden; margin-bottom: 30px;">
+  <div class="history-scroll-box">
     @if (history().length === 0) {
-      <div class="empty-state">No hay registros de modificaciones recientes.</div>
+      <div class="empty-state" style="padding: 20px; text-align: center;">No hay registros de modificaciones recientes.</div>
     } @else {
       @for (log of history(); track log.id) {
-        <div class="cat-row" style="flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px;">
-          <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">{{log.timestamp}}</div>
-          <div style="font-size: 13px;">{{log.action}}</div>
+        <div class="history-item">
+          <span class="history-time">{{ formatTimestamp(log.timestamp) }}</span>
+          <span class="history-action">{{ log.action }}</span>
         </div>
       }
     }
   </div>
 </div>
+
+
 
