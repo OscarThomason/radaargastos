@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './core/components/header/header.component';
 import { AuthService } from './core/services/auth.service';
+import { FinanceService } from './core/services/finance.service';
 
 @Component({
   selector: 'app-root',
@@ -12,4 +13,5 @@ import { AuthService } from './core/services/auth.service';
 })
 export class AppComponent {
   authService = inject(AuthService);
+  financeService = inject(FinanceService);
 }

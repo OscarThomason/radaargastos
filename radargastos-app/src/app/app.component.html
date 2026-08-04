@@ -1,7 +1,41 @@
+@if (financeService.isLoading()) {
+  <div class="notebook-loading-overlay">
+    <div class="notebook-loader-card">
+      <div class="notebook-graphic">
+        <div class="notebook-spine">
+          <span class="ring"></span>
+          <span class="ring"></span>
+          <span class="ring"></span>
+          <span class="ring"></span>
+          <span class="ring"></span>
+        </div>
+        <div class="notebook-page">
+          <div class="red-margin-line"></div>
+          <div class="filling-lines">
+            <div class="line line-1"></div>
+            <div class="line line-2"></div>
+            <div class="line line-3"></div>
+            <div class="line line-4"></div>
+            <div class="line line-5"></div>
+          </div>
+          <div class="pencil-icon">✍️</div>
+        </div>
+      </div>
+
+      <h3 class="loading-title">ORGANIZANDO TU BITÁCORA...</h3>
+      <p class="loading-subtitle">Cargando tus deudas, servicios y cuentas al día</p>
+
+      <div class="loader-progress-track">
+        <div class="loader-progress-bar"></div>
+      </div>
+    </div>
+  </div>
+}
+
 <div id="app">
   @if (authService.userSignal()) {
-  <app-header></app-header>
-}
+    <app-header></app-header>
+  }
   <main>
     <router-outlet></router-outlet>
   </main>

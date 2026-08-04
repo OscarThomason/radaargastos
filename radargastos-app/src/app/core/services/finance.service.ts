@@ -85,11 +85,29 @@ export class FinanceService {
     });
   });
 
+  isLoading = signal<boolean>(true);
+
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private unsubSnapshot: any = null;
 
   constructor() {
+    // Cargar caché local inmediatamente para respuesta instantánea
+    const saved = localStorage.getItem('finanzas:state');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        this.state.set({ ...DEFAULT_STATE, ...parsed });
+      } catch (e) {
+        console.error('Error al parsear estado local inicial', e);
+      }
+    }
+
+    // Duración mínima de la animación de carga de libreta (1.4s)
+    setTimeout(() => {
+      this.isLoading.set(false);
+    }, 1400);
+
     effect(() => {
       const user = this.authService.userSignal();
       if (user) {
@@ -101,6 +119,7 @@ export class FinanceService {
         }
         this.state.set(JSON.parse(JSON.stringify(DEFAULT_STATE)));
         localStorage.removeItem('finanzas:state');
+        this.isLoading.set(false);
       }
     });
   }
