@@ -64,21 +64,30 @@ h3,
 
 /* Global Forms and Buttons */
 input,
-select {
+select,
+textarea {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   color: var(--text);
   border-radius: var(--radius);
   padding: 10px 12px;
   font-size: 14px;
   font-family: 'Sora', sans-serif;
+  touch-action: manipulation;
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--info);
+}
+
+button {
+  touch-action: manipulation;
 }
 
 button.btn-primary {
@@ -94,6 +103,7 @@ button.btn-primary {
   cursor: pointer;
   margin-top: 12px;
   transition: all 0.2s ease;
+  min-height: 44px;
 }
 
 button.btn-primary:hover {
@@ -111,6 +121,7 @@ button.btn-ghost {
   cursor: pointer;
   text-transform: uppercase;
   transition: all 0.2s ease;
+  min-height: 44px;
 }
 
 button.btn-ghost:hover {
@@ -127,6 +138,10 @@ button.btn-ghost:hover {
   margin-bottom: 24px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .card-panel h3 {
@@ -140,7 +155,9 @@ button.btn-ghost:hover {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-grid label {
@@ -148,6 +165,7 @@ button.btn-ghost:hover {
   color: var(--text-muted);
   display: block;
   margin-bottom: 4px;
+  font-weight: 600;
 }
 
 /* Data Tables — Modern Table Layout (Filas cápsula redondeadas) */
@@ -156,6 +174,7 @@ table.data-table {
   border-collapse: separate;
   border-spacing: 0 8px;
   font-size: 13px;
+  box-sizing: border-box;
 }
 
 table.data-table th {
@@ -263,56 +282,66 @@ table.data-table tbody tr.row-expanded td:last-child {
   gap: 6px;
 }
 
-/* Modals */
+/* Modals Optimizados para iPhone 14/15 e iOS Safari */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
-  padding: 20px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px;
+  box-sizing: border-box;
 }
 
 .modal-content {
   background: var(--surface);
   border: 2px solid var(--border);
-  box-shadow: 8px 8px 0px rgba(0, 0, 0, 1);
-  padding: 24px;
-  border-radius: 8px;
+  box-shadow: 6px 6px 0px rgba(0, 0, 0, 1);
+  padding: 20px;
+  border-radius: 16px;
   width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
+  max-width: 480px;
+  max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-content h3 {
   margin-top: 0;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--border);
+  font-size: 16px;
 }
 
 .modal-tabs {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .modal-tabs button {
   flex: 1;
   background: var(--surface2);
   border: 1px solid var(--border);
-  padding: 10px;
+  padding: 10px 8px;
   cursor: pointer;
   border-radius: var(--radius);
   font-weight: 600;
   transition: all 0.2s;
+  min-height: 44px;
 }
 
 .modal-tabs button.active {
@@ -354,12 +383,20 @@ h2.section-title:first-child {
   height: 100%;
 }
 
-/* --- MOBILE SPECIFIC --- */
+/* --- MOBILE SPECIFIC (Optimizado para iPhone 14/15, SE y Android) --- */
 @media (max-width: 768px) {
+  /* Evitar auto-zoom en iOS Safari cuando el usuario toca un campo */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+  }
+
   main {
-    padding-bottom: 84px;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(10px + env(safe-area-inset-left, 0px));
+    padding-right: calc(10px + env(safe-area-inset-right, 0px));
   }
 
   .summary-strip {
@@ -373,21 +410,22 @@ h2.section-title:first-child {
 
   .form-grid {
     grid-template-columns: 1fr !important;
+    gap: 10px;
   }
 
   .card-panel {
-    padding: 16px;
+    padding: 14px;
     border-radius: 12px;
   }
 
   .modal-content {
-    padding: 20px;
-    width: 92vw;
-    max-width: 460px;
-    max-height: 88vh;
+    padding: 16px 14px 18px 14px;
+    width: 95vw;
+    max-width: 440px;
+    max-height: calc(92dvh - env(safe-area-inset-bottom, 0px));
     border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-    margin: 0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    margin: auto;
   }
 
   /* Ajuste de libreta para móviles */
