@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
@@ -16,6 +16,38 @@ export class DeudasComponent {
   private financeService = inject(FinanceService);
 
   debts = computed(() => this.financeService.state().debts);
+
+  searchQuery = signal<string>('');
+  sortBy = signal<'date' | 'name' | 'amount'>('date');
+
+  filteredDebts = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const sort = this.sortBy();
+
+    let list = this.debts();
+
+    if (q) {
+      list = list.filter(d => 
+        (d.name && d.name.toLowerCase().includes(q)) ||
+        (d.notes && d.notes.toLowerCase().includes(q)) ||
+        (d.group && d.group.toLowerCase().includes(q)) ||
+        (d.frequency && d.frequency.toLowerCase().includes(q))
+      );
+    }
+
+    return list.slice().sort((a, b) => {
+      if (sort === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      if (sort === 'amount') {
+        const amtA = a.group === 'prestamo' ? this.getNextUnpaidForDebt(a) : this.calcMinPaymentForDebt(a);
+        const amtB = b.group === 'prestamo' ? this.getNextUnpaidForDebt(b) : this.calcMinPaymentForDebt(b);
+        return amtB - amtA;
+      }
+      // default 'date'
+      return (a.anchor || '').localeCompare(b.anchor || '');
+    });
+  });
 
   frequencies = ['semanal', 'quincenal', 'mensual', 'bimestral', 'anual'];
 

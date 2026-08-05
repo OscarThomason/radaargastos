@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
@@ -16,7 +16,36 @@ export class ServiciosComponent {
   private financeService = inject(FinanceService);
 
   services = computed(() => this.financeService.state().services);
-  
+
+  searchQuery = signal<string>('');
+  sortBy = signal<'date' | 'name' | 'amount'>('date');
+
+  filteredServices = computed(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const sort = this.sortBy();
+
+    let list = this.services();
+
+    if (q) {
+      list = list.filter(s => 
+        (s.name && s.name.toLowerCase().includes(q)) ||
+        (s.notes && s.notes.toLowerCase().includes(q)) ||
+        (s.frequency && s.frequency.toLowerCase().includes(q))
+      );
+    }
+
+    return list.slice().sort((a, b) => {
+      if (sort === 'name') {
+        return a.name.localeCompare(b.name);
+      }
+      if (sort === 'amount') {
+        return b.amount - a.amount;
+      }
+      // default 'date'
+      return (a.anchor || '').localeCompare(b.anchor || '');
+    });
+  });
+
   editingId: string | null = null;
   expandedId: string | null = null;
   

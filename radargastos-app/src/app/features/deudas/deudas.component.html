@@ -170,6 +170,28 @@
   </div>
 }
 
+<!-- Barra de Búsqueda y Ordenamiento -->
+<div class="search-sort-bar">
+  <div class="search-input-wrapper">
+    <span class="material-symbols-outlined search-icon">search</span>
+    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar deuda por nombre, notas o tipo..." />
+    @if (searchQuery()) {
+      <button class="clear-search-btn" (click)="searchQuery.set('')" title="Limpiar búsqueda">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+
+  <div class="sort-selector-wrapper">
+    <span class="material-symbols-outlined sort-icon">sort</span>
+    <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+      <option value="date">📅 Por Próx. Fecha</option>
+      <option value="name">🔤 Por Abecedario (A-Z)</option>
+      <option value="amount">💲 Por Monto</option>
+    </select>
+  </div>
+</div>
+
 <div class="card-panel" style="overflow-x: auto;">
   <table class="data-table">
     <thead>
@@ -183,10 +205,10 @@
       </tr>
     </thead>
     <tbody>
-      @if (debts().length === 0) {
-        <tr><td colspan="6" class="empty-state">No hay deudas registradas.</td></tr>
+      @if (filteredDebts().length === 0) {
+        <tr><td colspan="6" class="empty-state">No se encontraron deudas con esos criterios.</td></tr>
       } @else {
-        @for (d of debts(); track d.id) {
+        @for (d of filteredDebts(); track d.id) {
           <!-- Fila principal clickeable -->
           <tr class="row-clickable" [class.row-expanded]="expandedId === d.id" (click)="toggleExpand(d.id)" style="cursor: pointer;">
             <td>

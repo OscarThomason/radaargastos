@@ -31,6 +31,28 @@
   </div>
 }
 
+<!-- Barra de Búsqueda y Ordenamiento -->
+<div class="search-sort-bar">
+  <div class="search-input-wrapper">
+    <span class="material-symbols-outlined search-icon">search</span>
+    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar servicio por nombre o notas..." />
+    @if (searchQuery()) {
+      <button class="clear-search-btn" (click)="searchQuery.set('')" title="Limpiar búsqueda">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+
+  <div class="sort-selector-wrapper">
+    <span class="material-symbols-outlined sort-icon">sort</span>
+    <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+      <option value="date">📅 Por Próx. Fecha</option>
+      <option value="name">🔤 Por Abecedario (A-Z)</option>
+      <option value="amount">💲 Por Monto</option>
+    </select>
+  </div>
+</div>
+
 <div class="card-panel" style="overflow-x: auto;">
   <table class="data-table">
     <thead>
@@ -43,10 +65,10 @@
       </tr>
     </thead>
     <tbody>
-      @if (services().length === 0) {
-        <tr><td colspan="5" class="empty-state">No hay servicios registrados.</td></tr>
+      @if (filteredServices().length === 0) {
+        <tr><td colspan="5" class="empty-state">No se encontraron servicios con esos criterios.</td></tr>
       } @else {
-        @for (s of services(); track s.id) {
+        @for (s of filteredServices(); track s.id) {
           <!-- Fila principal clickeable -->
           <tr class="row-clickable" [class.row-expanded]="expandedId === s.id" (click)="toggleExpand(s.id)" style="cursor: pointer;">
             <td>

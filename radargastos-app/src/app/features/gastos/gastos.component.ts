@@ -38,16 +38,61 @@ export class GastosComponent {
     return Array.from(months).sort().reverse(); 
   });
 
+  searchQuery = signal<string>('');
+  sortBy = signal<'date' | 'name' | 'amount'>('date');
+
   expenses = computed(() => {
-    return this.allExpenses()
-      .filter(e => e.date.slice(0, 7) === this.selectedMonth())
-      .sort((a, b) => b.date.localeCompare(a.date));
+    const q = this.searchQuery().toLowerCase().trim();
+    const sort = this.sortBy();
+
+    let list = this.allExpenses().filter(e => e.date.slice(0, 7) === this.selectedMonth());
+
+    if (q) {
+      list = list.filter(e => 
+        (e.description && e.description.toLowerCase().includes(q)) ||
+        (e.category && e.category.toLowerCase().includes(q))
+      );
+    }
+
+    return list.slice().sort((a, b) => {
+      if (sort === 'name') {
+        const descA = a.description || a.category || '';
+        const descB = b.description || b.category || '';
+        return descA.localeCompare(descB);
+      }
+      if (sort === 'amount') {
+        return b.amount - a.amount;
+      }
+      // default 'date'
+      return b.date.localeCompare(a.date);
+    });
   });
 
   incomes = computed(() => {
-    return this.allIncomes()
-      .filter(i => i.date.slice(0, 7) === this.selectedMonth())
-      .sort((a, b) => b.date.localeCompare(a.date));
+    const q = this.searchQuery().toLowerCase().trim();
+    const sort = this.sortBy();
+
+    let list = this.allIncomes().filter(i => i.date.slice(0, 7) === this.selectedMonth());
+
+    if (q) {
+      list = list.filter(i => 
+        (i.description && i.description.toLowerCase().includes(q)) ||
+        (i.category && i.category.toLowerCase().includes(q))
+      );
+    }
+
+    return list.slice().sort((a, b) => {
+      if (sort === 'name') {
+        const descA = a.description || a.category || '';
+        const descB = b.description || b.category || '';
+        return descA.localeCompare(descB);
+      }
+      if (sort === 'amount') {
+        return b.amount - a.amount;
+      }
+      // default 'date'
+      return b.date.localeCompare(a.date);
+    });
   });
 
   pastBalance = computed(() => {

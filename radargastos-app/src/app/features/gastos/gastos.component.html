@@ -43,6 +43,28 @@
   </button>
 </div>
 
+<!-- Barra de Búsqueda y Ordenamiento -->
+<div class="search-sort-bar">
+  <div class="search-input-wrapper">
+    <span class="material-symbols-outlined search-icon">search</span>
+    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" placeholder="Buscar gasto o ingreso por nombre o categoría..." />
+    @if (searchQuery()) {
+      <button class="clear-search-btn" (click)="searchQuery.set('')" title="Limpiar búsqueda">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    }
+  </div>
+
+  <div class="sort-selector-wrapper">
+    <span class="material-symbols-outlined sort-icon">sort</span>
+    <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+      <option value="date">📅 Por Fecha</option>
+      <option value="name">🔤 Por Abecedario (A-Z)</option>
+      <option value="amount">💲 Por Monto</option>
+    </select>
+  </div>
+</div>
+
   <div class="grid-2col">
     <!-- Columna de Gastos del Mes -->
     <div>
