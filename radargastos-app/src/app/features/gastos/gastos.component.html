@@ -43,64 +43,59 @@
   </button>
 </div>
 
-<div class="grid-2col">
-  <!-- Columna de Gastos del Mes -->
-  <div>
-    <h2 class="section-title" style="margin-top: 0;">Gastos del Mes ({{ expenses().length }})</h2>
-    <div class="card-panel" style="padding: 12px;">
-      <div class="expense-log">
-        @if (expenses().length === 0) {
-        <div class="empty-state">No hay gastos en este mes.</div>
-        } @else {
-        @for (e of expenses(); track e.id) {
-        <div class="exp-row hoverable minimal-row" (click)="showItemDetails('expense', e)"
-          title="Clic para ver detalles">
-          <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-            <span class="accent-pill accent-pill-danger"
-              style="font-size: 10px; padding: 3px 8px;">{{e.category}}</span>
-            <span class="truncate-text" style="font-weight: 500;">{{e.description || 'Gasto'}}</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-            <span class="exp-amount" style="font-weight: 700;">{{ showTotals() ? money(e.amount) : '****' }}</span>
-            <span class="material-symbols-outlined"
-              style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-          </div>
+  <div class="grid-2col">
+    <!-- Columna de Gastos del Mes -->
+    <div>
+      <h2 class="section-title" style="margin-top: 0;">Gastos del Mes ({{ expenses().length }})</h2>
+      <div class="card-panel" style="padding: 12px;">
+        <div class="expense-log">
+          @if (expenses().length === 0) {
+            <div class="empty-state">No hay gastos en este mes.</div>
+          } @else {
+            @for (e of expenses(); track e.id) {
+              <div class="exp-row hoverable minimal-row" (click)="showItemDetails('expense', e)" title="Clic para ver detalles">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <span style="font-size: 18px; flex-shrink: 0;">{{ getCategoryEmoji(e.category) }}</span>
+                  <span class="accent-pill accent-pill-danger" style="font-size: 10px; padding: 3px 8px;">{{e.category}}</span>
+                  <span class="truncate-text" style="font-weight: 500;">{{e.description || 'Gasto'}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                  <span class="exp-amount" style="font-weight: 700;">{{ showTotals() ? money(e.amount) : '****' }}</span>
+                  <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+                </div>
+              </div>
+            }
+          }
         </div>
-        }
-        }
       </div>
     </div>
-  </div>
 
-  <!-- Columna de Ingresos del Mes -->
-  <div>
-    <h2 class="section-title" style="margin-top: 0;">Ingresos del Mes ({{ incomes().length }})</h2>
-    <div class="card-panel" style="padding: 12px;">
-      <div class="expense-log">
-        @if (incomes().length === 0) {
-        <div class="empty-state">No hay ingresos en este mes.</div>
-        } @else {
-        @for (i of incomes(); track i.id) {
-        <div class="exp-row hoverable minimal-row" (click)="showItemDetails('income', i)"
-          title="Clic para ver detalles">
-          <div style="display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1;">
-            <span class="accent-pill accent-pill-emerald" style="font-size: 10px; padding: 3px 8px;">{{i.category ||
-              'Ingreso'}}</span>
-            <span class="truncate-text" style="font-weight: 500;">{{i.description || 'Ingreso'}}</span>
-          </div>
-          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-            <span class="exp-amount txt-safe" style="font-weight: 700;">{{ showTotals() ? '+' + money(i.amount) : '****'
-              }}</span>
-            <span class="material-symbols-outlined"
-              style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
-          </div>
+    <!-- Columna de Ingresos del Mes -->
+    <div>
+      <h2 class="section-title" style="margin-top: 0;">Ingresos del Mes ({{ incomes().length }})</h2>
+      <div class="card-panel" style="padding: 12px;">
+        <div class="expense-log">
+          @if (incomes().length === 0) {
+            <div class="empty-state">No hay ingresos en este mes.</div>
+          } @else {
+            @for (i of incomes(); track i.id) {
+              <div class="exp-row hoverable minimal-row" (click)="showItemDetails('income', i)" title="Clic para ver detalles">
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                  <span style="font-size: 18px; flex-shrink: 0;">{{ getCategoryEmoji(i.category) }}</span>
+                  <span class="accent-pill accent-pill-emerald" style="font-size: 10px; padding: 3px 8px;">{{i.category || 'Ingreso'}}</span>
+                  <span class="truncate-text" style="font-weight: 500;">{{i.description || 'Ingreso'}}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                  <span class="exp-amount txt-safe" style="font-weight: 700;">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>
+                  <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+                </div>
+              </div>
+            }
+          }
         </div>
-        }
-        }
       </div>
     </div>
   </div>
-</div>
 
 <!-- Modal de Registro / Edición de Gasto -->
 @if (isExpenseModalOpen) {
@@ -189,19 +184,18 @@
     </div>
 
     <!-- Icono y Monto destacado -->
-    <div
-      style="text-align: center; padding: 16px 0; background: var(--surface2); border-radius: 8px; margin-bottom: 16px;">
-      <div
-        style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">
+    <div style="text-align: center; padding: 18px 12px; background: var(--surface2); border-radius: 12px; margin-bottom: 16px;">
+      <div style="font-size: 36px; margin-bottom: 6px;">{{ getCategoryEmoji(selectedDetailData.category) }}</div>
+      <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700;">
         {{ selectedDetailData.category }}
       </div>
       <div style="font-size: 28px; font-weight: 800; margin-top: 4px;" [class.txt-safe]="!selectedDetailIsExpense">
         {{ selectedDetailIsExpense ? money(selectedDetailData.amount) : '+' + money(selectedDetailData.amount) }}
       </div>
       @if (selectedDetailData.description) {
-      <div style="font-size: 14px; font-weight: 500; margin-top: 4px; color: var(--text);">
-        {{ selectedDetailData.description }}
-      </div>
+        <div style="font-size: 14px; font-weight: 600; margin-top: 4px; color: var(--text);">
+          {{ selectedDetailData.description }}
+        </div>
       }
     </div>
 

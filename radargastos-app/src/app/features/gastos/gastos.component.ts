@@ -291,4 +291,28 @@ export class GastosComponent {
   formatTime(timeStr?: string) {
     return this.financeService.formatTime(timeStr);
   }
+
+  getCategoryEmoji(category?: string): string {
+    if (!category) return '💸';
+    const cat = category.toLowerCase().trim();
+
+    if (cat.includes('servicio')) return '⚡';
+    if (cat.includes('deuda')) return '💳';
+    if (cat.includes('transporte') || cat.includes('gasolina') || cat.includes('auto') || cat.includes('uber')) return '🚗';
+    if (cat.includes('alimento') || cat.includes('super') || cat.includes('despensa') || cat.includes('comida')) return '🛒';
+    if (cat.includes('restaurante') || cat.includes('cenar') || cat.includes('comida fuera')) return '🍔';
+    if (cat.includes('ocio') || cat.includes('oscio') || cat.includes('cine') || cat.includes('entretenimiento') || cat.includes('juego')) return '🎮';
+    if (cat.includes('salud') || cat.includes('farmacia') || cat.includes('médico') || cat.includes('doctor')) return '💊';
+    if (cat.includes('gym') || cat.includes('nutricion') || cat.includes('deporte') || cat.includes('ejercicio')) return '🏋️‍♂️';
+    if (cat.includes('ropa') || cat.includes('accesorios') || cat.includes('moda') || cat.includes('zapatos')) return '🛍️';
+    if (cat.includes('casa') || cat.includes('hogar') || cat.includes('renta') || cat.includes('mantenimiento')) return '🏠';
+    if (cat.includes('viaje') || cat.includes('hotel') || cat.includes('vuelo') || cat.includes('vacaciones')) return '✈️';
+    if (cat.includes('mascota') || cat.includes('perro') || cat.includes('gato') || cat.includes('vet')) return '🐶';
+    if (cat.includes('sueldo') || cat.includes('salario') || cat.includes('nómina')) return '💼';
+    if (cat.includes('negocio') || cat.includes('ventas') || cat.includes('ganancia')) return '📈';
+    if (cat.includes('préstamo') || cat.includes('prestamo')) return '🤝';
+    if (cat.includes('regalía') || cat.includes('regalia') || cat.includes('inversión')) return '👑';
+
+    return '🏷️';
+  }
 }
