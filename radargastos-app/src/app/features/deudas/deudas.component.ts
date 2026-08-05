@@ -18,7 +18,7 @@ export class DeudasComponent {
   debts = computed(() => this.financeService.state().debts);
 
   searchQuery = signal<string>('');
-  sortBy = signal<'date' | 'name' | 'amount'>('date');
+  sortBy = signal<'date' | 'name' | 'amount-desc' | 'amount-asc'>('date');
 
   filteredDebts = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -39,10 +39,15 @@ export class DeudasComponent {
       if (sort === 'name') {
         return a.name.localeCompare(b.name);
       }
-      if (sort === 'amount') {
+      if (sort === 'amount-desc') {
         const amtA = a.group === 'prestamo' ? this.getNextUnpaidForDebt(a) : this.calcMinPaymentForDebt(a);
         const amtB = b.group === 'prestamo' ? this.getNextUnpaidForDebt(b) : this.calcMinPaymentForDebt(b);
         return amtB - amtA;
+      }
+      if (sort === 'amount-asc') {
+        const amtA = a.group === 'prestamo' ? this.getNextUnpaidForDebt(a) : this.calcMinPaymentForDebt(a);
+        const amtB = b.group === 'prestamo' ? this.getNextUnpaidForDebt(b) : this.calcMinPaymentForDebt(b);
+        return amtA - amtB;
       }
       // default 'date'
       return (a.anchor || '').localeCompare(b.anchor || '');

@@ -39,7 +39,7 @@ export class GastosComponent {
   });
 
   searchQuery = signal<string>('');
-  sortBy = signal<'date' | 'name' | 'amount'>('date');
+  sortBy = signal<'date' | 'name' | 'amount-desc' | 'amount-asc'>('date');
 
   expenses = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -60,8 +60,11 @@ export class GastosComponent {
         const descB = b.description || b.category || '';
         return descA.localeCompare(descB);
       }
-      if (sort === 'amount') {
+      if (sort === 'amount-desc') {
         return b.amount - a.amount;
+      }
+      if (sort === 'amount-asc') {
+        return a.amount - b.amount;
       }
       // default 'date'
       return b.date.localeCompare(a.date);
@@ -87,8 +90,11 @@ export class GastosComponent {
         const descB = b.description || b.category || '';
         return descA.localeCompare(descB);
       }
-      if (sort === 'amount') {
+      if (sort === 'amount-desc') {
         return b.amount - a.amount;
+      }
+      if (sort === 'amount-asc') {
+        return a.amount - b.amount;
       }
       // default 'date'
       return b.date.localeCompare(a.date);

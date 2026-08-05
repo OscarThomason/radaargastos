@@ -185,9 +185,10 @@
   <div class="sort-selector-wrapper">
     <span class="material-symbols-outlined sort-icon">sort</span>
     <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
-      <option value="date">📅 Por Próx. Fecha</option>
-      <option value="name">🔤 Por Abecedario (A-Z)</option>
-      <option value="amount">💲 Por Monto</option>
+      <option value="date">Por Fecha</option>
+      <option value="name">A-Z (Abecedario)</option>
+      <option value="amount-desc">+$ (Mayor a menor)</option>
+      <option value="amount-asc">-$ (Menor a mayor)</option>
     </select>
   </div>
 </div>

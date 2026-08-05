@@ -18,7 +18,7 @@ export class ServiciosComponent {
   services = computed(() => this.financeService.state().services);
 
   searchQuery = signal<string>('');
-  sortBy = signal<'date' | 'name' | 'amount'>('date');
+  sortBy = signal<'date' | 'name' | 'amount-desc' | 'amount-asc'>('date');
 
   filteredServices = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -38,8 +38,11 @@ export class ServiciosComponent {
       if (sort === 'name') {
         return a.name.localeCompare(b.name);
       }
-      if (sort === 'amount') {
+      if (sort === 'amount-desc') {
         return b.amount - a.amount;
+      }
+      if (sort === 'amount-asc') {
+        return a.amount - b.amount;
       }
       // default 'date'
       return (a.anchor || '').localeCompare(b.anchor || '');
