@@ -35,23 +35,22 @@
   <table class="data-table">
     <thead>
       <tr>
-        <th>Nombre</th>
-        <th>Costo</th>
-        <th>Frecuencia</th>
-        <th>Próximo Pago</th>
-        <th>Días Restantes</th>
-        <th style="width: 32px;"></th>
+        <th>Servicio</th>
+        <th style="text-align: right;">Importe</th>
+        <th class="desktop-only">Frecuencia</th>
+        <th class="desktop-only">Próximo Pago</th>
+        <th class="desktop-only">Días Restantes</th>
       </tr>
     </thead>
     <tbody>
       @if (services().length === 0) {
-        <tr><td colspan="6" class="empty-state">No hay servicios registrados.</td></tr>
+        <tr><td colspan="5" class="empty-state">No hay servicios registrados.</td></tr>
       } @else {
         @for (s of services(); track s.id) {
           <!-- Fila principal clickeable -->
           <tr class="row-clickable" [class.row-expanded]="expandedId === s.id" (click)="toggleExpand(s.id)" style="cursor: pointer;">
             <td>
-              <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted); transition: transform 0.2s;"
                   [style.transform]="expandedId === s.id ? 'rotate(90deg)' : 'rotate(0deg)'">
                   chevron_right
@@ -60,40 +59,47 @@
                 <strong style="font-size: 14px;">{{s.name}}</strong>
               </div>
             </td>
-            <td><strong>{{money(s.amount)}}</strong></td>
-            <td><span class="badge">{{s.frequency || 'mensual' | titlecase}}</span></td>
-            <td>{{formatDate(s.anchor)}}</td>
-            <td>
+            <td style="text-align: right;"><strong style="font-size: 14px; color: var(--text);">{{money(s.amount)}}</strong></td>
+            <td class="desktop-only"><span class="badge">{{s.frequency || 'mensual' | titlecase}}</span></td>
+            <td class="desktop-only">{{formatDate(s.anchor)}}</td>
+            <td class="desktop-only">
               <strong [style.color]="getDaysClass(s.anchor)">{{getDaysRemaining(s.anchor)}}</strong>
             </td>
-            <td></td>
           </tr>
 
           <!-- Panel de detalles expandible -->
           @if (expandedId === s.id) {
             <tr class="detail-row">
-              <td colspan="6" style="padding: 0; border: none;">
+              <td colspan="5" style="padding: 0; border: none;">
                 <div class="detail-panel">
                   <div class="detail-panel-inner">
-                    <!-- Info del servicio -->
+                    <!-- Info completa del servicio -->
                     <div class="detail-info">
-                      @if (s.notes) {
-                        <div class="detail-field">
-                          <span class="detail-label">Notas</span>
-                          <span class="detail-value">{{ s.notes }}</span>
-                        </div>
-                      }
                       <div class="detail-field">
-                        <span class="detail-label">Próx. fecha</span>
+                        <span class="detail-label">Importe</span>
+                        <span class="detail-value" style="font-weight: 700;">{{ money(s.amount) }}</span>
+                      </div>
+                      <div class="detail-field">
+                        <span class="detail-label">Próx. Fecha</span>
                         <span class="detail-value">{{ formatDate(s.anchor) }}</span>
+                      </div>
+                      <div class="detail-field">
+                        <span class="detail-label">Días Restantes</span>
+                        <span class="detail-value" [style.color]="getDaysClass(s.anchor)">{{ getDaysRemaining(s.anchor) }}</span>
                       </div>
                       <div class="detail-field">
                         <span class="detail-label">Frecuencia</span>
                         <span class="detail-value">{{ s.frequency || 'mensual' | titlecase }}</span>
                       </div>
+                      @if (s.notes) {
+                        <div class="detail-field" style="grid-column: 1 / -1;">
+                          <span class="detail-label">Notas</span>
+                          <span class="detail-value">{{ s.notes }}</span>
+                        </div>
+                      }
                     </div>
 
-                    <!-- Acciones -->
+                    <!-- Acciones Editar / Eliminar -->
                     <div class="detail-actions">
                       <button class="action-btn action-edit" (click)="$event.stopPropagation(); editService(s.id)">
                         <span class="material-symbols-outlined">edit</span>

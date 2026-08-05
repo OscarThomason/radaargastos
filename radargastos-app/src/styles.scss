@@ -428,6 +428,36 @@ h2.section-title:first-child {
     margin: auto;
   }
 
+  /* Ocultar columnas secundarias en vista móvil */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .detail-panel-inner {
+    padding: 12px 14px !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+
+  .detail-info {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .detail-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+
+    .action-btn {
+      flex: 1 !important;
+      justify-content: center !important;
+      min-height: 42px !important;
+    }
+  }
+
   /* Ajuste de libreta para móviles */
   body {
     background-image:

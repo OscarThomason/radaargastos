@@ -175,23 +175,22 @@
     <thead>
       <tr>
         <th>Deuda</th>
-        <th>Frecuencia</th>
-        <th>Próx. Cuota / Pago Mín.</th>
-        <th>Próx. Pago</th>
-        <th>Días Rest.</th>
-        <th>Progreso</th>
-        <th style="width: 32px;"></th>
+        <th class="desktop-only">Frecuencia</th>
+        <th style="text-align: right;">Próx. Cuota / Pago Mín.</th>
+        <th class="desktop-only">Próx. Pago</th>
+        <th class="desktop-only">Días Rest.</th>
+        <th class="desktop-only">Progreso</th>
       </tr>
     </thead>
     <tbody>
       @if (debts().length === 0) {
-        <tr><td colspan="7" class="empty-state">No hay deudas registradas.</td></tr>
+        <tr><td colspan="6" class="empty-state">No hay deudas registradas.</td></tr>
       } @else {
         @for (d of debts(); track d.id) {
           <!-- Fila principal clickeable -->
           <tr class="row-clickable" [class.row-expanded]="expandedId === d.id" (click)="toggleExpand(d.id)" style="cursor: pointer;">
             <td>
-              <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted); transition: transform 0.2s;"
                   [style.transform]="expandedId === d.id ? 'rotate(90deg)' : 'rotate(0deg)'">
                   chevron_right
@@ -212,87 +211,100 @@
                 </div>
               </div>
             </td>
-            <td><span class="badge">{{d.frequency || 'mensual' | titlecase}}</span></td>
+            
+            <td class="desktop-only"><span class="badge">{{d.frequency || 'mensual' | titlecase}}</span></td>
 
-            <!-- Próxima cuota / Pago mínimo -->
-            <td>
+            <!-- Próxima cuota / Pago mínimo (Visible siempre) -->
+            <td style="text-align: right;">
               @if (d.group === 'prestamo') {
-                <strong>{{ money(getNextUnpaidForDebt(d)) }}</strong>
+                <strong style="font-size: 14px; color: var(--text);">{{ money(getNextUnpaidForDebt(d)) }}</strong>
                 @if (d.useVariableInstallments) {
                   <div style="font-size: 10px; color: var(--text-muted);">cuota {{ getPaidCount(d) + 1 }}/{{ getTotalCount(d) }}</div>
                 }
               } @else {
-                <strong>{{ money(calcMinPaymentForDebt(d)) }}</strong>
+                <strong style="font-size: 14px; color: var(--text);">{{ money(calcMinPaymentForDebt(d)) }}</strong>
                 @if (d.cat) {
                   <div style="font-size: 10px; color: #1D4ED8;">con CAT</div>
                 }
               }
             </td>
 
-            <td>{{formatDate(d.anchor)}}</td>
-            <td>
+            <td class="desktop-only">{{formatDate(d.anchor)}}</td>
+            <td class="desktop-only">
               <strong [style.color]="getDaysClass(d.anchor)">{{getDaysRemaining(d.anchor)}}</strong>
             </td>
 
             <!-- Progreso en Pagos -->
-            <td>
+            <td class="desktop-only">
               @if (d.group === 'prestamo') {
                 <div style="font-size: 12px;">{{ getPaidCount(d) }}/{{ getTotalCount(d) }}</div>
               } @else {
                 —
               }
             </td>
-            <td></td>
           </tr>
 
           <!-- Panel de detalle expandible -->
           @if (expandedId === d.id) {
             <tr class="detail-row">
-              <td colspan="7" style="padding: 0; border: none;">
+              <td colspan="6" style="padding: 0; border: none;">
                 <div class="detail-panel">
                   <div class="detail-panel-inner">
-                    <!-- Info de la deuda -->
+                    <!-- Info completa de la deuda -->
                     <div class="detail-info">
+                      <div class="detail-field">
+                        <span class="detail-label">Próx. Pago</span>
+                        <span class="detail-value">{{ formatDate(d.anchor) }}</span>
+                      </div>
+                      <div class="detail-field">
+                        <span class="detail-label">Días Restantes</span>
+                        <span class="detail-value" [style.color]="getDaysClass(d.anchor)">{{ getDaysRemaining(d.anchor) }}</span>
+                      </div>
                       <div class="detail-field">
                         <span class="detail-label">Frecuencia</span>
                         <span class="detail-value">{{ d.frequency || 'mensual' | titlecase }}</span>
                       </div>
+
                       @if (d.group === 'prestamo') {
                         <div class="detail-field">
-                          <span class="detail-label">Total deuda</span>
+                          <span class="detail-label">Progreso</span>
+                          <span class="detail-value">{{ getPaidCount(d) }} de {{ getTotalCount(d) }} cuotas</span>
+                        </div>
+                        <div class="detail-field">
+                          <span class="detail-label">Total Deuda</span>
                           <span class="detail-value">{{ money(d.total || 0) }}</span>
                         </div>
                         <div class="detail-field">
-                          <span class="detail-label">Pagado</span>
+                          <span class="detail-label">Monto Pagado</span>
                           <span class="detail-value" style="color: #059669;">{{ money(d.pagado || 0) }} ({{ d.total ? ((d.pagado || 0) / d.total * 100 | number:'1.0-0') : 0 }}%)</span>
                         </div>
                       } @else {
                         <div class="detail-field">
-                          <span class="detail-label">Saldo deuda</span>
+                          <span class="detail-label">Saldo Deuda</span>
                           <span class="detail-value" style="color: #D32F2F;">{{ money(d.debt || 0) }}</span>
                         </div>
                         @if (d.noInterest) {
                           <div class="detail-field">
-                            <span class="detail-label">Sin intereses</span>
+                            <span class="detail-label">Sin Intereses</span>
                             <span class="detail-value" style="color: #059669;">{{ money(d.noInterest) }}</span>
                           </div>
                         }
                         @if (d.creditTerm) {
                           <div class="detail-field">
-                            <span class="detail-label">Plazo rest.</span>
+                            <span class="detail-label">Plazo Restante</span>
                             <span class="detail-value">{{ d.creditTerm }} meses</span>
                           </div>
                         }
                       }
                       @if (d.notes) {
-                        <div class="detail-field">
+                        <div class="detail-field" style="grid-column: 1 / -1;">
                           <span class="detail-label">Notas</span>
                           <span class="detail-value">{{ d.notes }}</span>
                         </div>
                       }
                     </div>
 
-                    <!-- Acciones -->
+                    <!-- Acciones Editar / Pagar / Eliminar -->
                     <div class="detail-actions">
                       <button class="action-btn action-pay" (click)="$event.stopPropagation(); openPayModal(d.id)">
                         <span class="material-symbols-outlined">check_circle</span>
