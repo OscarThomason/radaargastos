@@ -19,6 +19,7 @@ export class AjustesComponent {
   expenseCats = signal<string[]>([...this.financeService.expenseCategories()]);
   incomeCats = signal<string[]>([...this.financeService.incomeCategories()]);
   timeFormat = signal<'12h' | '24h'>(this.financeService.timeFormat());
+  currency = signal<string>(this.financeService.currency());
 
   // Load history (máximo 60 registros)
   history = computed(() => (this.financeService.state().history || []).slice(0, 60));
@@ -54,10 +55,15 @@ export class AjustesComponent {
     this.timeFormat.set(fmt);
   }
 
+  setCurrency(curr: string) {
+    this.currency.set(curr);
+  }
+
   save() {
     this.financeService.updateExpenseCategories(this.expenseCats());
     this.financeService.updateIncomeCategories(this.incomeCats());
     this.financeService.updateTimeFormat(this.timeFormat());
+    this.financeService.updateCurrency(this.currency());
     this.location.back();
   }
 

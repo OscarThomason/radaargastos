@@ -26,6 +26,32 @@
   </div>
 </div>
 
+<!-- Configuración de Divisa / Moneda -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <h3>Moneda / Divisa</h3>
+  <p style="font-size: 13px; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px;">
+    Selecciona el símbolo de divisa que se mostrará en los balances y reportes financieros.
+  </p>
+  <div class="segmented-control">
+    <button [class.active]="currency() === '$'" (click)="setCurrency('$')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">payments</span>
+      Peso / Dólar ($)
+    </button>
+    <button [class.active]="currency() === '€'" (click)="setCurrency('€')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">euro</span>
+      Euro (€)
+    </button>
+    <button [class.active]="currency() === '£'" (click)="setCurrency('£')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">currency_pound</span>
+      Libra (£)
+    </button>
+    <button [class.active]="currency() === 'MXN'" (click)="setCurrency('MXN')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">monetization_on</span>
+      MXN
+    </button>
+  </div>
+</div>
+
 <!-- Exportar Información en Excel -->
 <div class="card-panel" style="margin-bottom: 24px;">
   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">

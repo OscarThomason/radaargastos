@@ -330,7 +330,7 @@ export class GastosComponent {
   }
 
   money(amount: number) {
-    return '$' + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   getCardName(id?: string) {

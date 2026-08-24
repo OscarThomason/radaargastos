@@ -1,38 +1,240 @@
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 
   @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
   }
 }
 
-.countdown-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+// ========================================
+// ESTILOS DE CALENDARIO DE PAGOS
+// ========================================
+.calendar-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-@media (max-width: 768px) {
-  .countdown-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+.calendar-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: minmax(90px, auto);
+  gap: 4px;
+}
+
+.calendar-day-cell {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 90px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+
+  &:hover {
+    background: var(--surface);
+    border-color: var(--text-muted);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    z-index: 10;
+  }
+
+  &.other-month {
+    opacity: 0.35;
+    background: transparent;
+    border-color: transparent;
+
+    &:hover {
+      opacity: 0.7;
+      background: var(--surface2);
+      border-color: var(--border);
+    }
+  }
+
+  &.status-danger {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-dim);
+  }
+
+  &.status-warn {
+    border-left: 3px solid var(--warn);
+    background: var(--warn-dim);
+  }
+
+  &.status-safe {
+    border-left: 3px solid var(--safe);
+    background: var(--safe-dim);
+  }
+
+  &.selected-week {
+    border-color: rgba(124, 156, 245, 0.5) !important;
+    background: rgba(124, 156, 245, 0.06) !important;
+  }
+
+  &.is-today {
+    border: 2px solid var(--info) !important;
+    background: rgba(124, 156, 245, 0.03);
+
+    .day-number {
+      color: var(--info);
+      font-weight: 800;
+    }
   }
 }
 
-.month-separator {
-  margin: 16px 0 12px;
-  border-bottom: 2px dashed rgba(0,0,0,0.1);
-  padding-bottom: 4px;
+.day-number-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-.month-separator h3 {
-  margin: 0;
-  font-size: 14px;
+
+.day-number {
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-muted);
+}
+
+.today-badge {
+  font-size: 8px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  background: var(--info-dim);
+  color: var(--info);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.day-events-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 2px;
+}
+
+.calendar-event-tag {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s ease;
+  line-height: 1.1;
+
+  .event-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event-amount {
+    font-size: 8px;
+    opacity: 0.85;
+    margin-top: 1px;
+  }
+
+  &:hover {
+    transform: scale(1.03);
+    filter: brightness(1.05);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+
+  &.status-danger {
+    background: var(--danger-dim);
+    color: var(--danger);
+    border-left-color: var(--danger);
+  }
+
+  &.status-warn {
+    background: var(--warn-dim);
+    color: var(--warn);
+    border-left-color: var(--warn);
+  }
+
+  &.status-safe {
+    background: var(--safe-dim);
+    color: var(--safe);
+    border-left-color: var(--safe);
+  }
+}
+
+// ========================================
+// RESPONSIVO PARA MÓVILES
+// ========================================
+@media (max-width: 600px) {
+  .calendar-weekdays-grid {
+    font-size: 9px;
+  }
+
+  .calendar-days-grid {
+    grid-auto-rows: minmax(65px, auto);
+  }
+
+  .calendar-day-cell {
+    min-height: 65px;
+    padding: 3px;
+  }
+
+  .calendar-event-tag {
+    padding: 2px 4px;
+    font-size: 8px;
+
+    .event-amount {
+      display: none;
+    }
+  }
+
+  .today-badge {
+    display: none;
+  }
+}
+
+// Simulación de stat-card para el selector dinámico de semana
+.stat-card {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+  }
+
+  @media (max-width: 600px) {
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
 }

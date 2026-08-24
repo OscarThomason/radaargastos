@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UpcomingItem } from '../../models/finance.model';
+import { FinanceService } from '../../services/finance.service';
 
 @Component({
   selector: 'app-countdown-card',
@@ -12,6 +13,7 @@ import { UpcomingItem } from '../../models/finance.model';
 export class CountdownCardComponent {
   @Input() item!: UpcomingItem;
   @Output() markPaid = new EventEmitter<{id: string, kind: string}>();
+  private financeService = inject(FinanceService);
 
   get statusClass() {
     if (this.item.days < 0) return 'status-danger';
@@ -41,6 +43,6 @@ export class CountdownCardComponent {
   }
 
   money(amount: number) {
-    return '$' + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }

@@ -85,6 +85,7 @@ export interface AppState {
   cards?: Card[];
   history?: HistoryLog[];
   timeFormat?: '12h' | '24h';
+  currency?: string;
 }
 
 export interface HistoryLog {

@@ -53,9 +53,8 @@ import { CommonModule } from '@angular/common';
       text-transform: uppercase;
       letter-spacing: 0.06em;
       font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      line-height: 1.25;
       flex: 1;
     }
 
@@ -97,9 +96,8 @@ import { CommonModule } from '@angular/common';
       font-family: 'Sora', sans-serif;
       color: var(--text, #0f172a);
       letter-spacing: -0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: normal;
+      line-height: 1.25;
     }
 
     .value.danger {

@@ -8,35 +8,98 @@
 </div>
 
 <div class="summary-strip">
-  <app-stat-card label="Compromiso este ciclo" [value]="showTotals() ? money(compromisoCiclo()) : '****'"
+  <app-stat-card label="Compromiso por pagar en el mes" [value]="showTotals() ? money(compromisoCiclo()) : '****'"
     icon="payments">
   </app-stat-card>
-  <app-stat-card label="Deuda viva total" [value]="showTotals() ? money(totalDeudaViva()) : '****'" valueClass="danger"
+  
+  <!-- Tarjeta interactiva para compromiso por semana -->
+  <div class="stat-card">
+    <div class="stat-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
+      <select [ngModel]="selectedWeekIndex()" (ngModelChange)="onChangeWeek($event)" style="background: transparent; border: none; font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; outline: none; padding: 0; width: 100%; cursor: pointer; font-family: inherit;">
+        @for (sem of semanasConCompromiso(); track sem.index) {
+          <option [value]="sem.index">Compromiso {{ sem.label }}</option>
+        }
+      </select>
+      <div class="icon-box" style="width: 30px; height: 30px; border-radius: 8px; background: var(--surface2); color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">date_range</span>
+      </div>
+    </div>
+    <div class="value" style="font-size: 22px; font-weight: 800; margin-top: 8px; font-family: 'Sora', sans-serif; color: var(--text); letter-spacing: -0.02em; white-space: normal; line-height: 1.25;">
+      {{ showTotals() ? money(compromisoSemanaSeleccionada()) : '****' }}
+    </div>
+  </div>
+
+  <app-stat-card label="Deuda total" [value]="showTotals() ? money(totalDeudaViva()) : '****'" valueClass="danger"
     icon="account_balance_wallet">
+  </app-stat-card>
+  <app-stat-card label="Por generar esta semana" [value]="showTotals() ? money(dineroRequeridoSemana()) : '****'"
+    [valueClass]="dineroRequeridoSemana() > 0 ? 'warn' : 'safe'" icon="trending_up">
   </app-stat-card>
   <app-stat-card label="Pagos vencidos" [value]="vencidos().toString()"
     [valueClass]="vencidos() > 0 ? 'danger' : 'safe'" icon="warning">
   </app-stat-card>
-  <app-stat-card label="Próximos 30 días" [value]="next30().length.toString()" icon="event">
-  </app-stat-card>
 </div>
 
-<h2 class="section-title">Cuenta regresiva de pagos</h2>
-<div>
-  @if (next30Grouped().length === 0) {
-  <div class="empty-state">No hay pagos programados en los próximos 30 días.</div>
-  } @else {
-  @for (group of next30Grouped(); track group.month) {
-  <div class="month-separator">
-    <h3>{{ group.month }}</h3>
+<div class="calendar-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 28px; margin-bottom: 12px;">
+  <h2 class="section-title" style="margin: 0;">Calendario de Pagos</h2>
+  <div class="calendar-controls" style="display: flex; align-items: center; gap: 8px;">
+    <button class="btn-ghost" style="padding: 6px 10px; border-color: transparent; margin: 0; min-width: unset;" (click)="prevMonth()" title="Mes Anterior">
+      <span class="material-symbols-outlined">chevron_left</span>
+    </button>
+    <span class="calendar-month-title" style="font-weight: 700; font-size: 15px; min-width: 150px; text-align: center; color: var(--text);">
+      {{ currentMonthName() }}
+    </span>
+    <button class="btn-ghost" style="padding: 6px 10px; border-color: transparent; margin: 0; min-width: unset;" (click)="nextMonth()" title="Siguiente Mes">
+      <span class="material-symbols-outlined">chevron_right</span>
+    </button>
   </div>
-  <div class="countdown-grid">
-    @for (item of group.items; track item.id) {
-    <app-countdown-card [item]="item" (markPaid)="onMarkPaid($event)"></app-countdown-card>
+</div>
+
+<div class="card-panel calendar-panel" style="padding: 12px; margin-bottom: 30px; overflow: hidden;">
+  <!-- Cabecera de días de la semana -->
+  <div class="calendar-weekdays-grid">
+    <div>Lun</div>
+    <div>Mar</div>
+    <div>Mié</div>
+    <div>Jue</div>
+    <div>Vie</div>
+    <div>Sáb</div>
+    <div>Dom</div>
+  </div>
+
+  <!-- Rejilla de días -->
+  <div class="calendar-days-grid">
+    @for (week of calendarWeeks(); track week; let idx = $index) {
+      @for (day of week; track day.date) {
+        <div class="calendar-day-cell" 
+             [class.other-month]="!day.isCurrentMonth"
+             [class.is-today]="day.isToday"
+             [class.selected-week]="idx === selectedWeekIndex()"
+             [ngClass]="getDayStatusClass(day.items)">
+          <div class="day-number-row">
+            <span class="day-number">{{ day.dayNum }}</span>
+            @if (day.isToday) {
+              <span class="today-badge">Hoy</span>
+            }
+          </div>
+          
+          <div class="day-events-container">
+            @for (item of day.items; track item.id) {
+              <div class="calendar-event-tag" 
+                   [class.status-danger]="item.days < 0"
+                   [class.status-warn]="item.days >= 0 && item.days <= 2"
+                   [class.status-safe]="item.days > 2"
+                   (click)="onMarkPaid({id: item.id, kind: item.kind})"
+                   [title]="item.name + ' - ' + money(item.amount)">
+                <span class="event-name">{{ item.name }}</span>
+                <span class="event-amount">{{ money(item.amount) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
     }
   </div>
-  }
-  }
 </div>
 
 @if (isPayModalOpen && payingDebt) {

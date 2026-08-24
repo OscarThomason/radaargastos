@@ -15,7 +15,8 @@ const DEFAULT_STATE: AppState = {
   customExpenseCategories: [...CATEGORIES],
   customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'],
   cards: [],
-  history: []
+  history: [],
+  currency: '$'
 };
 
 @Injectable({
@@ -25,6 +26,7 @@ export class FinanceService {
   state = signal<AppState>(JSON.parse(JSON.stringify(DEFAULT_STATE)));
   
   timeFormat = computed(() => this.state().timeFormat || '12h');
+  currency = computed(() => this.state().currency || '$');
 
   expenseCategories = computed(() => {
     const s = this.state();
@@ -462,6 +464,13 @@ export class FinanceService {
     const current = { ...this.state() };
     current.timeFormat = format;
     this.logAction(current, `Se cambió el formato de hora a ${format}`);
+    this.saveState(current);
+  }
+
+  updateCurrency(currency: string) {
+    const current = { ...this.state() };
+    current.currency = currency;
+    this.logAction(current, `Se cambió la moneda del sistema a ${currency}`);
     this.saveState(current);
   }
 

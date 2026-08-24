@@ -352,7 +352,7 @@ export class DeudasComponent {
   }
 
   money(amount: number) {
-    return '$' + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   formatDate(dateStr?: string) {
