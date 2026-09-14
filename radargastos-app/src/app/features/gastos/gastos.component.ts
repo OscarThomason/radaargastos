@@ -222,6 +222,16 @@ export class GastosComponent {
     this.inPaymentMethod = item.paymentMethod || 'efectivo';
   }
 
+  onDescChange(val: string) {
+    this.exDesc = val;
+    if (!val.trim()) return;
+    // Categorización instantánea en tiempo real por coincidencia local
+    const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(undefined, val);
+    if (mapped && mapped !== 'Otros') {
+      this.exCat = mapped;
+    }
+  }
+
   async autoCategorizeWithN8n() {
     if (!this.exDesc.trim()) return;
     this.isAiCategorizing.set(true);
