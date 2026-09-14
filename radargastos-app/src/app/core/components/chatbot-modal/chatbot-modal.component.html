@@ -1,0 +1,114 @@
+<!-- Botón Flotante para Abrir el Chatbot Asesor -->
+<button class="chatbot-trigger-btn" (click)="toggleOpen()" title="Consultar si conviene realizar una compra">
+  <div class="chatbot-trigger-inner">
+    <span class="material-symbols-outlined">smart_toy</span>
+    <span class="chatbot-trigger-label">¿Comprar esto?</span>
+  </div>
+  <span class="chatbot-ping-dot"></span>
+</button>
+
+<!-- Ventana / Modal de Asesor Pre-Compra IA n8n -->
+@if (isOpen()) {
+  <div class="chatbot-overlay" (click)="close()">
+    <div class="chatbot-card-container" (click)="$event.stopPropagation()">
+      
+      <!-- Header del Chatbot -->
+      <div class="chatbot-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="bot-avatar">
+            <span class="material-symbols-outlined">psychology</span>
+          </div>
+          <div>
+            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text);">Asesor Pre-Compra (n8n FinOps)</h4>
+            <span style="font-size: 11px; color: var(--text-muted);">¿Vale la pena hacer esta compra? Consúltalo con la IA</span>
+          </div>
+        </div>
+        <button class="close-btn" (click)="close()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Cuerpo del Chatbot -->
+      <div class="chatbot-body">
+        @if (!lastResponse()) {
+          <div class="prompt-section">
+            <p style="font-size: 13px; color: var(--text); margin-bottom: 12px; font-weight: 500;">
+              Cuéntame qué artículo o servicio tienes pensado comprar y evaluaré el costo de oportunidad, nivel de necesidad e impacto en tu presupuesto:
+            </p>
+
+            <div class="form-group">
+              <label>¿Qué deseas comprar?</label>
+              <input [(ngModel)]="itemQuestion" placeholder="Ej. Chamarra de cuero, Tenis Nike, Pantalla 55''" (keyup.enter)="sendConsultation()">
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label>Monto Aprox. ($ MXN)</label>
+              <input [(ngModel)]="itemAmount" type="number" placeholder="Ej. 1500" (keyup.enter)="sendConsultation()">
+            </div>
+
+            <div class="form-group" style="margin-top: 10px;">
+              <label>Plazo o Notas (opcional)</label>
+              <input [(ngModel)]="itemNotes" placeholder="Ej. A 3 meses sin intereses, en oferta hoy" (keyup.enter)="sendConsultation()">
+            </div>
+
+            <!-- Sugerencias Rápidas -->
+            <div class="quick-pills-label">Prueba rápida:</div>
+            <div class="quick-pills-container">
+              <button class="quick-pill" (click)="quickAsk('Tenis deportivos Nike', 2200)">👟 Tenis $2,200</button>
+              <button class="quick-pill" (click)="quickAsk('Consola de videojuegos', 8500)">🎮 Consola $8,500</button>
+              <button class="quick-pill" (click)="quickAsk('Cena en restaurante gourmet', 950)">🍔 Cena $950</button>
+            </div>
+
+            <button class="btn-primary evaluate-btn" (click)="sendConsultation()" [disabled]="isThinking() || !itemQuestion.trim()">
+              @if (isThinking()) {
+                <span class="material-symbols-outlined spin-icon">sync</span>
+                <span>Analizando con n8n...</span>
+              } @else {
+                <span class="material-symbols-outlined">auto_awesome</span>
+                <span>Evaluar Compra con IA</span>
+              }
+            </button>
+          </div>
+        } @else {
+          <!-- Resultado del Análisis Pre-Compra -->
+          <div class="result-section">
+            <div class="verdict-banner" 
+              [class.verdict-recommended]="lastResponse()?.veredicto_consejero === 'Recomendado'"
+              [class.verdict-postpone]="lastResponse()?.veredicto_consejero === 'Posponer'"
+              [class.verdict-avoid]="lastResponse()?.veredicto_consejero === 'Evitar' || lastResponse()?.veredicto_consejero === 'Gasto Realizado'">
+              
+              <div class="verdict-header">
+                <span class="material-symbols-outlined verdict-icon">
+                  {{ lastResponse()?.veredicto_consejero === 'Recomendado' ? 'verified' : (lastResponse()?.veredicto_consejero === 'Posponer' ? 'history_toggle_off' : 'block') }}
+                </span>
+                <div>
+                  <span class="verdict-label">Veredicto IA</span>
+                  <h3 class="verdict-title">{{ lastResponse()?.veredicto_consejero || 'Posponer' }}</h3>
+                </div>
+              </div>
+            </div>
+
+            <div class="analysis-box">
+              <div class="analysis-item">
+                <span class="analysis-title">📊 Análisis Financiero:</span>
+                <p class="analysis-text">{{ lastResponse()?.analisis_financiero }}</p>
+              </div>
+
+              @if (lastResponse()?.accion_recomendada) {
+                <div class="analysis-item" style="margin-top: 10px;">
+                  <span class="analysis-title">💡 Acción Recomendada:</span>
+                  <p class="analysis-text" style="color: var(--text); font-weight: 600;">{{ lastResponse()?.accion_recomendada }}</p>
+                </div>
+              }
+            </div>
+
+            <button class="btn-ghost new-search-btn" (click)="resetForm()">
+              <span class="material-symbols-outlined">restart_alt</span>
+              <span>Consultar otra compra</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

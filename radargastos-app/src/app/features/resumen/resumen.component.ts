@@ -30,6 +30,34 @@ export class ResumenComponent {
   });
   
   showTotals = signal(true);
+  showReminderToast = signal(true);
+
+  upcomingWeekPaymentInfo = computed(() => {
+    const weekItems = this.upcomingItems().filter(i => i.days >= 0 && i.days <= 7);
+    if (weekItems.length === 0) return null;
+
+    const totalNeeded = weekItems.reduce((acc, item) => acc + item.amount, 0);
+    const firstItem = weekItems[0];
+    const dateFormatted = firstItem.due.toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'short' });
+
+    return {
+      totalNeeded,
+      count: weekItems.length,
+      firstName: firstItem.name,
+      firstDate: dateFormatted
+    };
+  });
+
+  dismissReminderToast() {
+    this.showReminderToast.set(false);
+  }
+
+  constructor() {
+    // Auto-ocultar el pop-up después de 5 segundos
+    setTimeout(() => {
+      this.showReminderToast.set(false);
+    }, 5000);
+  }
 
   toggleTotals() {
     this.showTotals.set(!this.showTotals());

@@ -77,6 +77,102 @@
   </div>
 </div>
 
+<!-- Analista de Gastos IA FinOps & Auditoría de Evitables -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+    <div>
+      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="color: #7C3AED;">psychology</span>
+        Analista de Gastos IA (n8n FinOps)
+      </h3>
+      <span style="font-size: 12px; color: var(--text-muted);">Auditoría de gastos prescindibles, evitación de compras impulsivas y límites de presupuesto.</span>
+    </div>
+    <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="auditExpensesWithN8n()" [disabled]="isAuditingWithN8n()">
+      <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
+      <span>{{ isAuditingWithN8n() ? 'Auditando con n8n...' : 'Auditar Gastos con IA' }}</span>
+    </button>
+  </div>
+
+  <!-- Banners de Diagnóstico de Gastos -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-bottom: 16px;">
+    @if (aiAuditExpenses().incomeExceeded) {
+      <div style="background: #FEE2E2; border-left: 4px solid #DC2626; padding: 12px 16px; border-radius: 10px; color: #991B1B;">
+        <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">warning</span>
+          Superaste tus ingresos este mes
+        </strong>
+        <p style="margin: 4px 0 0 0; font-size: 12px;">
+          Con respecto a lo que tienes de ingresos (<strong>{{ money(aiAuditExpenses().totalInc) }}</strong>), tus gastos alcanzaron el <strong>{{ aiAuditExpenses().ratioToIncome }}%</strong> (superado por {{ money(aiAuditExpenses().exceededAmount) }}).
+        </p>
+      </div>
+    } @else if (aiAuditExpenses().totalInc > 0) {
+      <div style="background: #D1FAE5; border-left: 4px solid #059669; padding: 12px 16px; border-radius: 10px; color: #065F46;">
+        <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+          Gastos dentro de tus ingresos
+        </strong>
+        <p style="margin: 4px 0 0 0; font-size: 12px;">
+          Tus gastos representan el <strong>{{ aiAuditExpenses().ratioToIncome }}%</strong> de tus ingresos de {{ money(aiAuditExpenses().totalInc) }}. ¡Vas muy bien!
+        </p>
+      </div>
+    }
+
+    <div style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px 16px; border-radius: 10px; color: #92400E;">
+      <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
+        <span class="material-symbols-outlined" style="font-size: 18px;">savings</span>
+        Gastos Evitables / Innecesarios
+      </strong>
+      <p style="margin: 4px 0 0 0; font-size: 12px;">
+        Acumulas <strong>{{ money(aiAuditExpenses().totalEvitable) }}</strong> en {{ aiAuditExpenses().evitableList.length }} gastos evitables o prescindibles este mes.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tabla Auditada de Gastos Evitables -->
+  <div style="overflow-x: auto;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Gasto Auditado</th>
+          <th>Monto</th>
+          <th>Evaluación IA</th>
+          <th>Acción Recomendada</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (aiAuditExpenses().expensesList.length === 0) {
+          <tr><td colspan="4" class="empty-state">No hay gastos registrados en este periodo.</td></tr>
+        } @else {
+          @for (e of aiAuditExpenses().expensesList; track e.id) {
+            <tr>
+              <td>
+                <strong>{{ e.description || e.category }}</strong>
+                <div style="font-size: 10px; color: var(--text-muted);">{{ e.date }} &bull; {{ e.category }}</div>
+              </td>
+              <td><strong>{{ money(e.amount) }}</strong></td>
+              <td>
+                @if (e.esEvitable) {
+                  <span class="badge" style="background: #FEE2E2; color: #DC2626;">⚠️ Pudo haberse evitado</span>
+                } @else if (e.nivelNecesidad === 'Esencial') {
+                  <span class="badge" style="background: #D1FAE5; color: #059669;">🟢 Esencial</span>
+                } @else {
+                  <span class="badge" style="background: #EFF6FF; color: #1D4ED8;">{{ e.nivelNecesidad || 'Evaluado' }}</span>
+                }
+                @if (e.analisisFinanciero) {
+                  <div style="font-size: 11px; margin-top: 2px; color: var(--text-muted);">"{{ e.analisisFinanciero }}"</div>
+                }
+              </td>
+              <td>
+                <span style="font-size: 11px; font-weight: 500;">{{ e.accionRecomendada || 'Mantener control sobre esta categoría.' }}</span>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- Análisis de Gastos Esenciales vs No Esenciales -->
 <div class="card-panel" style="margin-bottom: 24px;">
   <h2 class="section-title" style="margin-top: 0;">Clasificación de Gastos: Esenciales vs. No Esenciales</h2>

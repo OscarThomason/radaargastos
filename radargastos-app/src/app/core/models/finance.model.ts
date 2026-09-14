@@ -39,6 +39,18 @@ export interface ServiceItem {
   notes: string;
 }
 
+export interface N8nAgentResponse {
+  tipo_solicitud?: 'analisis_gasto' | 'consulta_compra';
+  categoria?: string;
+  subcategoria_sugerida?: string;
+  es_evitable?: boolean | null;
+  nivel_necesidad?: 'Esencial' | 'Opcional' | 'Impulso' | 'Inversión';
+  veredicto_consejero?: 'Recomendado' | 'Posponer' | 'Evitar' | 'Gasto Realizado';
+  analisis_financiero?: string;
+  accion_recomendada?: string;
+  datos_sanitizados?: boolean;
+}
+
 export interface Expense {
   id: string;
   date: string;
@@ -47,6 +59,12 @@ export interface Expense {
   description: string;
   amount: number;
   paymentMethod?: string; // id de tarjeta o 'efectivo'
+  // Campos de Inteligencia IA FinOps (n8n)
+  esEvitable?: boolean | null;
+  nivelNecesidad?: 'Esencial' | 'Opcional' | 'Impulso' | 'Inversión';
+  veredictoConsejero?: string;
+  analisisFinanciero?: string;
+  accionRecomendada?: string;
 }
 
 export interface Income {

@@ -2,7 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
-import { Expense, Income } from '../../core/models/finance.model';
+import { AiAdvisorService } from '../../core/services/ai-advisor.service';
+import { Expense, Income, N8nAgentResponse } from '../../core/models/finance.model';
 import { StatCardComponent } from '../../core/components/stat-card/stat-card.component';
 import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
@@ -15,9 +16,14 @@ import { ConfirmModalComponent } from '../../core/components/confirm-modal/confi
 })
 export class GastosComponent {
   private financeService = inject(FinanceService);
+  private aiAdvisor = inject(AiAdvisorService);
 
   categories = this.financeService.expenseCategories;
   incomeCategories = this.financeService.incomeCategories;
+
+  // Estado IA Categorización
+  isAiCategorizing = signal(false);
+  aiAnalysisResult = signal<N8nAgentResponse | null>(null);
   
   allExpenses = computed(() => this.financeService.state().expenses);
   allIncomes = computed(() => this.financeService.state().incomes);
@@ -216,10 +222,36 @@ export class GastosComponent {
     this.inPaymentMethod = item.paymentMethod || 'efectivo';
   }
 
+  async autoCategorizeWithN8n() {
+    if (!this.exDesc.trim()) return;
+    this.isAiCategorizing.set(true);
+
+    const result = await this.aiAdvisor.queryN8nAgent({
+      tipo_solicitud: 'analisis_gasto',
+      descripcion: this.exDesc,
+      monto: this.exAmount || 0,
+      fecha: this.exDate,
+      metodo_pago: this.getCardName(this.exPaymentMethod)
+    });
+
+    this.isAiCategorizing.set(false);
+
+    if (result) {
+      this.aiAnalysisResult.set(result);
+      if (result.categoria) {
+        const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result.categoria);
+        this.exCat = mapped;
+      }
+    }
+  }
+
   addExpense() {
     if (!this.exDate || this.exAmount === null) {
       alert('Completa fecha y monto'); return;
     }
+
+    const aiRes = this.aiAnalysisResult();
+    const isEss = this.aiAdvisor.isEssential(this.exCat);
     
     const item: Expense = {
       id: this.editingExId || 'e' + Date.now(),
@@ -228,7 +260,12 @@ export class GastosComponent {
       category: this.exCat,
       description: this.exDesc.trim(),
       amount: this.exAmount,
-      paymentMethod: this.exPaymentMethod
+      paymentMethod: this.exPaymentMethod,
+      esEvitable: aiRes ? aiRes.es_evitable : !isEss,
+      nivelNecesidad: aiRes ? aiRes.nivel_necesidad : (isEss ? 'Esencial' : 'Opcional'),
+      veredictoConsejero: aiRes?.veredicto_consejero,
+      analisisFinanciero: aiRes?.analisis_financiero,
+      accionRecomendada: aiRes?.accion_recomendada
     };
 
     if (this.editingExId) {
@@ -248,6 +285,7 @@ export class GastosComponent {
     this.exDesc = '';
     this.exAmount = null;
     this.exPaymentMethod = 'efectivo';
+    this.aiAnalysisResult.set(null);
     this.isExpenseModalOpen = false;
   }
 

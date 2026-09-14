@@ -198,13 +198,77 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   });
 
   aiInsights = computed(() => {
-    return this.aiAdvisor.generateInsights(
-      this.monthExpenses(),
-      this.monthIncomes(),
-      this.financeService.state().debts,
-      this.selectedMonthLabel()
-    );
+    const debts = this.financeService.state().debts;
+    return this.aiAdvisor.generateInsights(this.monthExpenses(), this.monthIncomes(), debts, this.selectedMonthLabel());
   });
+
+  isAuditingWithN8n = signal(false);
+
+  aiAuditExpenses = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    const expensesList = this.financeService.state().expenses
+      .filter(e => e.date.slice(0, 7) === monthKey);
+
+    const totalExp = expensesList.reduce((sum, e) => sum + e.amount, 0);
+    const incomesList = this.financeService.state().incomes
+      .filter(i => i.date.slice(0, 7) === monthKey);
+    const totalInc = incomesList.reduce((sum, i) => sum + i.amount, 0);
+
+    const evitableList = expensesList.filter(e => {
+      if (e.esEvitable !== undefined && e.esEvitable !== null) return e.esEvitable;
+      return !this.aiAdvisor.isEssential(e.category);
+    });
+
+    const totalEvitable = evitableList.reduce((sum, e) => sum + e.amount, 0);
+    const incomeExceeded = totalInc > 0 && totalExp > totalInc;
+    const ratioToIncome = totalInc > 0 ? Math.round((totalExp / totalInc) * 100) : 0;
+
+    return {
+      expensesList,
+      totalExp,
+      totalInc,
+      totalEvitable,
+      evitableList,
+      incomeExceeded,
+      ratioToIncome,
+      exceededAmount: totalExp - totalInc
+    };
+  });
+
+  async auditExpensesWithN8n() {
+    const monthKey = this.selectedMonthKey();
+    const expensesToAudit = this.financeService.state().expenses
+      .filter(e => e.date.slice(0, 7) === monthKey);
+
+    if (expensesToAudit.length === 0) {
+      alert('No hay gastos registrados en este mes para auditar.');
+      return;
+    }
+
+    this.isAuditingWithN8n.set(true);
+
+    for (const exp of expensesToAudit.slice(0, 8)) { // Auditar hasta 8 por lote
+      const res = await this.aiAdvisor.queryN8nAgent({
+        tipo_solicitud: 'analisis_gasto',
+        descripcion: exp.description || exp.category,
+        monto: exp.amount,
+        fecha: exp.date
+      });
+
+      if (res) {
+        this.financeService.updateExpense(exp.id, {
+          ...exp,
+          esEvitable: res.es_evitable,
+          nivelNecesidad: res.nivel_necesidad,
+          veredictoConsejero: res.veredicto_consejero,
+          analisisFinanciero: res.analisis_financiero,
+          accionRecomendada: res.accion_recomendada
+        });
+      }
+    }
+
+    this.isAuditingWithN8n.set(false);
+  }
 
   dailyAverage = computed(() => {
     const total = this.expCatData().total;

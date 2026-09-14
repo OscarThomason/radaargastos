@@ -1,3 +1,20 @@
+@if (showReminderToast() && upcomingWeekPaymentInfo()) {
+  <div class="reminder-toast-popup">
+    <div class="toast-content">
+      <div class="toast-badge">
+        <span class="material-symbols-outlined">notifications_active</span>
+      </div>
+      <div class="toast-body">
+        <strong style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: #D97706; display: block; margin-bottom: 2px;">¡RECORDATORIO DE LA SEMANA! ⏰</strong>
+        <span>
+          Recuerda que esta semana ocupas juntar <strong>{{ money(upcomingWeekPaymentInfo()?.totalNeeded || 0) }}</strong> para tus pagos próximos (ej. {{ upcomingWeekPaymentInfo()?.firstName }} el {{ upcomingWeekPaymentInfo()?.firstDate }}). ¡Que no se te pase la fecha!
+        </span>
+      </div>
+    </div>
+    <button class="toast-close-btn" (click)="dismissReminderToast()" title="Cerrar aviso">&times;</button>
+  </div>
+}
+
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
   <h2 class="section-title" style="margin: 0;">Resumen General</h2>
   <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;"

@@ -132,11 +132,20 @@
         <label>Categoría</label>
         <select [(ngModel)]="exCat">
           @for (c of categories(); track c) {
-          <option [value]="c">{{c}}</option>
+            <option [value]="c">{{ getCategoryEmoji(c) }} {{c}}</option>
           }
         </select>
       </div>
-      <div><label>Descripción</label><input [(ngModel)]="exDesc" placeholder="Ej. Súper, Gasolina"></div>
+      <div>
+        <label>Descripción</label>
+        <div style="display: flex; gap: 6px;">
+          <input [(ngModel)]="exDesc" (blur)="autoCategorizeWithN8n()" placeholder="Ej. Starbucks, Súper Chedraui, Uber" style="flex: 1;">
+          <button type="button" class="btn-ghost" style="padding: 4px 8px; font-size: 11px; white-space: nowrap; height: 42px; display: flex; align-items: center; gap: 4px;" (click)="autoCategorizeWithN8n()" [disabled]="isAiCategorizing()" title="Autocategorizar con Agente n8n IA">
+            <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
+            <span>{{ isAiCategorizing() ? 'n8n...' : 'IA n8n' }}</span>
+          </button>
+        </div>
+      </div>
       <div><label>Monto</label><input [(ngModel)]="exAmount" type="number" step="0.01" placeholder="0.00"></div>
       <div style="grid-column: 1 / -1;">
         <label>Método de Pago</label>
@@ -147,6 +156,23 @@
           }
         </select>
       </div>
+
+      @if (aiAnalysisResult()) {
+        <div style="grid-column: 1 / -1; background: var(--surface2); padding: 12px; border-radius: 10px; font-size: 12px; border-left: 4px solid var(--accent); margin-top: 6px;">
+          <div style="font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between;">
+            <span>🤖 FinOps Agent n8n: {{ aiAnalysisResult()?.categoria }}</span>
+            <span class="badge" [style.background]="aiAnalysisResult()?.es_evitable ? '#FEE2E2' : '#D1FAE5'" [style.color]="aiAnalysisResult()?.es_evitable ? '#DC2626' : '#059669'">
+              {{ aiAnalysisResult()?.nivel_necesidad || 'Evaluado' }}
+            </span>
+          </div>
+          @if (aiAnalysisResult()?.es_evitable) {
+            <div style="color: #DC2626; font-weight: 700; margin-top: 4px;">⚠️ Detectado como gasto evitable / prescindible</div>
+          }
+          @if (aiAnalysisResult()?.analisis_financiero) {
+            <div style="margin-top: 4px; color: var(--text-muted); font-style: italic;">"{{ aiAnalysisResult()?.analisis_financiero }}"</div>
+          }
+        </div>
+      }
     </div>
     <div style="display:flex; gap:10px; justify-content: flex-end; margin-top: 20px;">
       <button class="btn-ghost" (click)="cancelExEdit()">Cancelar</button>

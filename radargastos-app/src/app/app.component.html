@@ -39,4 +39,8 @@
   <main>
     <router-outlet></router-outlet>
   </main>
+  
+  @if (authService.userSignal()) {
+    <app-chatbot-modal></app-chatbot-modal>
+  }
 </div>
