@@ -18,65 +18,6 @@
   </div>
 </div>
 
-<!-- Asistente de IA Financiero -->
-<div class="card-panel ai-card-panel" style="margin-bottom: 24px;">
-  <div class="ai-header">
-    <div style="display: flex; align-items: center; gap: 10px;">
-      <div class="ai-avatar-minimal">
-        <span class="material-symbols-outlined">smart_toy</span>
-      </div>
-      <div>
-        <h3 style="margin: 0; border: none; padding: 0; font-size: 16px;">Asistente de IA Financiero</h3>
-        <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">Diagnóstico automático de {{ selectedMonthLabel() }}</span>
-      </div>
-    </div>
-    <span class="accent-pill accent-pill-emerald" style="font-size: 10px; padding: 4px 10px;">IA Activa</span>
-  </div>
-
-  <div class="ai-carousel-container">
-    @if (aiInsights().length === 0) {
-      <div class="empty-state" style="padding: 16px;">Sin datos suficientes para generar recomendaciones este mes.</div>
-    } @else {
-      @for (insight of aiInsights(); track insight.id; let idx = $index) {
-        @if (activeInsightIndex() === idx) {
-          <div class="insight-card-slide" [class]="'insight-' + insight.type">
-            <div class="insight-icon">
-              <span class="material-symbols-outlined">{{ insight.icon }}</span>
-            </div>
-            <div class="insight-content">
-              <strong class="insight-title">{{ insight.title }}</strong>
-              <p class="insight-desc">{{ insight.description }}</p>
-            </div>
-          </div>
-        }
-      }
-
-      <!-- Controles del Carrusel de Consejos -->
-      <div class="ai-carousel-footer">
-        <span style="font-size: 11px; color: var(--text-muted); font-weight: 600;">
-          Consejo {{ activeInsightIndex() + 1 }} de {{ aiInsights().length }}
-        </span>
-
-        <div class="ai-carousel-controls">
-          <button class="carousel-nav-btn" (click)="prevInsight()" [disabled]="aiInsights().length <= 1" title="Anterior consejo">
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          
-          <div class="carousel-dots">
-            @for (insight of aiInsights(); track insight.id; let idx = $index) {
-              <span class="carousel-dot" [class.active]="activeInsightIndex() === idx" (click)="setInsightIndex(idx)"></span>
-            }
-          </div>
-
-          <button class="carousel-nav-btn" (click)="nextInsight()" [disabled]="aiInsights().length <= 1" title="Siguiente consejo">
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
-
 <!-- Analista de Gastos IA FinOps & Auditoría de Evitables -->
 <div class="card-panel" style="margin-bottom: 24px;">
   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
