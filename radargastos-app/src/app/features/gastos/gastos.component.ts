@@ -231,7 +231,8 @@ export class GastosComponent {
       descripcion: this.exDesc,
       monto: this.exAmount || 0,
       fecha: this.exDate,
-      metodo_pago: this.getCardName(this.exPaymentMethod)
+      metodo_pago: this.getCardName(this.exPaymentMethod),
+      categorias_validas: this.categories().join(', ')
     });
 
     this.isAiCategorizing.set(false);

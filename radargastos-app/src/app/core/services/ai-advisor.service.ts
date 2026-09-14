@@ -24,8 +24,12 @@ export class AiAdvisorService {
     fecha?: string;
     metodo_pago?: string;
     notas?: string;
+    categorias_validas?: string;
   }): Promise<N8nAgentResponse | null> {
     try {
+      const defaultCategories = ['Servicios', 'Deudas', 'Transporte', 'Alimentos', 'Restaurantes', 'Oscio', 'Salud', 'nutricion y gym', 'ropa o accesorios', 'casa', 'viaje', 'mascota', 'Otros'];
+      const categoriasValidas = payload.categorias_validas || defaultCategories.join(', ');
+
       const response = await fetch(this.n8nWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,7 +41,8 @@ export class AiAdvisorService {
           moneda: payload.moneda || 'MXN',
           fecha: payload.fecha || new Date().toISOString().slice(0, 10),
           metodo_pago: payload.metodo_pago || 'No especificado',
-          notas: payload.notas || 'Sin notas'
+          notas: payload.notas || 'Sin notas',
+          categorias_validas: categoriasValidas
         })
       });
 
