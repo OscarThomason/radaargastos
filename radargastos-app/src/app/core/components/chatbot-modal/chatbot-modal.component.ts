@@ -53,21 +53,47 @@ export class ChatbotModalComponent {
 
     const response = await this.aiAdvisor.queryN8nAgent({
       tipo_solicitud: 'consulta_compra',
-      pregunta: this.itemQuestion.trim(),
+      pregunta: `¿Me conviene comprar ${this.itemQuestion.trim()} por un monto de $${this.itemAmount || 0} MXN?`,
+      descripcion: this.itemQuestion.trim(),
       monto: this.itemAmount || 0,
       notas: extraContext
     });
 
     this.isThinking.set(false);
 
-    if (response) {
+    if (response && response.analisis_financiero && !response.analisis_financiero.toLowerCase().includes('no hay concepto') && response.veredicto_consejero !== 'Gasto Realizado') {
       this.lastResponse.set(response);
     } else {
+      // Evaluador Inteligente de Respaldo Pre-Compra
+      const concept = this.itemQuestion.trim();
+      const amount = this.itemAmount || 0;
+      const isLowAmount = amount <= 500;
+      const hasGoodBalance = saldo > amount * 2;
+
+      let verdict: 'Recomendado' | 'Posponer' | 'Evitar' = 'Posponer';
+      let analysis = '';
+      let action = '';
+
+      if (hasGoodBalance && (isLowAmount || /hallowen|fiesta|decoracion|ropa|cine|comida|regalo/i.test(concept))) {
+        verdict = 'Recomendado';
+        analysis = `La compra de "${concept}" por $${amount.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN es un gasto de ocio/gusto personal. Tu saldo disponible ($${saldo.toLocaleString('es-MX', {minimumFractionDigits:2})}) absorbe fácilmente este consumo.`;
+        action = 'Puedes realizar la compra con tranquilidad siempre que sea en 1 solo pago de contado.';
+      } else if (saldo < amount) {
+        verdict = 'Evitar';
+        analysis = `El monto de "${concept}" ($${amount.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) supera tu saldo disponible actual ($${saldo.toLocaleString('es-MX', {minimumFractionDigits:2})}). Adquirirlo ahora pondría tus finanzas en déficit.`;
+        action = 'Se sugiere posponer la compra hasta acumular el fondo necesario sin recurrir a deuda.';
+      } else {
+        verdict = 'Posponer';
+        analysis = `La compra de "${concept}" por $${amount.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN representa un compromiso importante sobre tu saldo libre ($${saldo.toLocaleString('es-MX', {minimumFractionDigits:2})}).`;
+        action = 'Aplica la regla de las 48 horas: si en dos días sigues considerándolo esencial, realiza la compra.';
+      }
+
       this.lastResponse.set({
         tipo_solicitud: 'consulta_compra',
-        veredicto_consejero: 'Posponer',
-        analisis_financiero: 'No se pudo conectar con el agente n8n en este momento, pero te aconsejamos aplicar la regla de las 24-48 horas antes de realizar la compra.',
-        accion_recomendada: 'Reflexiona si este artículo satisface una necesidad esencial o un impulso temporal.'
+        categoria: 'Consulta Pre-Compra',
+        veredicto_consejero: verdict,
+        analisis_financiero: analysis,
+        accion_recomendada: action
       });
     }
   }
