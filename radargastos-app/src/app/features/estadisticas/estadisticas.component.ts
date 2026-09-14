@@ -203,8 +203,9 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   });
 
   isAuditingWithN8n = signal(false);
+  globalAiDiagnosis = signal<string | null>(null);
 
-  aiAuditExpenses = computed(() => {
+  globalMonthAnalysis = computed(() => {
     const monthKey = this.selectedMonthKey();
     const expensesList = this.financeService.state().expenses
       .filter(e => e.date.slice(0, 7) === monthKey);
@@ -214,60 +215,72 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
       .filter(i => i.date.slice(0, 7) === monthKey);
     const totalInc = incomesList.reduce((sum, i) => sum + i.amount, 0);
 
-    const evitableList = expensesList.filter(e => {
-      if (e.esEvitable !== undefined && e.esEvitable !== null) return e.esEvitable;
-      return !this.aiAdvisor.isEssential(e.category);
-    });
+    // Ocio y Comida fuera
+    const ocioExp = expensesList
+      .filter(e => e.category === 'Oscio' || e.category === 'Restaurantes' || e.category === 'ropa o accesorios')
+      .reduce((sum, e) => sum + e.amount, 0);
 
-    const totalEvitable = evitableList.reduce((sum, e) => sum + e.amount, 0);
-    const incomeExceeded = totalInc > 0 && totalExp > totalInc;
     const ratioToIncome = totalInc > 0 ? Math.round((totalExp / totalInc) * 100) : 0;
+    const ratioOcioToIncome = totalInc > 0 ? Math.round((ocioExp / totalInc) * 100) : 0;
+    const ratioOcioToExp = totalExp > 0 ? Math.round((ocioExp / totalExp) * 100) : 0;
+
+    const incomeExceeded = totalInc > 0 && totalExp > totalInc;
 
     return {
-      expensesList,
       totalExp,
       totalInc,
-      totalEvitable,
-      evitableList,
-      incomeExceeded,
+      ocioExp,
       ratioToIncome,
-      exceededAmount: totalExp - totalInc
+      ratioOcioToIncome,
+      ratioOcioToExp,
+      incomeExceeded,
+      exceededAmount: totalExp - totalInc,
+      netBalance: totalInc - totalExp
     };
   });
 
-  async auditExpensesWithN8n() {
-    const monthKey = this.selectedMonthKey();
-    const expensesToAudit = this.financeService.state().expenses
-      .filter(e => e.date.slice(0, 7) === monthKey);
-
-    if (expensesToAudit.length === 0) {
-      alert('No hay gastos registrados en este mes para auditar.');
+  async requestGlobalAiAudit() {
+    const analysis = this.globalMonthAnalysis();
+    if (analysis.totalExp === 0 && analysis.totalInc === 0) {
+      alert('No hay movimientos registrados en este mes para generar un análisis.');
       return;
     }
 
     this.isAuditingWithN8n.set(true);
 
-    for (const exp of expensesToAudit.slice(0, 8)) { // Auditar hasta 8 por lote
-      const res = await this.aiAdvisor.queryN8nAgent({
-        tipo_solicitud: 'analisis_gasto',
-        descripcion: exp.description || exp.category,
-        monto: exp.amount,
-        fecha: exp.date
-      });
+    const promptText = `
+ANÁLISIS FINANCIERO GLOBAL DEL MES (${this.selectedMonthLabel()}):
+- Ingreso Total del Mes: $${analysis.totalInc} MXN
+- Gasto Total del Mes: $${analysis.totalExp} MXN
+- Gasto en Ocio, Restaurantes y Gustos: $${analysis.ocioExp} MXN (${analysis.ratioOcioToIncome}% del ingreso total, ${analysis.ratioOcioToExp}% del gasto total).
+- Balance Resultante: $${analysis.netBalance} MXN.
 
-      if (res) {
-        this.financeService.updateExpense(exp.id, {
-          ...exp,
-          esEvitable: res.es_evitable,
-          nivelNecesidad: res.nivel_necesidad,
-          veredictoConsejero: res.veredicto_consejero,
-          analisisFinanciero: res.analisis_financiero,
-          accionRecomendada: res.accion_recomendada
-        });
-      }
-    }
+Evalúa cómo influye la proporción de presupuesto destinada a Ocio/Restaurantes sobre la salud financiera general y el saldo libre del usuario. Brinda un diagnóstico ejecutivo global en 2-3 párrafos con recomendaciones concretas de rebalanceo presupuestal.
+`;
+
+    const res = await this.aiAdvisor.queryN8nAgent({
+      tipo_solicitud: 'consulta_compra',
+      pregunta: promptText,
+      monto: analysis.totalExp
+    });
 
     this.isAuditingWithN8n.set(false);
+
+    if (res && res.analisis_financiero) {
+      this.globalAiDiagnosis.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Recomendación: ${res.accion_recomendada}` : ''));
+    } else {
+      // Diagnóstico inteligente generado localmente si n8n no responde
+      let localDiag = `En el periodo ${this.selectedMonthLabel()}, tus gastos totales ($${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}) representan el ${analysis.ratioToIncome}% de tus ingresos totales ($${analysis.totalInc.toLocaleString('es-MX', {minimumFractionDigits: 2})}). `;
+      if (analysis.ocioExp > 0) {
+        localDiag += `De ese total, destinas $${analysis.ocioExp.toLocaleString('es-MX', {minimumFractionDigits: 2})} a Ocio, Comida Fuera y Gustos (${analysis.ratioOcioToIncome}% de tus ingresos). `;
+        if (analysis.ratioOcioToIncome > 20) {
+          localDiag += `Tener una proporción de ocio superior al 20% limita tu capacidad de ahorro y amortiguamiento ante imprevistos. Te recomendamos fijar un tope mensual del 15% para ocio.`;
+        } else {
+          localDiag += `Tu nivel de gasto en ocio se mantiene en un rango saludable (debajo del 20% de tus ingresos).`;
+        }
+      }
+      this.globalAiDiagnosis.set(localDiag);
+    }
   }
 
   dailyAverage = computed(() => {

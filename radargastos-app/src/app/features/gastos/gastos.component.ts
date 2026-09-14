@@ -237,10 +237,20 @@ export class GastosComponent {
 
     this.isAiCategorizing.set(false);
 
+    // Mapear siempre con el respaldo inteligente local y n8n
+    const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result?.categoria, this.exDesc);
+    this.exCat = mapped;
+
     if (result) {
+      // Si n8n devolvió el mensaje génerico de "No hay concepto ni contexto suficiente", lo sanitizamos
+      if (result.analisis_financiero && result.analisis_financiero.toLowerCase().includes('no hay concepto')) {
+        const isEss = this.aiAdvisor.isEssential(mapped);
+        result.categoria = mapped;
+        result.nivel_necesidad = isEss ? 'Esencial' : 'Opcional';
+        result.analisis_financiero = `Gasto clasificado automáticamente en la categoría "${mapped}" basándonos en la descripción ingresada.`;
+        result.accion_recomendada = isEss ? 'Gasto necesario. Procurar comparar proveedores si es servicio recurrente.' : 'Evaluar si este gasto en ocio se alinea con tu presupuesto del mes.';
+      }
       this.aiAnalysisResult.set(result);
-      const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result.categoria, this.exDesc);
-      this.exCat = mapped;
     }
   }
 
