@@ -37,7 +37,7 @@ export class AiAdvisorService {
           tipo_solicitud: payload.tipo_solicitud,
           descripcion: payload.descripcion || payload.pregunta || '',
           pregunta: payload.pregunta || payload.descripcion || '',
-          monto: payload.monto ? String(payload.monto) : 'No especificado',
+          monto: (payload.monto && Number(payload.monto) > 0) ? String(payload.monto) : 'Solo categorización previa por concepto (monto aún sin definir)',
           moneda: payload.moneda || 'MXN',
           fecha: payload.fecha || new Date().toISOString().slice(0, 10),
           metodo_pago: payload.metodo_pago || 'No especificado',
@@ -75,23 +75,38 @@ export class AiAdvisorService {
   }
 
   /**
-   * Mapea la categoría textual enviada por n8n a una de las categorías estándar de la App
+   * Mapea la categoría textual enviada por n8n (o las palabras clave de la descripción) a las categorías de la App
    */
-  mapN8nCategoryToAppCategory(n8nCategory?: string): string {
-    if (!n8nCategory) return 'Otros';
-    const clean = n8nCategory.toLowerCase().trim();
+  mapN8nCategoryToAppCategory(n8nCategory?: string, description?: string): string {
+    const cleanCat = (n8nCategory || '').toLowerCase().trim();
+    const cleanDesc = (description || '').toLowerCase().trim();
 
-    if (clean.includes('servicio') || clean.includes('vivienda')) return 'Servicios';
-    if (clean.includes('deuda') || clean.includes('financier')) return 'Deudas';
-    if (clean.includes('transporte') || clean.includes('movilidad') || clean.includes('auto') || clean.includes('uber')) return 'Transporte';
-    if (clean.includes('básica') || clean.includes('super') || clean.includes('alimentación') || clean.includes('despensa')) return 'Alimentos';
-    if (clean.includes('restaurante') || clean.includes('fuera') || clean.includes('delivery')) return 'Restaurantes';
-    if (clean.includes('ocio') || clean.includes('suscrip') || clean.includes('digital') || clean.includes('entretenimiento')) return 'Oscio';
-    if (clean.includes('salud') || clean.includes('bienestar') || clean.includes('farmacia')) return 'Salud';
-    if (clean.includes('ropa') || clean.includes('cuidado') || clean.includes('vestimenta')) return 'ropa o accesorios';
-    if (clean.includes('casa') || clean.includes('mantenimiento') || clean.includes('hogar')) return 'casa';
-    if (clean.includes('viaje') || clean.includes('hotel') || clean.includes('vuelo')) return 'viaje';
-    if (clean.includes('mascota') || clean.includes('perro') || clean.includes('gato')) return 'mascota';
+    if (cleanCat && cleanCat !== 'otros' && cleanCat !== 'n/a') {
+      if (cleanCat.includes('servicio') || cleanCat.includes('vivienda')) return 'Servicios';
+      if (cleanCat.includes('deuda') || cleanCat.includes('financier')) return 'Deudas';
+      if (cleanCat.includes('transporte') || cleanCat.includes('movilidad') || cleanCat.includes('auto') || cleanCat.includes('uber')) return 'Transporte';
+      if (cleanCat.includes('básica') || cleanCat.includes('super') || cleanCat.includes('alimentación') || cleanCat.includes('despensa')) return 'Alimentos';
+      if (cleanCat.includes('restaurante') || cleanCat.includes('fuera') || cleanCat.includes('delivery')) return 'Restaurantes';
+      if (cleanCat.includes('ocio') || cleanCat.includes('suscrip') || cleanCat.includes('digital') || cleanCat.includes('entretenimiento')) return 'Oscio';
+      if (cleanCat.includes('salud') || cleanCat.includes('bienestar') || cleanCat.includes('farmacia')) return 'Salud';
+      if (cleanCat.includes('ropa') || cleanCat.includes('cuidado') || cleanCat.includes('vestimenta')) return 'ropa o accesorios';
+      if (cleanCat.includes('casa') || cleanCat.includes('mantenimiento') || cleanCat.includes('hogar')) return 'casa';
+      if (cleanCat.includes('viaje') || cleanCat.includes('hotel') || cleanCat.includes('vuelo')) return 'viaje';
+      if (cleanCat.includes('mascota') || cleanCat.includes('perro') || cleanCat.includes('gato')) return 'mascota';
+    }
+
+    // Respaldo Inteligente local por Palabras Clave en la Descripción
+    if (cleanDesc) {
+      if (/starb|starbucks|moka|café|coffee|tacos|burguer|burger|pizza|comida|restaurante|dona|bar|sushi|uber eats|rappi/i.test(cleanDesc)) return 'Restaurantes';
+      if (/uber|didi|cabify|gasolina|gas|estacionamiento|caseta|taller|auto|mantenimiento auto|pasaje|camión/i.test(cleanDesc)) return 'Transporte';
+      if (/chedraui|walmart|soriana|oxxo|7-eleven|súper|super|despensa|abarrotes|verduras|fruta|mercado/i.test(cleanDesc)) return 'Alimentos';
+      if (/netflix|spotify|hbo|disney|prime|cine|juego|steam|playstation|xbox|nintendo|spotify/i.test(cleanDesc)) return 'Oscio';
+      if (/luz|agua|cfe|telmex|izzi|totalplay|internet|renta|gas lp/i.test(cleanDesc)) return 'Servicios';
+      if (/farmacia|doctor|consulta|medicina|similares|salud|hospital|médico/i.test(cleanDesc)) return 'Salud';
+      if (/gym|gimnasio|proteína|proteina|suplemento|crossfit/i.test(cleanDesc)) return 'nutricion y gym';
+      if (/ropa|zapatos|tenis|pantalón|pantalon|camisa|playera|zara|h&m|vestido/i.test(cleanDesc)) return 'ropa o accesorios';
+      if (/vet|veterinario|perro|gato|croquetas|mascota/i.test(cleanDesc)) return 'mascota';
+    }
 
     return 'Otros';
   }

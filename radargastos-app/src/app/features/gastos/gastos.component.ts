@@ -239,10 +239,8 @@ export class GastosComponent {
 
     if (result) {
       this.aiAnalysisResult.set(result);
-      if (result.categoria) {
-        const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result.categoria);
-        this.exCat = mapped;
-      }
+      const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result.categoria, this.exDesc);
+      this.exCat = mapped;
     }
   }
 
