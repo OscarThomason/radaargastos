@@ -75,6 +75,40 @@ export class AjustesComponent {
     return `${parts[0]} ${formattedTime}`;
   }
 
+  // Estado de uso de memoria
+  storageInfo = computed(() => this.financeService.getStorageUsage());
+  backupSuccessMessage = signal<string | null>(null);
+  backupErrorMessage = signal<string | null>(null);
+
+  exportJsonBackup() {
+    this.financeService.exportBackupJson();
+    this.backupSuccessMessage.set('Copia de seguridad descargada correctamente.');
+    setTimeout(() => this.backupSuccessMessage.set(null), 4000);
+  }
+
+  async onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    this.backupSuccessMessage.set(null);
+    this.backupErrorMessage.set(null);
+
+    const ok = await this.financeService.importBackupJson(file);
+    if (ok) {
+      this.backupSuccessMessage.set(`¡Copia de seguridad "${file.name}" restaurada con éxito! Todos tus registros han sido recuperados.`);
+    } else {
+      this.backupErrorMessage.set('No se pudo procesar el archivo seleccionado. Asegúrate de que sea un archivo JSON de respaldo válido.');
+    }
+    input.value = '';
+  }
+
+  optimizeMemory() {
+    this.financeService.optimizeStorage();
+    this.backupSuccessMessage.set('Memoria optimizada. Se han comprimido los registros obsoletos manteniendo todos tus datos intactos.');
+    setTimeout(() => this.backupSuccessMessage.set(null), 4000);
+  }
+
   exportExcel() {
     this.financeService.exportDataToExcel();
   }

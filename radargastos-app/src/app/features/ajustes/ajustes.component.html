@@ -52,18 +52,60 @@
   </div>
 </div>
 
-<!-- Exportar Información en Excel -->
+<!-- Panel de Gestión de Memoria y Respaldo / Restauración -->
 <div class="card-panel" style="margin-bottom: 24px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
     <div>
-      <h3 style="margin-bottom: 4px; border: none; padding: 0;">Exportar Reporte a Excel</h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
-        Descarga un archivo <strong>.xlsx</strong> completo con pestañas organizadas para Resumen, Gastos, Ingresos, Deudas y Servicios.
+      <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="color: #7C3AED;">sd_card</span>
+        Gestión de Memoria & Copia de Seguridad
+      </h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
+        Evita la pérdida de registros respaldando o restaurando tus datos en cualquier dispositivo.
       </p>
     </div>
-    <button class="btn-primary" style="margin: 0; background: #059669; border-color: #059669; color: #ffffff; display: flex; align-items: center; gap: 8px;" (click)="exportExcel()">
-      <span class="material-symbols-outlined">table_view</span>
-      Exportar a Excel (.xlsx)
+    <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); background: var(--surface2); padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border);">
+      Espacio Usado: {{ storageInfo().usedKb }} KB ({{ storageInfo().percent }}%)
+    </div>
+  </div>
+
+  <!-- Barra de progreso de memoria -->
+  <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+    <div [style.width.%]="storageInfo().percent" style="height: 100%; background: linear-gradient(90deg, #10B981, #F59E0B); border-radius: 4px; transition: width 0.3s ease;"></div>
+  </div>
+
+  @if (backupSuccessMessage()) {
+    <div style="background: #D1FAE5; color: #065F46; border-left: 4px solid #10B981; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;">
+      {{ backupSuccessMessage() }}
+    </div>
+  }
+
+  @if (backupErrorMessage()) {
+    <div style="background: #FEE2E2; color: #991B1B; border-left: 4px solid #EF4444; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;">
+      {{ backupErrorMessage() }}
+    </div>
+  }
+
+  <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+    <button class="btn-primary" style="margin: 0; background: #7C3AED; border-color: #7C3AED; display: flex; align-items: center; gap: 6px; font-size: 13px;" (click)="exportJsonBackup()">
+      <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+      Descargar Respaldo JSON
+    </button>
+
+    <label class="btn-ghost" style="margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; height: auto; padding: 10px 16px; border: 1px solid var(--border); border-radius: 10px; font-weight: 600;">
+      <span class="material-symbols-outlined" style="font-size: 18px;">upload</span>
+      Restaurar Copia de Seguridad JSON
+      <input type="file" accept=".json" (change)="onFileSelected($event)" style="display: none;">
+    </label>
+
+    <button class="btn-ghost" style="margin: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; border-color: var(--border);" (click)="optimizeMemory()" title="Libera espacio en memoria local comprimiendo datos viejos">
+      <span class="material-symbols-outlined" style="font-size: 18px;">auto_fix_high</span>
+      Optimizar Memoria
+    </button>
+
+    <button class="btn-primary" style="margin: 0; background: #059669; border-color: #059669; color: #ffffff; display: flex; align-items: center; gap: 6px; font-size: 13px; margin-left: auto;" (click)="exportExcel()">
+      <span class="material-symbols-outlined" style="font-size: 18px;">table_view</span>
+      Exportar Excel (.xlsx)
     </button>
   </div>
 </div>

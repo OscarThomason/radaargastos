@@ -156,8 +156,22 @@ export class FinanceService {
     // Actualización inmediata en memoria para UI rápida
     this.state.set(newState);
 
-    // Caché local (offline fallback)
-    localStorage.setItem('finanzas:state', JSON.stringify(newState));
+    // Caché local (offline fallback) con manejo seguro de QuotaExceededError
+    try {
+      localStorage.setItem('finanzas:state', JSON.stringify(newState));
+    } catch (err) {
+      console.warn('Advertencia: Quota de LocalStorage excedida. Optimizando espacio...', err);
+      // Reducir peso eliminado historial extendido
+      const prunedState: AppState = {
+        ...newState,
+        history: (newState.history || []).slice(0, 15)
+      };
+      try {
+        localStorage.setItem('finanzas:state', JSON.stringify(prunedState));
+      } catch (err2) {
+        console.error('Error crítico guardando en localStorage:', err2);
+      }
+    }
 
     // Persistencia en la nube
     const user = this.authService.userSignal();
@@ -168,6 +182,70 @@ export class FinanceService {
       } catch (err) {
         console.error('Error guardando en Firestore', err);
       }
+    }
+  }
+
+  /** Retorna el peso en KB y el porcentaje aproximado de uso de LocalStorage (Límite 5MB) */
+  getStorageUsage(): { usedKb: number; percent: number } {
+    try {
+      const data = JSON.stringify(this.state());
+      const bytes = new Blob([data]).size;
+      const usedKb = Math.round((bytes / 1024) * 10) / 10;
+      // 5MB max aprox en localStorage = 5120 KB
+      const percent = Math.min(100, Math.round((usedKb / 5120) * 100));
+      return { usedKb, percent };
+    } catch {
+      return { usedKb: 0, percent: 0 };
+    }
+  }
+
+  /** Optimiza la memoria reduciendo logs históricos viejos */
+  optimizeStorage() {
+    const current = { ...this.state() };
+    current.history = (current.history || []).slice(0, 15);
+    this.saveState(current);
+  }
+
+  /** Exporta una copia de seguridad integral en formato JSON descargable */
+  exportBackupJson() {
+    const state = this.state();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+    const downloadAnchor = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `Backup_Bitacora_Financiera_${today}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  /** Importa y restaura una copia de seguridad JSON */
+  async importBackupJson(file: File): Promise<boolean> {
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+
+      if (!parsed || (typeof parsed !== 'object')) {
+        throw new Error('Formato de archivo inválido');
+      }
+
+      // Fusionar y validar estructura
+      const restoredState: AppState = {
+        ...DEFAULT_STATE,
+        ...parsed,
+        debts: Array.isArray(parsed.debts) ? parsed.debts : [],
+        services: Array.isArray(parsed.services) ? parsed.services : [],
+        expenses: Array.isArray(parsed.expenses) ? parsed.expenses : [],
+        incomes: Array.isArray(parsed.incomes) ? parsed.incomes : [],
+        cards: Array.isArray(parsed.cards) ? parsed.cards : []
+      };
+
+      this.logAction(restoredState, `Se restauró una copia de seguridad JSON (${file.name})`);
+      await this.saveState(restoredState);
+      return true;
+    } catch (e) {
+      console.error('Error al importar copia de seguridad:', e);
+      return false;
     }
   }
 
