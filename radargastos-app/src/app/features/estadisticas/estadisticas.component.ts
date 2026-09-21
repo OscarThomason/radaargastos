@@ -248,39 +248,94 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
 
     this.isAuditingWithN8n.set(true);
 
-    const promptText = `
-ANÁLISIS FINANCIERO GLOBAL DEL MES (${this.selectedMonthLabel()}):
-- Ingreso Total del Mes: $${analysis.totalInc} MXN
-- Gasto Total del Mes: $${analysis.totalExp} MXN
-- Gasto en Ocio, Restaurantes y Gustos: $${analysis.ocioExp} MXN (${analysis.ratioOcioToIncome}% del ingreso total, ${analysis.ratioOcioToExp}% del gasto total).
-- Balance Resultante: $${analysis.netBalance} MXN.
+    const expData = this.expCatData();
+    const essData = this.essentialAnalysis();
+    const categoriesBreakdown = expData.labels
+      .map((label, idx) => `- ${label}: $${expData.values[idx].toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${Math.round((expData.values[idx]/expData.total)*100)}% del gasto)`)
+      .join('\n');
 
-Evalúa cómo influye la proporción de presupuesto destinada a Ocio/Restaurantes sobre la salud financiera general y el saldo libre del usuario. Brinda un diagnóstico ejecutivo global en 2-3 párrafos con recomendaciones concretas de rebalanceo presupuestal.
+    const promptText = `
+EVALUACIÓN Y DIAGNÓSTICO FINANCIERO GLOBAL DEL MES (${this.selectedMonthLabel()}):
+- Ingreso Total: $${analysis.totalInc.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN
+- Gasto Total Acumulado: $${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${analysis.ratioToIncome}% de tus ingresos)
+- Saldo / Margen Libre: $${analysis.netBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN
+- Gastos Esenciales: $${essData.essentialTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${essData.essentialPercent}% del gasto total)
+- Gastos No Esenciales / Ocio / Gustos: $${essData.nonEssentialTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${essData.nonEssentialPercent}% del gasto total, destinas $${analysis.ocioExp} solo a ocio/restaurantes)
+
+DESGLOSE COMPLETO DE GASTOS POR CATEGORÍA:
+${categoriesBreakdown}
+
+INSTRUCCIÓN: Genera un dictamen ejecutivo de salud financiera global en 2 o 3 párrafos. Analiza si la proporción de gasto en ocio o no esenciales compromete el margen de ahorro o la seguridad financiera ante imprevistos, proponiendo ajustes específicos.
 `;
 
     const res = await this.aiAdvisor.queryN8nAgent({
       tipo_solicitud: 'consulta_compra',
       pregunta: promptText,
+      descripcion: `Diagnóstico Financiero Global ${this.selectedMonthLabel()}`,
       monto: analysis.totalExp
     });
 
     this.isAuditingWithN8n.set(false);
 
-    if (res && res.analisis_financiero) {
-      this.globalAiDiagnosis.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Recomendación: ${res.accion_recomendada}` : ''));
+    // Verificar si la respuesta de n8n es útil o si devolvió el mensaje por defecto de falta de concepto
+    const n8nText = res?.analisis_financiero || '';
+    const isInvalidN8nText = !res || !n8nText || n8nText.toLowerCase().includes('no hay concepto') || n8nText.toLowerCase().includes('información disponible no es posible');
+
+    if (!isInvalidN8nText && res) {
+      this.globalAiDiagnosis.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Recomendación Clave: ${res.accion_recomendada}` : ''));
     } else {
-      // Diagnóstico inteligente generado localmente si n8n no responde
-      let localDiag = `En el periodo ${this.selectedMonthLabel()}, tus gastos totales ($${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}) representan el ${analysis.ratioToIncome}% de tus ingresos totales ($${analysis.totalInc.toLocaleString('es-MX', {minimumFractionDigits: 2})}). `;
-      if (analysis.ocioExp > 0) {
-        localDiag += `De ese total, destinas $${analysis.ocioExp.toLocaleString('es-MX', {minimumFractionDigits: 2})} a Ocio, Comida Fuera y Gustos (${analysis.ratioOcioToIncome}% de tus ingresos). `;
-        if (analysis.ratioOcioToIncome > 20) {
-          localDiag += `Tener una proporción de ocio superior al 20% limita tu capacidad de ahorro y amortiguamiento ante imprevistos. Te recomendamos fijar un tope mensual del 15% para ocio.`;
-        } else {
-          localDiag += `Tu nivel de gasto en ocio se mantiene en un rango saludable (debajo del 20% de tus ingresos).`;
-        }
-      }
-      this.globalAiDiagnosis.set(localDiag);
+      // Diagnóstico Financiero Global Inteligente Avanzado de Respaldo
+      this.globalAiDiagnosis.set(this.generateAdvancedLocalDiagnosis(analysis, essData, expData));
     }
+  }
+
+  private generateAdvancedLocalDiagnosis(
+    analysis: { totalExp: number; totalInc: number; ocioExp: number; ratioToIncome: number; ratioOcioToIncome: number; ratioOcioToExp: number; incomeExceeded: boolean; exceededAmount: number; netBalance: number },
+    essData: { essentialTotal: number; nonEssentialTotal: number; essentialPercent: number; nonEssentialPercent: number },
+    expData: { labels: string[]; values: number[]; total: number }
+  ): string {
+    const month = this.selectedMonthLabel();
+    const incStr = `$${analysis.totalInc.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+    const expStr = `$${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+    const balStr = `$${analysis.netBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+    const ocioStr = `$${analysis.ocioExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+
+    let diagnosis = `📊 **Diagnóstico Ejecutivo de Finanzas (${month}):**\n\n`;
+
+    if (analysis.incomeExceeded) {
+      diagnosis += `⚠️ **Alerta de Déficit Presupuestario:** Tus gastos en ${month} (${expStr}) superaron tus ingresos (${incStr}) por un monto de $${analysis.exceededAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}. Tus consumos alcanzaron el ${analysis.ratioToIncome}% de tus recursos disponibles.\n\n`;
+    } else if (analysis.ratioToIncome >= 90) {
+      diagnosis += `⚡ **Margen Financiero Ajustado:** Tus gastos consumen el **${analysis.ratioToIncome}%** de tus ingresos totales (${incStr}), dejándote con un remanente libre reducido de únicamente **${balStr}** para ahorros o eventualidades.\n\n`;
+    } else {
+      diagnosis += `🟢 **Salud Financiera Estable:** Mantienes tus gastos (${expStr}) dentro del límite de tus ingresos (${incStr}), conservando una liquidez disponible de **${balStr}** (${100 - analysis.ratioToIncome}% de margen libre).\n\n`;
+    }
+
+    // Análisis de Ocio y Gustos Prescindibles
+    if (analysis.ocioExp > 0) {
+      diagnosis += `🎮 **Impacto de Ocio y Comida Fuera:** Destinas **${ocioStr}** a conceptos prescindibles (ocio, restaurantes y ropa), lo que equivale al **${analysis.ratioOcioToIncome}%** de tus ingresos de este mes (${analysis.ratioOcioToExp}% de tu gasto total). `;
+      
+      if (analysis.ratioToIncome >= 85 && analysis.ocioExp > analysis.netBalance) {
+        const ahorroSugerido = Math.round(analysis.ocioExp * 0.35);
+        diagnosis += `Debido a que tu margen libre actual es de solo ${balStr}, tus consumos en ocio absorben casi la totalidad de tu capacidad de ahorro. Si optimizas un 35% de esta categoría, recuperarías **$${ahorroSugerido.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN** adicionales de liquidez mensual.\n\n`;
+      } else {
+        diagnosis += `Este nivel de consumo se encuentra en un rango de equilibrio respecto a tus ingresos.\n\n`;
+      }
+    }
+
+    // Análisis por Categorías Principales
+    if (expData.labels.length > 0) {
+      const topCatIndex = expData.values.indexOf(Math.max(...expData.values));
+      const topCatName = expData.labels[topCatIndex];
+      const topCatAmount = expData.values[topCatIndex];
+      const topCatPct = Math.round((topCatAmount / expData.total) * 100);
+
+      diagnosis += `💡 **Concentración Principal:** La categoría con mayor impacto este mes es **${topCatName}** con $${topCatAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${topCatPct}% del presupuesto total).\n\n`;
+    }
+
+    // Recomendación Final
+    diagnosis += `📌 **Recomendación Estratégica:** Prioriza cubrir tus compromisos esenciales (${essData.essentialPercent}% del presupuesto) y establece un tope mensual para consumos en ocio equivalente al 15% de tus ingresos para consolidar tu fondo de emergencia.`;
+
+    return diagnosis;
   }
 
   dailyAverage = computed(() => {
