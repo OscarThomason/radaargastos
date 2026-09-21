@@ -13,8 +13,11 @@ import { CalendarService } from '../../services/calendar.service';
 })
 export class HeaderComponent implements OnDestroy {
   authService = inject(AuthService);
-  private financeService = inject(FinanceService);
+  financeService = inject(FinanceService);
   private calendarService = inject(CalendarService);
+
+  cloudStatus = computed(() => this.financeService.cloudSyncStatus());
+  cloudError = computed(() => this.financeService.cloudSyncError());
 
   private nowSignal = signal(Date.now());
   private timer: any;

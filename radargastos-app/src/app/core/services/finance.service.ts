@@ -152,6 +152,11 @@ export class FinanceService {
     });
   }
 
+  // Estado de Sincronización en la Nube con Firebase
+  cloudSyncStatus = signal<'synced' | 'syncing' | 'error' | 'offline'>('synced');
+  cloudSyncError = signal<string | null>(null);
+  lastCloudSyncTime = signal<Date | null>(null);
+
   private async saveState(newState: AppState) {
     // Actualización inmediata en memoria para UI rápida
     this.state.set(newState);
@@ -161,7 +166,6 @@ export class FinanceService {
       localStorage.setItem('finanzas:state', JSON.stringify(newState));
     } catch (err) {
       console.warn('Advertencia: Quota de LocalStorage excedida. Optimizando espacio...', err);
-      // Reducir peso eliminado historial extendido
       const prunedState: AppState = {
         ...newState,
         history: (newState.history || []).slice(0, 15)
@@ -173,15 +177,26 @@ export class FinanceService {
       }
     }
 
-    // Persistencia en la nube
+    // Persistencia en la nube Firebase Firestore
     const user = this.authService.userSignal();
     if (user) {
+      this.cloudSyncStatus.set('syncing');
       try {
         const userDocRef = doc(this.firestore, `users/${user.uid}`);
-        await setDoc(userDocRef, newState);
-      } catch (err) {
-        console.error('Error guardando en Firestore', err);
+        // SANITIZACIÓN CRÍTICA: Convertir a JSON puro para eliminar valores 'undefined' que rechaza Firestore
+        const cleanPayload = JSON.parse(JSON.stringify(newState));
+        await setDoc(userDocRef, cleanPayload);
+        
+        this.cloudSyncStatus.set('synced');
+        this.cloudSyncError.set(null);
+        this.lastCloudSyncTime.set(new Date());
+      } catch (err: any) {
+        console.error('Error al guardar en Firebase Firestore:', err);
+        this.cloudSyncStatus.set('error');
+        this.cloudSyncError.set(err?.message || 'Error de conexión con Firebase');
       }
+    } else {
+      this.cloudSyncStatus.set('offline');
     }
   }
 
