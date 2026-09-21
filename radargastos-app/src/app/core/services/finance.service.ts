@@ -131,25 +131,26 @@ export class FinanceService {
 
     this.unsubSnapshot = onSnapshot(userDocRef, (snapshot) => {
       if (snapshot.exists()) {
-        // Cargar datos de la nube
+        // Cargar datos reales de la nube del usuario
         const data = snapshot.data() as AppState;
         this.state.set({ ...DEFAULT_STATE, ...data });
-        // Sincronizar cache local por seguridad
         localStorage.setItem('finanzas:state', JSON.stringify(data));
       } else {
-        // MIGRACIÓN: Si la nube está vacía, subir los datos locales
-        const saved = localStorage.getItem('finanzas:state');
-        let dataToUpload = JSON.parse(JSON.stringify(DEFAULT_STATE));
-        if (saved) {
-          try {
-            dataToUpload = { ...DEFAULT_STATE, ...JSON.parse(saved) };
-          } catch (e) {
-            console.error('Error parseando estado local para migración', e);
-          }
-        }
-        setDoc(userDocRef, dataToUpload);
+        // PERFIL NUEVO: Inicializar documento en la nube totalmente en blanco (vacío)
+        const cleanEmptyState: AppState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+        const cleanPayload = JSON.parse(JSON.stringify(cleanEmptyState));
+        setDoc(userDocRef, cleanPayload);
+        this.state.set(cleanEmptyState);
+        localStorage.setItem('finanzas:state', JSON.stringify(cleanEmptyState));
       }
     });
+  }
+
+  /** Resetea y deja toda la bitácora del usuario totalmente en blanco (borra todos los registros) */
+  async resetToEmptyState() {
+    const emptyState: AppState = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    this.logAction(emptyState, 'Se restableció la bitácora a cero (Perfil en Blanco)');
+    await this.saveState(emptyState);
   }
 
   // Estado de Sincronización en la Nube con Firebase

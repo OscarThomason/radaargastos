@@ -109,6 +109,14 @@ export class AjustesComponent {
     setTimeout(() => this.backupSuccessMessage.set(null), 4000);
   }
 
+  async resetProfileToEmpty() {
+    if (confirm('⚠️ ¿Estás seguro de restablecer toda tu bitácora? Esto borrará tus gastos, ingresos, deudas y servicios actuales para dejar el perfil completamente en blanco.')) {
+      await this.financeService.resetToEmptyState();
+      this.backupSuccessMessage.set('Perfil restablecido con éxito. Toda la bitácora ahora está en blanco.');
+      setTimeout(() => this.backupSuccessMessage.set(null), 4000);
+    }
+  }
+
   exportExcel() {
     this.financeService.exportDataToExcel();
   }
