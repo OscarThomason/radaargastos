@@ -60,16 +60,18 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
     this.isAnalyzingWithN8n.set(false);
 
     if (res && res.analisis_financiero && !res.analisis_financiero.toLowerCase().includes('no hay concepto')) {
-      this.aiDiagnosisText.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Estrategia Recomendada: ${res.accion_recomendada}` : ''));
+      const cleanDiagnosis = (res.analisis_financiero || '').replace(/\*\*/g, '');
+      const cleanAction = (res.accion_recomendada || '').replace(/\*\*/g, '');
+      this.aiDiagnosisText.set(cleanDiagnosis + (cleanAction ? `\n\n📌 Estrategia Recomendada: ${cleanAction}` : ''));
     } else {
       // Diagnóstico de Respaldo Inteligente Local
-      let diag = `📊 **Diagnóstico de Tendencia de Deudas:**\n\n`;
-      diag += `Actualmente acumulas **$${analysis.totalDebt.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN** en compromisos de deuda. Tus cuotas mensuales requeridas ($${analysis.monthlyCommitment.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) representan el **${analysis.debtRatio}%** de tus ingresos.\n\n`;
-      diag += `📈 **Tendencia de Pago:** ${analysis.trendText}\n\n`;
+      let diag = `Diagnóstico de Tendencia de Deudas:\n\n`;
+      diag += `Actualmente acumulas $${analysis.totalDebt.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN en compromisos de deuda. Tus cuotas mensuales requeridas ($${analysis.monthlyCommitment.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) representan el ${analysis.debtRatio}% de tus ingresos.\n\n`;
+      diag += `📈 Tendencia de Pago: ${analysis.trendText}\n\n`;
       if (analysis.highestCatDebt) {
-        diag += `💡 **Estrategia Avalancha:** Prioriza abonar montos adicionales a la tarjeta/préstamo **"${analysis.highestCatDebt.name}"** por tener el mayor costo financiero (CAT ${analysis.highestCatDebt.cat}%). Esto te ahorrará miles de pesos en intereses acumulados.`;
+        diag += `💡 Estrategia Avalancha: Prioriza abonar montos adicionales a la tarjeta/préstamo "${analysis.highestCatDebt.name}" por tener el mayor costo financiero (CAT ${analysis.highestCatDebt.cat}%). Esto te ahorrará miles de pesos en intereses acumulados.`;
       } else {
-        diag += `💡 **Estrategia Recomendada:** Mantén la puntualidad en tus cuotas mensuales y procura realizar abonos a capital en la deuda de menor saldo para liberar liquidez rápidamente (método bola de nieve).`;
+        diag += `💡 Estrategia Recomendada: Mantén la puntualidad en tus cuotas mensuales y procura realizar abonos a capital en la deuda de menor saldo para liberar liquidez rápidamente (método bola de nieve).`;
       }
       this.aiDiagnosisText.set(diag);
     }

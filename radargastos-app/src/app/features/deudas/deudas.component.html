@@ -23,32 +23,32 @@
 
   <!-- Banners de Métricas y Tendencia -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-    <div style="background: #EFF6FF; border-left: 4px solid #3B82F6; padding: 12px 16px; border-radius: 10px; color: #1E40AF;">
-      <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">account_balance</span>
-        Deuda Total Acumulada
-      </strong>
-      <p style="margin: 4px 0 0 0; font-size: 12px;">
+    <div class="minimal-stat-box status-info">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">account_balance</span>
+        <span>Deuda Total Acumulada</span>
+      </div>
+      <p class="stat-box-text">
         <strong>{{ money(debtAnalysis().totalDebt) }}</strong> total en {{ debts().length }} compromisos activos.
       </p>
     </div>
 
-    <div style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px 16px; border-radius: 10px; color: #92400E;">
-      <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">price_check</span>
-        Compromiso Mensual ({{ debtAnalysis().debtRatio }}% del ingreso)
-      </strong>
-      <p style="margin: 4px 0 0 0; font-size: 12px;">
+    <div class="minimal-stat-box status-warning">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">price_check</span>
+        <span>Compromiso Mensual ({{ debtAnalysis().debtRatio }}% del ingreso)</span>
+      </div>
+      <p class="stat-box-text">
         Cuota mensual requerida: <strong>{{ money(debtAnalysis().monthlyCommitment) }}</strong>.
       </p>
     </div>
 
-    <div style="background: #ECFDF5; border-left: 4px solid #10B981; padding: 12px 16px; border-radius: 10px; color: #065F46;">
-      <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">trending_down</span>
-        Tendencia del Periodo
-      </strong>
-      <p style="margin: 4px 0 0 0; font-size: 12px;">
+    <div class="minimal-stat-box status-success">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">trending_down</span>
+        <span>Tendencia del Periodo</span>
+      </div>
+      <p class="stat-box-text">
         {{ debtAnalysis().trendText }}
       </p>
     </div>
@@ -56,17 +56,17 @@
 
   <!-- Caja del Diagnóstico IA / Estrategia -->
   @if (aiDiagnosisText()) {
-    <div style="background: rgba(124, 58, 237, 0.06); border: 1px solid rgba(124, 58, 237, 0.2); border-radius: 12px; padding: 16px;">
-      <div style="font-weight: 700; font-size: 13px; color: #6D28D9; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">insights</span>
-        Dictamen de Estrategia de Desendeudamiento (IA FinOps)
+    <div class="minimal-ai-card">
+      <div class="minimal-ai-header">
+        <span class="material-symbols-outlined">insights</span>
+        <span>Dictamen de Estrategia de Desendeudamiento (IA FinOps)</span>
       </div>
-      <p style="font-size: 13px; line-height: 1.5; color: var(--text); margin: 0; white-space: pre-line;">
+      <p class="minimal-ai-body">
         {{ aiDiagnosisText() }}
       </p>
     </div>
   } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
+    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
       Haz clic en <strong>"Analizar Deudas con IA"</strong> para evaluar si tus pagos han disminuido y recibir una estrategia de liquidación priorizada por costo financiero (CAT).
     </div>
   }

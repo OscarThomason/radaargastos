@@ -39,33 +39,33 @@
   <!-- Banners y Métricas Globales del Mes -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
     @if (globalMonthAnalysis().incomeExceeded) {
-      <div style="background: #FEE2E2; border-left: 4px solid #DC2626; padding: 12px 16px; border-radius: 10px; color: #991B1B;">
-        <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-          <span class="material-symbols-outlined" style="font-size: 18px;">warning</span>
-          Gastos Superan Ingresos
-        </strong>
-        <p style="margin: 4px 0 0 0; font-size: 12px;">
+      <div class="minimal-stat-box status-danger">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">warning</span>
+          <span>Gastos Superan Ingresos</span>
+        </div>
+        <p class="stat-box-text">
           Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }} (Excedido por {{ money(globalMonthAnalysis().exceededAmount) }}).
         </p>
       </div>
     } @else if (globalMonthAnalysis().totalInc > 0) {
-      <div style="background: #D1FAE5; border-left: 4px solid #059669; padding: 12px 16px; border-radius: 10px; color: #065F46;">
-        <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-          <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
-          Gastos dentro del Ingreso
-        </strong>
-        <p style="margin: 4px 0 0 0; font-size: 12px;">
+      <div class="minimal-stat-box status-success">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">check_circle</span>
+          <span>Gastos dentro del Ingreso</span>
+        </div>
+        <p class="stat-box-text">
           Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }}. Balance libre: {{ money(globalMonthAnalysis().netBalance) }}.
         </p>
       </div>
     }
 
-    <div style="background: #FEF3C7; border-left: 4px solid #D97706; padding: 12px 16px; border-radius: 10px; color: #92400E;">
-      <strong style="display: flex; align-items: center; gap: 6px; font-size: 13px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">sports_esports</span>
-        Impacto de Ocio & Gustos
-      </strong>
-      <p style="margin: 4px 0 0 0; font-size: 12px;">
+    <div class="minimal-stat-box status-warning">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">sports_esports</span>
+        <span>Impacto de Ocio & Gustos</span>
+      </div>
+      <p class="stat-box-text">
         Destinas <strong>{{ money(globalMonthAnalysis().ocioExp) }}</strong> a Ocio, Restaurantes y Ropa (<strong>{{ globalMonthAnalysis().ratioOcioToIncome }}%</strong> de tu ingreso).
       </p>
     </div>
@@ -73,17 +73,17 @@
 
   <!-- Caja de Diagnóstico IA Resumido -->
   @if (globalAiDiagnosis()) {
-    <div style="background: rgba(124, 58, 237, 0.06); border: 1px solid rgba(124, 58, 237, 0.2); border-radius: 12px; padding: 16px;">
-      <div style="font-weight: 700; font-size: 13px; color: #6D28D9; display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">analytics</span>
-        Dictamen de Salud Financiera Global (IA FinOps)
+    <div class="minimal-ai-card">
+      <div class="minimal-ai-header">
+        <span class="material-symbols-outlined">analytics</span>
+        <span>Dictamen de Salud Financiera Global (IA FinOps)</span>
       </div>
-      <p style="font-size: 13px; line-height: 1.5; color: var(--text); margin: 0; white-space: pre-line;">
+      <p class="minimal-ai-body">
         {{ globalAiDiagnosis() }}
       </p>
     </div>
   } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
+    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
       Haz clic en <strong>"Generar Diagnóstico Global con IA"</strong> para obtener una evaluación consolidada sobre cómo influye la proporción de ocio y gastos generales sobre tu balance financiero del mes.
     </div>
   }

@@ -12,19 +12,16 @@
   </div>
 
   <div style="display: flex; align-items: center; gap: 20px;">
-    <!-- Badge de Estado Firebase Nube -->
-    <div style="font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 20px; display: flex; align-items: center; gap: 6px;"
-      [style.background]="cloudStatus() === 'synced' ? 'rgba(16, 185, 129, 0.15)' : (cloudStatus() === 'syncing' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)')"
-      [style.color]="cloudStatus() === 'synced' ? '#059669' : (cloudStatus() === 'syncing' ? '#D97706' : '#DC2626')"
-      [style.border]="cloudStatus() === 'synced' ? '1px solid rgba(16, 185, 129, 0.3)' : (cloudStatus() === 'syncing' ? '1px solid rgba(245, 158, 11, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)')"
-      [title]="cloudError() || 'Sincronizado con Firebase Firestore'">
-      <span class="material-symbols-outlined" style="font-size: 14px;">
+    <!-- Indicador Nube Firebase Minimalista -->
+    <button class="cloud-status-btn"
+      [class.synced]="cloudStatus() === 'synced'"
+      [class.syncing]="cloudStatus() === 'syncing'"
+      [class.offline]="cloudStatus() === 'offline' || cloudStatus() === 'error'"
+      [title]="cloudStatus() === 'synced' ? 'Nube Firestore Sincronizada' : (cloudStatus() === 'syncing' ? 'Guardando cambios en la nube...' : 'Modo Offline / Error: ' + (cloudError() || 'Sin conexión'))">
+      <span class="material-symbols-outlined icon-cloud">
         {{ cloudStatus() === 'synced' ? 'cloud_done' : (cloudStatus() === 'syncing' ? 'cloud_sync' : 'cloud_off') }}
       </span>
-      <span>
-        {{ cloudStatus() === 'synced' ? 'Firebase Nube OK' : (cloudStatus() === 'syncing' ? 'Guardando en la nube...' : 'Modo Offline / Error Nube') }}
-      </span>
-    </div>
+    </button>
 
     <div class="today-chip-sticker">
       <div class="beige-tape"></div>

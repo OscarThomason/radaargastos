@@ -765,3 +765,91 @@ tr.detail-row td {
   from { opacity: 0; transform: translateY(-12px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+// ========================================
+// RECUADROS DE ANÁLISIS MINIMALISTAS (Elegantes y Ejecutivos)
+// ========================================
+.minimal-stat-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: all 0.2s ease;
+
+  .stat-box-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+
+    .material-symbols-outlined {
+      font-size: 18px;
+    }
+  }
+
+  .stat-box-text {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted);
+  }
+
+  &.status-danger {
+    border-color: rgba(220, 38, 38, 0.25);
+    background: rgba(220, 38, 38, 0.03);
+    .stat-box-header { color: #DC2626; }
+  }
+
+  &.status-success {
+    border-color: rgba(5, 150, 105, 0.25);
+    background: rgba(5, 150, 105, 0.03);
+    .stat-box-header { color: #059669; }
+  }
+
+  &.status-warning {
+    border-color: rgba(217, 119, 6, 0.25);
+    background: rgba(217, 119, 6, 0.03);
+    .stat-box-header { color: #D97706; }
+  }
+
+  &.status-info {
+    border-color: rgba(37, 99, 235, 0.25);
+    background: rgba(37, 99, 235, 0.03);
+    .stat-box-header { color: #2563EB; }
+  }
+}
+
+.minimal-ai-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+
+  .minimal-ai-header {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+
+    .material-symbols-outlined {
+      font-size: 18px;
+      color: #7C3AED;
+    }
+  }
+
+  .minimal-ai-body {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 0;
+    white-space: pre-line;
+  }
+}
