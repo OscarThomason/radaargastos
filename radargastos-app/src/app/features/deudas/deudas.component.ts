@@ -60,18 +60,24 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
     this.isAnalyzingWithN8n.set(false);
 
     if (res && res.analisis_financiero && !res.analisis_financiero.toLowerCase().includes('no hay concepto')) {
-      const cleanDiagnosis = (res.analisis_financiero || '').replace(/\*\*/g, '');
-      const cleanAction = (res.accion_recomendada || '').replace(/\*\*/g, '');
-      this.aiDiagnosisText.set(cleanDiagnosis + (cleanAction ? `\n\n📌 Estrategia Recomendada: ${cleanAction}` : ''));
+      let cleanDiagnosis = (res.analisis_financiero || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+      let cleanAction = (res.accion_recomendada || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      this.aiDiagnosisText.set(cleanDiagnosis + (cleanAction ? `<br><br><strong><u>Estrategia Recomendada:</u></strong> ${cleanAction}` : ''));
     } else {
       // Diagnóstico de Respaldo Inteligente Local
-      let diag = `Diagnóstico de Tendencia de Deudas:\n\n`;
-      diag += `Actualmente acumulas $${analysis.totalDebt.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN en compromisos de deuda. Tus cuotas mensuales requeridas ($${analysis.monthlyCommitment.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) representan el ${analysis.debtRatio}% de tus ingresos.\n\n`;
-      diag += `📈 Tendencia de Pago: ${analysis.trendText}\n\n`;
+      let diag = `<strong><u>Diagnóstico de Tendencia de Deudas:</u></strong><br><br>`;
+      diag += `Actualmente acumulas <strong>$${analysis.totalDebt.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</strong> en compromisos de deuda. Tus cuotas mensuales requeridas ($${analysis.monthlyCommitment.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) representan el <strong>${analysis.debtRatio}%</strong> de tus ingresos.<br><br>`;
+      diag += `<u>Tendencia de Pago:</u> ${analysis.trendText}<br><br>`;
       if (analysis.highestCatDebt) {
-        diag += `💡 Estrategia Avalancha: Prioriza abonar montos adicionales a la tarjeta/préstamo "${analysis.highestCatDebt.name}" por tener el mayor costo financiero (CAT ${analysis.highestCatDebt.cat}%). Esto te ahorrará miles de pesos en intereses acumulados.`;
+        diag += `<u>Estrategia Avalancha:</u> Prioriza abonar montos adicionales a la tarjeta/préstamo <strong>"${analysis.highestCatDebt.name}"</strong> por tener el mayor costo financiero (CAT ${analysis.highestCatDebt.cat}%). Esto te ahorrará intereses acumulados.`;
       } else {
-        diag += `💡 Estrategia Recomendada: Mantén la puntualidad en tus cuotas mensuales y procura realizar abonos a capital en la deuda de menor saldo para liberar liquidez rápidamente (método bola de nieve).`;
+        diag += `<u>Estrategia Recomendada:</u> Mantén la puntualidad en tus cuotas mensuales y procura realizar abonos a capital en la deuda de menor saldo para liberar liquidez rápidamente (método bola de nieve).`;
       }
       this.aiDiagnosisText.set(diag);
     }

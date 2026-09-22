@@ -1,26 +1,26 @@
-<!-- Botón Flotante para Abrir el Chatbot Asesor -->
-<button class="chatbot-trigger-btn" (click)="toggleOpen()" title="Asesor FinOps: Consulta si conviene realizar una compra">
+<!-- Botón Flotante para Abrir el Asesor Pre-Compra -->
+<button class="chatbot-trigger-btn" (click)="toggleOpen()" title="Asesor FinOps: Consulta la viabilidad de una compra">
   <div class="chatbot-trigger-inner">
-    <span class="material-symbols-outlined">auto_awesome</span>
+    <span class="material-symbols-outlined">shopping_cart_checkout</span>
     <span class="chatbot-trigger-label">Asesor Pre-Compra</span>
   </div>
   <span class="chatbot-ping-dot"></span>
 </button>
 
-<!-- Ventana / Modal de Asesor Pre-Compra IA n8n -->
+<!-- Ventana / Modal de Asesor Pre-Compra -->
 @if (isOpen()) {
   <div class="chatbot-overlay" (click)="close()">
     <div class="chatbot-card-container" (click)="$event.stopPropagation()">
       
-      <!-- Header del Chatbot -->
+      <!-- Header del Asesor -->
       <div class="chatbot-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <div class="bot-avatar">
-            <span class="material-symbols-outlined">psychology</span>
+            <span class="material-symbols-outlined">balance</span>
           </div>
           <div>
-            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text);">Asesor Pre-Compra (n8n FinOps)</h4>
-            <span style="font-size: 11px; color: var(--text-muted);">¿Vale la pena hacer esta compra? Consúltalo con la IA</span>
+            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text);">Evaluación de Compra</h4>
+            <span style="font-size: 11px; color: var(--text-muted);">Análisis de costo de oportunidad e impacto presupuestario</span>
           </div>
         </div>
         <button class="close-btn" (click)="close()">
@@ -28,44 +28,44 @@
         </button>
       </div>
 
-      <!-- Cuerpo del Chatbot -->
+      <!-- Cuerpo del Asesor -->
       <div class="chatbot-body">
         @if (!lastResponse()) {
           <div class="prompt-section">
-            <p style="font-size: 13px; color: var(--text); margin-bottom: 12px; font-weight: 500;">
-              Cuéntame qué artículo o servicio tienes pensado comprar y evaluaré el costo de oportunidad, nivel de necesidad e impacto en tu presupuesto:
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">
+              Ingresa el artículo o servicio que deseas adquirir y evaluaremos su viabilidad en relación con tu saldo y metas:
             </p>
 
             <div class="form-group">
-              <label>¿Qué deseas comprar?</label>
-              <input [(ngModel)]="itemQuestion" placeholder="Ej. Chamarra de cuero, Tenis Nike, Pantalla 55''" (keyup.enter)="sendConsultation()">
+              <label>Artículo / Concepto</label>
+              <input [(ngModel)]="itemQuestion" placeholder="Ej. Chamarra de cuero, Tenis, Pantalla" (keyup.enter)="sendConsultation()">
             </div>
 
             <div class="form-group" style="margin-top: 10px;">
-              <label>Monto Aprox. ($ MXN)</label>
+              <label>Monto Estimado ($ MXN)</label>
               <input [(ngModel)]="itemAmount" type="number" placeholder="Ej. 1500" (keyup.enter)="sendConsultation()">
             </div>
 
             <div class="form-group" style="margin-top: 10px;">
-              <label>Plazo o Notas (opcional)</label>
-              <input [(ngModel)]="itemNotes" placeholder="Ej. A 3 meses sin intereses, en oferta hoy" (keyup.enter)="sendConsultation()">
+              <label>Plazo o Oferta (opcional)</label>
+              <input [(ngModel)]="itemNotes" placeholder="Ej. A 3 meses sin intereses, oferta del mes" (keyup.enter)="sendConsultation()">
             </div>
 
-            <!-- Sugerencias Rápidas -->
-            <div class="quick-pills-label">Prueba rápida:</div>
+            <!-- Sugerencias Rápidas sin Emojis -->
+            <div class="quick-pills-label">Consultas frecuentes:</div>
             <div class="quick-pills-container">
-              <button class="quick-pill" (click)="quickAsk('Tenis deportivos Nike', 2200)">👟 Tenis $2,200</button>
-              <button class="quick-pill" (click)="quickAsk('Consola de videojuegos', 8500)">🎮 Consola $8,500</button>
-              <button class="quick-pill" (click)="quickAsk('Cena en restaurante gourmet', 950)">🍔 Cena $950</button>
+              <button class="quick-pill" (click)="quickAsk('Tenis deportivos', 2200)">Tenis $2,200</button>
+              <button class="quick-pill" (click)="quickAsk('Consola de videojuegos', 8500)">Consola $8,500</button>
+              <button class="quick-pill" (click)="quickAsk('Cena en restaurante', 950)">Cena $950</button>
             </div>
 
             <button class="btn-primary evaluate-btn" (click)="sendConsultation()" [disabled]="isThinking() || !itemQuestion.trim()">
               @if (isThinking()) {
                 <span class="material-symbols-outlined spin-icon">sync</span>
-                <span>Analizando con n8n...</span>
+                <span>Evaluando Viabilidad...</span>
               } @else {
-                <span class="material-symbols-outlined">auto_awesome</span>
-                <span>Evaluar Compra con IA</span>
+                <span class="material-symbols-outlined">analytics</span>
+                <span>Evaluar Viabilidad de Compra</span>
               }
             </button>
           </div>
@@ -82,7 +82,7 @@
                   {{ lastResponse()?.veredicto_consejero === 'Recomendado' ? 'verified' : (lastResponse()?.veredicto_consejero === 'Posponer' ? 'history_toggle_off' : 'block') }}
                 </span>
                 <div>
-                  <span class="verdict-label">Veredicto IA</span>
+                  <span class="verdict-label">Dictamen Ejecutivo</span>
                   <h3 class="verdict-title">{{ lastResponse()?.veredicto_consejero || 'Posponer' }}</h3>
                 </div>
               </div>
@@ -90,13 +90,13 @@
 
             <div class="analysis-box">
               <div class="analysis-item">
-                <span class="analysis-title">📊 Análisis Financiero:</span>
+                <span class="analysis-title"><u>Análisis Financiero:</u></span>
                 <p class="analysis-text">{{ lastResponse()?.analisis_financiero }}</p>
               </div>
 
               @if (lastResponse()?.accion_recomendada) {
                 <div class="analysis-item" style="margin-top: 10px;">
-                  <span class="analysis-title">💡 Acción Recomendada:</span>
+                  <span class="analysis-title"><u>Acción Recomendada:</u></span>
                   <p class="analysis-text" style="color: var(--text); font-weight: 600;">{{ lastResponse()?.accion_recomendada }}</p>
                 </div>
               }
@@ -104,7 +104,7 @@
 
             <button class="btn-ghost new-search-btn" (click)="resetForm()">
               <span class="material-symbols-outlined">restart_alt</span>
-              <span>Consultar otra compra</span>
+              <span>Evaluar otra compra</span>
             </button>
           </div>
         }

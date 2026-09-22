@@ -1,13 +1,15 @@
-@if (showReminderToast() && upcomingWeekPaymentInfo()) {
+@if (showReminderToast() && activeReminder()) {
   <div class="reminder-toast-popup">
     <div class="toast-content">
       <div class="toast-badge">
-        <span class="material-symbols-outlined">notifications_active</span>
+        <span class="material-symbols-outlined">{{ activeReminder().icon }}</span>
       </div>
       <div class="toast-body">
-        <strong style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: #D97706; display: block; margin-bottom: 2px;">¡RECORDATORIO DE LA SEMANA! ⏰</strong>
+        <strong style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text); display: block; margin-bottom: 2px;">
+          {{ activeReminder().title }}
+        </strong>
         <span>
-          Recuerda que esta semana ocupas juntar <strong>{{ money(upcomingWeekPaymentInfo()?.totalNeeded || 0) }}</strong> para tus pagos próximos (ej. {{ upcomingWeekPaymentInfo()?.firstName }} el {{ upcomingWeekPaymentInfo()?.firstDate }}). ¡Que no se te pase la fecha!
+          {{ activeReminder().text }}
         </span>
       </div>
     </div>

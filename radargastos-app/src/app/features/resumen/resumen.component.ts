@@ -48,15 +48,79 @@ export class ResumenComponent {
     };
   });
 
+  activeReminder = computed(() => {
+    const weekInfo = this.upcomingWeekPaymentInfo();
+    const vencidosCount = this.vencidos();
+    const requerido = this.dineroRequeridoSemana();
+    const totalDeuda = this.totalDeudaViva();
+
+    const reminders: { title: string; icon: string; text: string }[] = [];
+
+    if (vencidosCount > 0) {
+      reminders.push({
+        title: 'Pagos Pendientes Vencidos',
+        icon: 'warning',
+        text: `Tienes ${vencidosCount} compromiso(s) con fecha vencida. Te sugerimos ponernos al día para mantener tus finanzas sanas.`
+      });
+    }
+
+    if (weekInfo) {
+      reminders.push({
+        title: 'Compromiso de la Semana',
+        icon: 'event',
+        text: `Esta semana requieres ${this.money(weekInfo.totalNeeded)} para ${weekInfo.count} pago(s). Próximo: ${weekInfo.firstName} (${weekInfo.firstDate}).`
+      });
+    }
+
+    if (requerido > 0) {
+      reminders.push({
+        title: 'Falta por Generar',
+        icon: 'trending_up',
+        text: `Faltan ${this.money(requerido)} de liquidez para completar los vencimientos programados de los próximos 7 días.`
+      });
+    }
+
+    if (totalDeuda > 0) {
+      reminders.push({
+        title: 'Estrategia de Desendeudamiento',
+        icon: 'account_balance_wallet',
+        text: `Tu saldo actual en deudas es de ${this.money(totalDeuda)}. Abonar montos extra a capital acelera tu libertad financiera.`
+      });
+    }
+
+    // Consejos financieros generales variados
+    reminders.push({
+      title: 'Optimización de Suscripciones',
+      icon: 'subscriptions',
+      text: 'Revisa periódicamente tus servicios fijos y cancela las plataformas digitales que no utilices activamente.'
+    });
+
+    reminders.push({
+      title: 'Regla del 50/30/20',
+      icon: 'pie_chart',
+      text: 'Procura destinar el 50% de tu ingreso a necesidades primarias, 30% a compromisos/ahorro y máximo 20% a ocio.'
+    });
+
+    reminders.push({
+      title: 'Control de Gastos Hormiga',
+      icon: 'receipt_long',
+      text: 'Registrar diariamente hasta las compras más pequeñas te ayuda a evitar fugas invisibles de dinero.'
+    });
+
+    // Seleccionar uno de manera aleatoria cada vez que se evalúa o carga
+    const index = Math.floor(Math.random() * reminders.length);
+    return reminders[index];
+  });
+
   dismissReminderToast() {
     this.showReminderToast.set(false);
   }
 
   constructor() {
-    // Auto-ocultar el pop-up después de 5 segundos
+    // Auto-ocultar el pop-up después de 8 segundos
     setTimeout(() => {
       this.showReminderToast.set(false);
-    }, 5000);
+    }, 8000);
   }
 
   toggleTotals() {

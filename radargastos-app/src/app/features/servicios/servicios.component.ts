@@ -65,20 +65,26 @@ Evalúa cuáles servicios son realmente necesarios y cuáles suscripciones secun
     this.isAnalyzingWithN8n.set(false);
 
     if (res && res.analisis_financiero && !res.analisis_financiero.toLowerCase().includes('no hay concepto')) {
-      const cleanDiagnosis = (res.analisis_financiero || '').replace(/\*\*/g, '');
-      const cleanAction = (res.accion_recomendada || '').replace(/\*\*/g, '');
-      this.aiDiagnosisText.set(cleanDiagnosis + (cleanAction ? `\n\n📌 Plan de Optimización: ${cleanAction}` : ''));
+      let cleanDiagnosis = (res.analisis_financiero || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+      let cleanAction = (res.accion_recomendada || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      this.aiDiagnosisText.set(cleanDiagnosis + (cleanAction ? `<br><br><strong><u>Plan de Optimización:</u></strong> ${cleanAction}` : ''));
     } else {
       // Diagnóstico de Respaldo Inteligente Local
-      let diag = `Diagnóstico de Necesidad de Servicios:\n\n`;
-      diag += `Actualmente gastas $${analysis.totalServices.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN al mes en servicios. De ese total:\n`;
-      diag += `- 🟢 Servicios Necesarios (Fijos): $${analysis.essentialTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN (${analysis.essentialList.length} servicios prioritarios como luz, agua, internet, renta).\n`;
-      diag += `- 🟡 Servicios Prescindibles (Suscripciones): $${analysis.optionalTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN (${analysis.optionalList.length} servicios de entretenimiento u opcionales).\n\n`;
+      let diag = `<strong><u>Diagnóstico de Necesidad de Servicios:</u></strong><br><br>`;
+      diag += `Actualmente gastas <strong>$${analysis.totalServices.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</strong> al mes en servicios. De ese total:<br>`;
+      diag += `- <u>Servicios Necesarios (Fijos):</u> <strong>$${analysis.essentialTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</strong> (${analysis.essentialList.length} servicios prioritarios como luz, agua, internet, renta).<br>`;
+      diag += `- <u>Servicios Prescindibles (Suscripciones):</u> <strong>$${analysis.optionalTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</strong> (${analysis.optionalList.length} servicios de entretenimiento u opcionales).<br><br>`;
 
       if (analysis.optionalTotal > 0) {
-        diag += `💡 Oportunidad de Ahorro: Mantener tus suscripciones opcionales (${analysis.optionalList.map(s => s.name).join(', ')}) te cuesta $${analysis.annualOptionalCost.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN al año. Cancelar o pausar 1 o 2 suscripciones secundarias te liberaría liquidez inmediata.`;
+        diag += `<u>Oportunidad de Ahorro:</u> Mantener tus suscripciones opcionales (${analysis.optionalList.map(s => s.name).join(', ')}) te cuesta <strong>$${analysis.annualOptionalCost.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN al año</strong>. Cancelar o pausar 1 o 2 suscripciones secundarias te liberaría liquidez inmediata.`;
       } else {
-        diag += `🟢 Excelente Control: Todos tus servicios contratados corresponden a necesidades primarias fijas de la vivienda.`;
+        diag += `<u>Excelente Control:</u> Todos tus servicios contratados corresponden a necesidades primarias fijas de la vivienda.`;
       }
       this.aiDiagnosisText.set(diag);
     }

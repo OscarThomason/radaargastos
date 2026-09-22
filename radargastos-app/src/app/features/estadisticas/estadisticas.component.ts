@@ -282,9 +282,15 @@ INSTRUCCIÓN: Genera un dictamen ejecutivo de salud financiera global en 2 o 3 p
     const isInvalidN8nText = !res || !n8nText || n8nText.toLowerCase().includes('no hay concepto') || n8nText.toLowerCase().includes('información disponible no es posible');
 
     if (!isInvalidN8nText && res) {
-      const cleanDiagnosis = (res.analisis_financiero || '').replace(/\*\*/g, '');
-      const cleanAction = (res.accion_recomendada || '').replace(/\*\*/g, '');
-      this.globalAiDiagnosis.set(cleanDiagnosis + (cleanAction ? `\n\n📌 Recomendación Clave: ${cleanAction}` : ''));
+      let cleanDiagnosis = (res.analisis_financiero || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+      let cleanAction = (res.accion_recomendada || '')
+        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      this.globalAiDiagnosis.set(cleanDiagnosis + (cleanAction ? `<br><br><strong><u>Recomendación Clave:</u></strong> ${cleanAction}` : ''));
     } else {
       // Diagnóstico Financiero Global Inteligente Avanzado de Respaldo
       this.globalAiDiagnosis.set(this.generateAdvancedLocalDiagnosis(analysis, essData, expData));
@@ -302,25 +308,25 @@ INSTRUCCIÓN: Genera un dictamen ejecutivo de salud financiera global en 2 o 3 p
     const balStr = `$${analysis.netBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
     const ocioStr = `$${analysis.ocioExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
 
-    let diagnosis = `Diagnóstico Ejecutivo de Finanzas (${month}):\n\n`;
+    let diagnosis = `<strong><u>Diagnóstico Ejecutivo de Finanzas (${month}):</u></strong><br><br>`;
 
     if (analysis.incomeExceeded) {
-      diagnosis += `⚠️ Alerta de Déficit Presupuestario: Tus gastos en ${month} (${expStr}) superaron tus ingresos (${incStr}) por un monto de $${analysis.exceededAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}. Tus consumos alcanzaron el ${analysis.ratioToIncome}% de tus recursos disponibles.\n\n`;
+      diagnosis += `<u>Alerta de Déficit Presupuestario:</u> Tus gastos en ${month} (${expStr}) superaron tus ingresos (${incStr}) por un monto de <strong>$${analysis.exceededAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>. Tus consumos alcanzaron el <strong>${analysis.ratioToIncome}%</strong> de tus recursos disponibles.<br><br>`;
     } else if (analysis.ratioToIncome >= 90) {
-      diagnosis += `⚡ Margen Financiero Ajustado: Tus gastos consumen el ${analysis.ratioToIncome}% de tus ingresos totales (${incStr}), dejándote con un remanente libre reducido de únicamente ${balStr} para ahorros o eventualidades.\n\n`;
+      diagnosis += `<u>Margen Financiero Ajustado:</u> Tus gastos consumen el <strong>${analysis.ratioToIncome}%</strong> de tus ingresos totales (${incStr}), dejándote con un remanente libre reducido de únicamente <strong>${balStr}</strong> para ahorros o eventualidades.<br><br>`;
     } else {
-      diagnosis += `🟢 Salud Financiera Estable: Mantienes tus gastos (${expStr}) dentro del límite de tus ingresos (${incStr}), conservando una liquidez disponible de ${balStr} (${100 - analysis.ratioToIncome}% de margen libre).\n\n`;
+      diagnosis += `<u>Salud Financiera Estable:</u> Mantienes tus gastos (${expStr}) dentro del límite de tus ingresos (${incStr}), conservando una liquidez disponible de <strong>${balStr}</strong> (${100 - analysis.ratioToIncome}% de margen libre).<br><br>`;
     }
 
     // Análisis de Ocio y Gustos Prescindibles
     if (analysis.ocioExp > 0) {
-      diagnosis += `🎮 Impacto de Ocio y Comida Fuera: Destinas ${ocioStr} a conceptos prescindibles (ocio, restaurantes y ropa), lo que equivale al ${analysis.ratioOcioToIncome}% de tus ingresos de este mes (${analysis.ratioOcioToExp}% de tu gasto total). `;
+      diagnosis += `<u>Impacto de Ocio y Comida Fuera:</u> Destinas <strong>${ocioStr}</strong> a conceptos prescindibles (ocio, restaurantes y ropa), lo que equivale al <strong>${analysis.ratioOcioToIncome}%</strong> de tus ingresos de este mes (${analysis.ratioOcioToExp}% de tu gasto total). `;
       
       if (analysis.ratioToIncome >= 85 && analysis.ocioExp > analysis.netBalance) {
         const ahorroSugerido = Math.round(analysis.ocioExp * 0.35);
-        diagnosis += `Debido a que tu margen libre actual es de solo ${balStr}, tus consumos en ocio absorben casi la totalidad de tu capacidad de ahorro. Si optimizas un 35% de esta categoría, recuperarías $${ahorroSugerido.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN adicionales de liquidez mensual.\n\n`;
+        diagnosis += `Debido a que tu margen libre actual es de solo ${balStr}, tus consumos en ocio absorben casi la totalidad de tu capacidad de ahorro. Si optimizas un 35% de esta categoría, recuperarías <strong>$${ahorroSugerido.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN</strong> adicionales de liquidez mensual.<br><br>`;
       } else {
-        diagnosis += `Este nivel de consumo se encuentra en un rango de equilibrio respecto a tus ingresos.\n\n`;
+        diagnosis += `Este nivel de consumo se encuentra en un rango de equilibrio respecto a tus ingresos.<br><br>`;
       }
     }
 
@@ -331,11 +337,11 @@ INSTRUCCIÓN: Genera un dictamen ejecutivo de salud financiera global en 2 o 3 p
       const topCatAmount = expData.values[topCatIndex];
       const topCatPct = Math.round((topCatAmount / expData.total) * 100);
 
-      diagnosis += `💡 Concentración Principal: La categoría con mayor impacto este mes es ${topCatName} con $${topCatAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${topCatPct}% del presupuesto total).\n\n`;
+      diagnosis += `<u>Concentración Principal:</u> La categoría con mayor impacto este mes es <strong>${topCatName}</strong> con <strong>$${topCatAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN</strong> (${topCatPct}% del presupuesto total).<br><br>`;
     }
 
     // Recomendación Final
-    diagnosis += `📌 Recomendación Estratégica: Prioriza cubrir tus compromisos esenciales (${essData.essentialPercent}% del presupuesto) y establece un tope mensual para consumos en ocio equivalente al 15% de tus ingresos para consolidar tu fondo de emergencia.`;
+    diagnosis += `<strong><u>Recomendación Estratégica:</u></strong> Prioriza cubrir tus compromisos esenciales (${essData.essentialPercent}% del presupuesto) y establece un tope mensual para consumos en ocio equivalente al 15% de tus ingresos para consolidar tu fondo de emergencia.`;
 
     return diagnosis;
   }

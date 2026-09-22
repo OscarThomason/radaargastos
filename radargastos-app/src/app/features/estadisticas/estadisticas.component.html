@@ -31,8 +31,8 @@
       </span>
     </div>
     <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="requestGlobalAiAudit()" [disabled]="isAuditingWithN8n()">
-      <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
-      <span>{{ isAuditingWithN8n() ? 'Generando Diagnóstico...' : 'Generar Diagnóstico Global con IA' }}</span>
+      <span class="material-symbols-outlined" style="font-size: 16px;">analytics</span>
+      <span>{{ isAuditingWithN8n() ? 'Generando Diagnóstico...' : 'Generar Diagnóstico Global' }}</span>
     </button>
   </div>
 
@@ -76,15 +76,13 @@
     <div class="minimal-ai-card">
       <div class="minimal-ai-header">
         <span class="material-symbols-outlined">analytics</span>
-        <span>Dictamen de Salud Financiera Global (IA FinOps)</span>
+        <span>Dictamen de Salud Financiera Global</span>
       </div>
-      <p class="minimal-ai-body">
-        {{ globalAiDiagnosis() }}
-      </p>
+      <p class="minimal-ai-body" [innerHTML]="globalAiDiagnosis()"></p>
     </div>
   } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
-      Haz clic en <strong>"Generar Diagnóstico Global con IA"</strong> para obtener una evaluación consolidada sobre cómo influye la proporción de ocio y gastos generales sobre tu balance financiero del mes.
+    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 14px; border-radius: 10px; text-align: center;">
+      Haz clic en <strong>"Generar Diagnóstico Global"</strong> para obtener una evaluación consolidada sobre cómo influye la proporción de ocio y gastos generales sobre tu balance financiero del mes.
     </div>
   }
 </div>

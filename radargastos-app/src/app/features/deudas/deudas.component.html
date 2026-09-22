@@ -16,8 +16,8 @@
       </span>
     </div>
     <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="requestDebtAiAnalysis()" [disabled]="isAnalyzingWithN8n()">
-      <span class="material-symbols-outlined" style="font-size: 16px;">auto_awesome</span>
-      <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Deudas con IA' }}</span>
+      <span class="material-symbols-outlined" style="font-size: 16px;">finance_chip</span>
+      <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Deudas' }}</span>
     </button>
   </div>
 
@@ -59,15 +59,13 @@
     <div class="minimal-ai-card">
       <div class="minimal-ai-header">
         <span class="material-symbols-outlined">insights</span>
-        <span>Dictamen de Estrategia de Desendeudamiento (IA FinOps)</span>
+        <span>Dictamen de Estrategia de Desendeudamiento</span>
       </div>
-      <p class="minimal-ai-body">
-        {{ aiDiagnosisText() }}
-      </p>
+      <p class="minimal-ai-body" [innerHTML]="aiDiagnosisText()"></p>
     </div>
   } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px dashed var(--border); padding: 14px; border-radius: 10px; text-align: center;">
-      Haz clic en <strong>"Analizar Deudas con IA"</strong> para evaluar si tus pagos han disminuido y recibir una estrategia de liquidación priorizada por costo financiero (CAT).
+    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 14px; border-radius: 10px; text-align: center;">
+      Haz clic en <strong>"Analizar Deudas"</strong> para evaluar si tus pagos han disminuido y recibir una estrategia de liquidación priorizada por costo financiero (CAT).
     </div>
   }
 </div>
