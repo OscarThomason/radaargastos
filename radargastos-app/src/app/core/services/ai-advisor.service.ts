@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Expense, Income, Debt, EssentialAnalysis, EssentialCategoryGroup, AiInsight, N8nAgentResponse } from '../models/finance.model';
+import { Expense, Income, Debt, ServiceItem, EssentialAnalysis, EssentialCategoryGroup, AiInsight, N8nAgentResponse } from '../models/finance.model';
 
 @Injectable({
   providedIn: 'root'
@@ -262,5 +262,111 @@ export class AiAdvisorService {
     }
 
     return insights;
+  }
+
+  /**
+   * Clasifica si un servicio es verdaderamente esencial o prescindible
+   */
+  isServiceEssential(serviceName: string): boolean {
+    const clean = serviceName.toLowerCase().trim();
+    return /luz|cfe|agua|gas|renta|alquiler|internet|telmex|izzi|totalplay|mantenimiento|casa|hogar|predial/i.test(clean);
+  }
+
+  /**
+   * Diagnostica deudas: tendencia de aumento/disminución, ratio de endeudamiento y mayor CAT
+   */
+  analyzeDebtsTrend(debts: Debt[], incomes: Income[], expenses: Expense[]) {
+    const totalDebt = debts.reduce((sum, d) => sum + (d.group === 'prestamo' ? ((d.total || 0) - (d.pagado || 0)) : (d.debt || 0)), 0);
+    const monthlyCommitment = debts.reduce((sum, d) => {
+      if (d.group === 'prestamo') return sum + (d.cuota || 0);
+      return sum + (d.minPayment || 0);
+    }, 0);
+
+    const totalInc = incomes.reduce((sum, i) => sum + i.amount, 0);
+    const debtRatio = totalInc > 0 ? Math.round((monthlyCommitment / totalInc) * 100) : 0;
+
+    // Pagos de deudas registrados en gastos del mes actual vs mes anterior
+    const nowKey = new Date().toISOString().slice(0, 7);
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    const lastKey = lastMonth.toISOString().slice(0, 7);
+
+    const currentMonthDebtPayments = expenses
+      .filter(e => e.date.slice(0, 7) === nowKey && e.category === 'Deudas')
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const lastMonthDebtPayments = expenses
+      .filter(e => e.date.slice(0, 7) === lastKey && e.category === 'Deudas')
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    let trendText = '';
+    let trendType: 'decreased' | 'increased' | 'stable' = 'stable';
+
+    if (lastMonthDebtPayments > 0) {
+      const diff = currentMonthDebtPayments - lastMonthDebtPayments;
+      const pct = Math.round(Math.abs(diff / lastMonthDebtPayments) * 100);
+      if (diff < 0) {
+        trendType = 'decreased';
+        trendText = `Tus abonos a deudas han disminuido un ${pct}% este mes comparado con el mes anterior (reducción de $${Math.abs(diff).toLocaleString('es-MX', {minimumFractionDigits: 2})}).`;
+      } else if (diff > 0) {
+        trendType = 'increased';
+        trendText = `Tus pagos a deudas se incrementaron un ${pct}% este mes ($${diff.toLocaleString('es-MX', {minimumFractionDigits: 2})} adicionales asignados a liquidación).`;
+      } else {
+        trendText = 'Tus cuotas de pago de deudas se mantienen estables respecto al mes anterior.';
+      }
+    } else {
+      trendText = 'Comportamiento de deudas registrado en este periodo.';
+    }
+
+    // Identificar deuda con mayor CAT
+    const debtsWithCat = debts.filter(d => d.cat && d.cat > 0).sort((a, b) => (b.cat || 0) - (a.cat || 0));
+    const highestCatDebt = debtsWithCat.length > 0 ? debtsWithCat[0] : null;
+
+    return {
+      totalDebt,
+      monthlyCommitment,
+      debtRatio,
+      currentMonthDebtPayments,
+      lastMonthDebtPayments,
+      trendType,
+      trendText,
+      highestCatDebt
+    };
+  }
+
+  /**
+   * Diagnostica servicios: esenciales vs prescindibles, costo mensual/anual y ahorro estimado
+   */
+  analyzeServicesNecessity(services: ServiceItem[], incomes: Income[]) {
+    let essentialTotal = 0;
+    let optionalTotal = 0;
+    const essentialList: ServiceItem[] = [];
+    const optionalList: ServiceItem[] = [];
+
+    services.forEach(s => {
+      const isEss = this.isServiceEssential(s.name);
+      if (isEss) {
+        essentialTotal += s.amount;
+        essentialList.push(s);
+      } else {
+        optionalTotal += s.amount;
+        optionalList.push(s);
+      }
+    });
+
+    const totalServices = essentialTotal + optionalTotal;
+    const totalInc = incomes.reduce((sum, i) => sum + i.amount, 0);
+    const optionalRatio = totalInc > 0 ? Math.round((optionalTotal / totalInc) * 100) : 0;
+    const annualOptionalCost = optionalTotal * 12;
+
+    return {
+      essentialTotal,
+      optionalTotal,
+      totalServices,
+      essentialList,
+      optionalList,
+      optionalRatio,
+      annualOptionalCost
+    };
   }
 }

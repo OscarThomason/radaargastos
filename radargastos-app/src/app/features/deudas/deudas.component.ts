@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
+import { AiAdvisorService } from '../../core/services/ai-advisor.service';
 import { Debt, Installment } from '../../core/models/finance.model';
 import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
@@ -14,11 +15,65 @@ import { ConfirmModalComponent } from '../../core/components/confirm-modal/confi
 })
 export class DeudasComponent {
   private financeService = inject(FinanceService);
+  private aiAdvisor = inject(AiAdvisorService);
 
   debts = computed(() => this.financeService.state().debts);
+  incomes = computed(() => this.financeService.state().incomes);
+  expenses = computed(() => this.financeService.state().expenses);
 
   searchQuery = signal<string>('');
   sortBy = signal<'date' | 'name' | 'amount-desc' | 'amount-asc'>('date');
+
+  // Análisis de Tendencia y Carga de Deudas
+  debtAnalysis = computed(() => {
+    return this.aiAdvisor.analyzeDebtsTrend(this.debts(), this.incomes(), this.expenses());
+  });
+
+  isAnalyzingWithN8n = signal(false);
+  aiDiagnosisText = signal<string | null>(null);
+
+  async requestDebtAiAnalysis() {
+    const analysis = this.debtAnalysis();
+    if (this.debts().length === 0) {
+      alert('No hay deudas registradas para analizar.');
+      return;
+    }
+
+    this.isAnalyzingWithN8n.set(true);
+
+    const promptText = `
+ANÁLISIS DE DEUDAS Y TENDENCIA DE PAGO:
+- Total Adeudado Acumulado: $${analysis.totalDebt} MXN
+- Compromiso Mensual en Cuotas: $${analysis.monthlyCommitment} MXN (${analysis.debtRatio}% de los ingresos del mes).
+- Tendencia: ${analysis.trendText}
+- Deuda con Mayor CAT: ${analysis.highestCatDebt ? `${analysis.highestCatDebt.name} (CAT ${analysis.highestCatDebt.cat}%)` : 'Ninguna tarjeta con CAT registrado'}.
+
+Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una estrategia acelerada de pago (método avalancha) para liquidar primero las deudas de mayor tasa de interés.
+`;
+
+    const res = await this.aiAdvisor.queryN8nAgent({
+      tipo_solicitud: 'consulta_compra',
+      pregunta: promptText,
+      monto: analysis.totalDebt
+    });
+
+    this.isAnalyzingWithN8n.set(false);
+
+    if (res && res.analisis_financiero && !res.analisis_financiero.toLowerCase().includes('no hay concepto')) {
+      this.aiDiagnosisText.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Estrategia Recomendada: ${res.accion_recomendada}` : ''));
+    } else {
+      // Diagnóstico de Respaldo Inteligente Local
+      let diag = `📊 **Diagnóstico de Tendencia de Deudas:**\n\n`;
+      diag += `Actualmente acumulas **$${analysis.totalDebt.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN** en compromisos de deuda. Tus cuotas mensuales requeridas ($${analysis.monthlyCommitment.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN) representan el **${analysis.debtRatio}%** de tus ingresos.\n\n`;
+      diag += `📈 **Tendencia de Pago:** ${analysis.trendText}\n\n`;
+      if (analysis.highestCatDebt) {
+        diag += `💡 **Estrategia Avalancha:** Prioriza abonar montos adicionales a la tarjeta/préstamo **"${analysis.highestCatDebt.name}"** por tener el mayor costo financiero (CAT ${analysis.highestCatDebt.cat}%). Esto te ahorrará miles de pesos en intereses acumulados.`;
+      } else {
+        diag += `💡 **Estrategia Recomendada:** Mantén la puntualidad en tus cuotas mensuales y procura realizar abonos a capital en la deuda de menor saldo para liberar liquidez rápidamente (método bola de nieve).`;
+      }
+      this.aiDiagnosisText.set(diag);
+    }
+  }
 
   filteredDebts = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();

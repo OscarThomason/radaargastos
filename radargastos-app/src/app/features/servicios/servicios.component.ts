@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
+import { AiAdvisorService } from '../../core/services/ai-advisor.service';
 import { ServiceItem } from '../../core/models/finance.model';
 import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
@@ -14,11 +15,72 @@ import { ConfirmModalComponent } from '../../core/components/confirm-modal/confi
 })
 export class ServiciosComponent {
   private financeService = inject(FinanceService);
+  private aiAdvisor = inject(AiAdvisorService);
 
   services = computed(() => this.financeService.state().services);
+  incomes = computed(() => this.financeService.state().incomes);
 
   searchQuery = signal<string>('');
   sortBy = signal<'date' | 'name' | 'amount-desc' | 'amount-asc'>('date');
+
+  // Análisis de Necesidad de Servicios (Esenciales vs Prescindibles)
+  servicesAnalysis = computed(() => {
+    return this.aiAdvisor.analyzeServicesNecessity(this.services(), this.incomes());
+  });
+
+  isAnalyzingWithN8n = signal(false);
+  aiDiagnosisText = signal<string | null>(null);
+
+  isServiceEssential(name: string): boolean {
+    return this.aiAdvisor.isServiceEssential(name);
+  }
+
+  async requestServicesAiAnalysis() {
+    const analysis = this.servicesAnalysis();
+    if (this.services().length === 0) {
+      alert('No hay servicios registrados para analizar.');
+      return;
+    }
+
+    this.isAnalyzingWithN8n.set(true);
+
+    const essentialNames = analysis.essentialList.map(s => s.name).join(', ') || 'Ninguno';
+    const optionalNames = analysis.optionalList.map(s => `${s.name} ($${s.amount})`).join(', ') || 'Ninguno';
+
+    const promptText = `
+ANÁLISIS DE SERVICIOS Y SUSCRIPCIONES CONTRATADAS:
+- Total Gasto Mensual en Servicios: $${analysis.totalServices} MXN
+- Servicios Esenciales Fijos (Luz, Agua, Renta, CFE, Gas, Internet): $${analysis.essentialTotal} MXN (${essentialNames})
+- Suscripciones / Servicios Prescindibles: $${analysis.optionalTotal} MXN (${optionalNames}). Representa el ${analysis.optionalRatio}% de los ingresos mensuales ($${analysis.annualOptionalCost} MXN al año).
+
+Evalúa cuáles servicios son realmente necesarios y cuáles suscripciones secundarias convendría cancelar, pausar o sustituir para liberar dinero libre.
+`;
+
+    const res = await this.aiAdvisor.queryN8nAgent({
+      tipo_solicitud: 'consulta_compra',
+      pregunta: promptText,
+      monto: analysis.totalServices
+    });
+
+    this.isAnalyzingWithN8n.set(false);
+
+    if (res && res.analisis_financiero && !res.analisis_financiero.toLowerCase().includes('no hay concepto')) {
+      this.aiDiagnosisText.set(res.analisis_financiero + (res.accion_recomendada ? `\n\n📌 Plan de Optimización: ${res.accion_recomendada}` : ''));
+    } else {
+      // Diagnóstico de Respaldo Inteligente Local
+      let diag = `⚡ **Diagnóstico de Necesidad de Servicios:**\n\n`;
+      diag += `Actualmente gastas **$${analysis.totalServices.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN** al mes en servicios. De ese total:\n`;
+      diag += `- 🟢 **Servicios Necesarios (Fijos):** $${analysis.essentialTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN (${analysis.essentialList.length} servicios prioritarios como luz, agua, internet, renta).\n`;
+      diag += `- 🟡 **Servicios Prescindibles (Suscripciones):** $${analysis.optionalTotal.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN (${analysis.optionalList.length} servicios de entretenimiento u opcionales).\n\n`;
+
+      if (analysis.optionalTotal > 0) {
+        diag += `💡 **Oportunidad de Ahorro:** Mantener tus suscripciones opcionales (${analysis.optionalList.map(s => s.name).join(', ')}) te cuesta **$${analysis.annualOptionalCost.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN al año**. Cancelar o pausar 1 o 2 suscripciones secundarias te liberaría liquidez inmediata.`;
+      } else {
+        diag += `🟢 **Excelente Control:** Todos tus servicios contratados corresponden a necesidades primarias fijos de la vivienda.`;
+      }
+      this.aiDiagnosisText.set(diag);
+    }
+  }
 
   filteredServices = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
