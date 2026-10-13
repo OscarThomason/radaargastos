@@ -1,123 +1,162 @@
-@if (showReminderToast() && activeReminder()) {
-  <div class="reminder-toast-popup">
-    <div class="toast-content">
-      <div class="toast-badge">
-        <span class="material-symbols-outlined">{{ activeReminder().icon }}</span>
+<!-- CALENDARIO MINIMALISTA TIPO AGENDA (Estilo Imagen 2) -->
+<div class="agenda-calendar-container card-panel" style="margin-top: 0; margin-bottom: 30px; padding: 24px 28px;">
+  <!-- Cabecera del Calendario -->
+  <div class="agenda-top-header">
+    <div class="agenda-title-block">
+      <span class="agenda-word-title">CALENDARIO</span>
+      <span class="agenda-year-text">{{ currentYear() }}</span>
+    </div>
+
+    <div class="agenda-header-actions" style="display: flex; align-items: center; gap: 12px;">
+      <!-- Controles sutiles de navegación de mes -->
+      <div class="agenda-month-nav">
+        <button class="agenda-nav-btn" (click)="prevMonth()" title="Mes anterior">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <span class="agenda-current-month-label">{{ currentMonthTitle() }}</span>
+        <button class="agenda-nav-btn" (click)="nextMonth()" title="Siguiente mes">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
       </div>
-      <div class="toast-body">
-        <strong style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; color: var(--text); display: block; margin-bottom: 2px;">
-          {{ activeReminder().title }}
-        </strong>
-        <span>
-          {{ activeReminder().text }}
+
+      <!-- Botón minimalista de visibilidad -->
+      <button class="agenda-nav-btn" (click)="toggleTotals()" title="Ocultar/Mostrar importes" style="margin-left: 4px;">
+        <span class="material-symbols-outlined" style="font-size: 19px;">
+          {{ showTotals() ? 'visibility' : 'visibility_off' }}
         </span>
-      </div>
-    </div>
-    <button class="toast-close-btn" (click)="dismissReminderToast()" title="Cerrar aviso">&times;</button>
-  </div>
-}
-
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-  <h2 class="section-title" style="margin: 0;">Resumen General</h2>
-  <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;"
-    (click)="toggleTotals()">
-    <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off'
-      }}</span>
-  </button>
-</div>
-
-<div class="summary-strip">
-  <app-stat-card label="Compromiso por pagar en el mes" [value]="showTotals() ? money(compromisoCiclo()) : '****'"
-    icon="payments">
-  </app-stat-card>
-  
-  <!-- Tarjeta interactiva para compromiso por semana -->
-  <div class="stat-card">
-    <div class="stat-card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 6px;">
-      <select [ngModel]="selectedWeekIndex()" (ngModelChange)="onChangeWeek($event)" style="background: transparent; border: none; font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; outline: none; padding: 0; width: 100%; cursor: pointer; font-family: inherit;">
-        @for (sem of semanasConCompromiso(); track sem.index) {
-          <option [value]="sem.index">Compromiso {{ sem.label }}</option>
-        }
-      </select>
-      <div class="icon-box" style="width: 30px; height: 30px; border-radius: 8px; background: var(--surface2); color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-        <span class="material-symbols-outlined" style="font-size: 18px;">date_range</span>
-      </div>
-    </div>
-    <div class="value" style="font-size: 22px; font-weight: 800; margin-top: 8px; font-family: 'Sora', sans-serif; color: var(--text); letter-spacing: -0.02em; white-space: normal; line-height: 1.25;">
-      {{ showTotals() ? money(compromisoSemanaSeleccionada()) : '****' }}
+      </button>
     </div>
   </div>
 
-  <app-stat-card label="Deuda total" [value]="showTotals() ? money(totalDeudaViva()) : '****'" valueClass="danger"
-    icon="account_balance_wallet">
-  </app-stat-card>
-  <app-stat-card label="Por generar esta semana" [value]="showTotals() ? money(dineroRequeridoSemana()) : '****'"
-    [valueClass]="dineroRequeridoSemana() > 0 ? 'warn' : 'safe'" icon="trending_up">
-  </app-stat-card>
-  <app-stat-card label="Pagos vencidos" [value]="vencidos().toString()"
-    [valueClass]="vencidos() > 0 ? 'danger' : 'safe'" icon="warning">
-  </app-stat-card>
-</div>
-
-<div class="calendar-header-bar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 28px; margin-bottom: 12px;">
-  <h2 class="section-title" style="margin: 0;">Calendario de Pagos</h2>
-  <div class="calendar-controls" style="display: flex; align-items: center; gap: 8px;">
-    <button class="btn-ghost" style="padding: 6px 10px; border-color: transparent; margin: 0; min-width: unset;" (click)="prevMonth()" title="Mes Anterior">
-      <span class="material-symbols-outlined">chevron_left</span>
-    </button>
-    <span class="calendar-month-title" style="font-weight: 700; font-size: 15px; min-width: 150px; text-align: center; color: var(--text);">
-      {{ currentMonthName() }}
-    </span>
-    <button class="btn-ghost" style="padding: 6px 10px; border-color: transparent; margin: 0; min-width: unset;" (click)="nextMonth()" title="Siguiente Mes">
-      <span class="material-symbols-outlined">chevron_right</span>
-    </button>
-  </div>
-</div>
-
-<div class="card-panel calendar-panel" style="padding: 12px; margin-bottom: 30px; overflow: hidden;">
-  <!-- Cabecera de días de la semana -->
-  <div class="calendar-weekdays-grid">
-    <div>Lun</div>
-    <div>Mar</div>
-    <div>Mié</div>
-    <div>Jue</div>
-    <div>Vie</div>
-    <div>Sáb</div>
-    <div>Dom</div>
+  <!-- Cabecera de días de la semana: D L M M J V S -->
+  <div class="agenda-weekdays-row">
+    <div>D</div>
+    <div>L</div>
+    <div>M</div>
+    <div>M</div>
+    <div>J</div>
+    <div>V</div>
+    <div>S</div>
   </div>
 
-  <!-- Rejilla de días -->
-  <div class="calendar-days-grid">
-    @for (week of calendarWeeks(); track week; let idx = $index) {
-      @for (day of week; track day.date) {
-        <div class="calendar-day-cell" 
+  <!-- Matriz de Días del Mes -->
+  <div class="agenda-days-grid">
+    @for (week of calendarWeeks(); track week; let wIdx = $index) {
+      @for (day of week; track day.date; let dIdx = $index) {
+        <div class="agenda-day-cell"
              [class.other-month]="!day.isCurrentMonth"
+             [class.has-debt]="day.hasDebts"
              [class.is-today]="day.isToday"
-             [class.selected-week]="idx === selectedWeekIndex()"
-             [ngClass]="getDayStatusClass(day.items)">
-          <div class="day-number-row">
-            <span class="day-number">{{ day.dayNum }}</span>
-            @if (day.isToday) {
-              <span class="today-badge">Hoy</span>
-            }
-          </div>
+             [class.is-drag-target]="dragOverDayDate() === day.date.toISOString().slice(0, 10)"
+             (dragover)="onDayDragOver($event, day)"
+             (dragleave)="onDayDragLeave($event, day)"
+             (drop)="onDayDrop($event, day)">
           
-          <div class="day-events-container">
-            @for (item of day.items; track item.id) {
-              <div class="calendar-event-tag" 
-                   [class.status-danger]="item.days < 0"
-                   [class.status-warn]="item.days >= 0 && item.days <= 2"
-                   [class.status-safe]="item.days > 2"
-                   (click)="onMarkPaid({id: item.id, kind: item.kind})"
-                   [title]="item.name + ' - ' + money(item.amount)">
-                <span class="event-name">{{ item.name }}</span>
-                <span class="event-amount">{{ money(item.amount) }}</span>
-              </div>
-            }
+          <!-- Círculo del Día / Recuadro para día activo -->
+          <div class="agenda-day-circle"
+               [class.circle-debt]="day.hasDebts && !day.hasOverdue"
+               [class.circle-overdue]="day.hasDebts && day.hasOverdue"
+               [class.is-today]="day.isToday"
+               [class.is-active-day]="isActiveDay(day.date, day.isToday)"
+               (click)="selectDay(day.date); (day.hasDebts ? onMarkPaid({id: day.items[0].id, kind: day.items[0].kind}) : null)">
+            <span class="agenda-day-num">{{ day.dayNum }}</span>
           </div>
+
+          <!-- Tooltip flotante elegante y minimalista al pasar el mouse -->
+          @if (day.hasDebts) {
+            <div class="agenda-hover-tooltip"
+                 [class.align-right]="dIdx >= 4"
+                 [class.align-left]="dIdx <= 1">
+              <div class="tooltip-top-row">
+                <span class="tooltip-date-txt">{{ formatDayTooltipDate(day.date) }}</span>
+                <span class="tooltip-total-amount">{{ money(day.totalAmount) }}</span>
+              </div>
+
+              <div class="tooltip-items-container">
+                @for (item of day.items; track item.id) {
+                  <div class="tooltip-item-card"
+                       [class.is-draggable]="item.kind !== 'tarjeta'"
+                       [draggable]="item.kind !== 'tarjeta'"
+                       (dragstart)="onItemDragStart($event, item)"
+                       (dragend)="onItemDragEnd($event)">
+                    
+                    @if (item.kind !== 'tarjeta') {
+                      <div class="drag-handle-pill" title="Toma y arrastra a otro día del calendario">
+                        <span class="material-symbols-outlined drag-icon">drag_indicator</span>
+                      </div>
+                    }
+
+                    <div class="tooltip-item-main" (click)="onMarkPaid({id: item.id, kind: item.kind})" title="Clic para pagar o abonar">
+                      <div class="tooltip-item-info">
+                        <strong class="tooltip-item-title">{{ item.name }}</strong>
+                        <span class="tooltip-item-type">
+                          {{ item.kind === 'servicio' ? 'Servicio' : (item.kind === 'tarjeta' ? 'Tarjeta (fecha fija)' : 'Deuda') }}
+                        </span>
+                      </div>
+                      <div class="tooltip-item-meta">
+                        <span class="tooltip-item-val">{{ money(item.amount) }}</span>
+                        @if (item.days < 0) {
+                          <span class="status-chip chip-overdue">Vencido (hace {{ abs(item.days) }}d)</span>
+                        } @else if (item.days === 0) {
+                          <span class="status-chip chip-today">Vence hoy</span>
+                        } @else {
+                          <span class="status-chip chip-upcoming">En {{ item.days }} días</span>
+                        }
+                      </div>
+                    </div>
+
+                    @if (item.kind !== 'tarjeta') {
+                      <button type="button"
+                              class="btn-reschedule-action" 
+                              (click)="openMoveDateModal(item, $event)" 
+                              title="Mover este compromiso a otro día del mes">
+                        <span class="material-symbols-outlined">event_repeat</span>
+                        <span class="reschedule-txt">Mover</span>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="tooltip-hint-action">
+                Clic para pagar • Arrastra o usa "Mover"
+              </div>
+            </div>
+          }
         </div>
       }
     }
+  </div>
+
+  <!-- Sección Inferior: OBJETIVOS DEL MES (con líneas estilo agenda minimalista) -->
+  <div class="agenda-goals-container">
+    <div class="agenda-goals-header">OBJETIVOS DEL MES:</div>
+    <div class="agenda-goals-lined-sheet">
+      <!-- Dato solicitado: POR GENERAR ESTA SEMANA -->
+      <div class="goals-lined-row highlight-stat-row">
+        <span class="lined-label">POR GENERAR ESTA SEMANA:</span>
+        <strong class="lined-value stat-por-generar" [class.warn]="dineroRequeridoSemana() > 0">
+          {{ showTotals() ? money(dineroRequeridoSemana()) : '****' }}
+        </strong>
+      </div>
+      <div class="goals-lined-row">
+        <span class="lined-label">Compromiso total programado en {{ currentMonthTitle() | lowercase }}:</span>
+        <strong class="lined-value">{{ showTotals() ? money(compromisoCiclo()) : '****' }}</strong>
+      </div>
+      <div class="goals-lined-row">
+        <span class="lined-label">Compromisos financieros programados en este mes:</span>
+        <strong class="lined-value">{{ monthDebtsList().length }} pagos activos</strong>
+      </div>
+      <div class="goals-lined-row">
+        @if (vencidos() > 0) {
+          <span class="lined-label" style="color: #DC2626;">Compromisos vencidos pendientes de pago:</span>
+          <strong class="lined-value" style="color: #DC2626;">{{ vencidos() }} pago(s) vencido(s)</strong>
+        } @else {
+          <span class="lined-label" style="color: #059669;">Balance de puntualidad del mes:</span>
+          <strong class="lined-value" style="color: #059669;">Al corriente (sin pagos atrasados)</strong>
+        }
+      </div>
+    </div>
   </div>
 </div>
 
@@ -167,6 +206,55 @@
     <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
       <button class="btn-ghost" (click)="cancelPay()">Cancelar</button>
       <button class="btn-primary" (click)="submitPayment()">Confirmar Pago</button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- MODAL MINIMALISTA PARA MOVER COMPROMISO DE DÍA -->
+@if (isMoveDateModalOpen() && movingItem()) {
+<div class="modal-overlay" (click)="closeMoveDateModal()">
+  <div class="modal-content move-date-modal" (click)="$event.stopPropagation()">
+    <div class="move-modal-header">
+      <div class="move-modal-title-group">
+        <span class="material-symbols-outlined move-header-icon">calendar_month</span>
+        <div>
+          <h3 style="margin: 0; font-size: 16px;">Mover fecha de compromiso</h3>
+          <p class="small-muted" style="margin: 2px 0 0 0;">{{ movingItem().name }} • {{ money(movingItem().amount) }}</p>
+        </div>
+      </div>
+      <button class="btn-ghost close-btn" (click)="closeMoveDateModal()" style="border: none; padding: 4px; font-size: 16px;">✕</button>
+    </div>
+
+    <div class="move-modal-body">
+      <div class="move-month-hint">
+        Selecciona el día de <strong>{{ currentMonthTitle() }} {{ currentYear() }}</strong>:
+      </div>
+
+      <!-- Cuadrícula minimalista de días del mes -->
+      <div class="days-picker-grid">
+        @for (dNum of daysInCurrentCalendarMonth(); track dNum) {
+          <button type="button"
+                  class="day-picker-btn"
+                  [class.selected]="selectedNewDay() === dNum"
+                  (click)="selectedNewDay.set(dNum)">
+            {{ dNum }}
+          </button>
+        }
+      </div>
+
+      <div class="move-summary-box">
+        <span class="summary-label">Nueva fecha programada:</span>
+        <strong class="summary-date">{{ selectedNewDay() }} de {{ currentMonthTitle() }} de {{ currentYear() }}</strong>
+      </div>
+    </div>
+
+    <div class="move-modal-actions">
+      <button class="btn-ghost" (click)="closeMoveDateModal()">Cancelar</button>
+      <button class="btn-primary" (click)="confirmMoveDate()">
+        <span class="material-symbols-outlined" style="font-size: 17px; margin-right: 4px; vertical-align: middle;">check</span>
+        Mover al día {{ selectedNewDay() }}
+      </button>
     </div>
   </div>
 </div>

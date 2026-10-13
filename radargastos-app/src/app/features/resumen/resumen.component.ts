@@ -163,15 +163,20 @@ export class ResumenComponent {
   });
 
   totalDeudaViva = computed(() => {
-    return this.financeService.state().debts.reduce((acc, d) => {
-      const debtAmount = d.group === 'prestamo' ? (d.total || 0) : (d.debt || 0);
-      const paid = d.group === 'prestamo' ? (d.pagado || 0) : 0;
-      return acc + (debtAmount - paid);
-    }, 0);
+    return this.financeService.totalConsolidatedDebt().total;
   });
 
   money(amount: number) {
     return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  formatDayTooltipDate(d: Date): string {
+    const s = d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  abs(n: number): number {
+    return Math.abs(n);
   }
 
   // --- Modal de Pagos Inteligente ---
@@ -273,14 +278,171 @@ export class ResumenComponent {
     return date.toISOString().slice(0, 10);
   }
 
-  // --- Calendario Mensual Reactivo ---
+  // --- Calendario Mensual Reactivo Tipo Agenda Minimalista ---
   currentCalendarDate = signal<Date>(new Date());
+
+  currentYear = computed(() => this.currentCalendarDate().getFullYear());
+
+  currentMonthTitle = computed(() => {
+    const d = this.currentCalendarDate();
+    const str = d.toLocaleDateString('es-MX', { month: 'long' });
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  });
 
   currentMonthName = computed(() => {
     const d = this.currentCalendarDate();
     const str = d.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     return str.charAt(0).toUpperCase() + str.slice(1);
   });
+
+  monthDebtsList = computed(() => {
+    const base = this.currentCalendarDate();
+    const m = base.getMonth();
+    const y = base.getFullYear();
+    return this.upcomingItems().filter(item => {
+      const itemDate = new Date(item.due);
+      return itemDate.getFullYear() === y && itemDate.getMonth() === m;
+    });
+  });
+
+  activeSelectedDate = signal<Date | null>(null);
+
+  selectDay(d: Date) {
+    this.activeSelectedDate.set(d);
+  }
+
+  isActiveDay(d: Date, isToday: boolean): boolean {
+    const sel = this.activeSelectedDate();
+    if (sel) {
+      return sel.getFullYear() === d.getFullYear() &&
+             sel.getMonth() === d.getMonth() &&
+             sel.getDate() === d.getDate();
+    }
+    return isToday;
+  }
+
+  // --- REPROGRAMACIÓN Y DESPLAZAMIENTO (DRAG & DROP / CLIC) ---
+  isMoveDateModalOpen = signal<boolean>(false);
+  movingItem = signal<any>(null);
+  selectedNewDay = signal<number>(1);
+  draggedItem = signal<any>(null);
+  dragOverDayDate = signal<string | null>(null);
+
+  daysInCurrentCalendarMonth = computed(() => {
+    const base = this.currentCalendarDate();
+    const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+    return Array.from({ length: lastDay }, (_, i) => i + 1);
+  });
+
+  openMoveDateModal(item: any, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (item.kind === 'tarjeta') return; // Excluir tarjetas de crédito
+    this.movingItem.set(item);
+    const itemDate = new Date(item.due);
+    this.selectedNewDay.set(itemDate.getDate());
+    this.isMoveDateModalOpen.set(true);
+  }
+
+  closeMoveDateModal() {
+    this.isMoveDateModalOpen.set(false);
+    this.movingItem.set(null);
+  }
+
+  confirmMoveDate() {
+    const item = this.movingItem();
+    if (!item) return;
+    this.moveItemToDay(item, this.selectedNewDay());
+    this.closeMoveDateModal();
+  }
+
+  moveItemToDay(item: any, dayNumber: number) {
+    const cur = this.currentCalendarDate();
+    const targetDate = new Date(cur.getFullYear(), cur.getMonth(), dayNumber);
+    this.moveItemToDate(item, targetDate);
+  }
+
+  moveItemToDate(item: any, targetDate: Date) {
+    if (item.kind === 'tarjeta') return; // Solo aplica a deudas y servicios, pagos de tarjeta NO
+
+    const y = targetDate.getFullYear();
+    const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const d = String(targetDate.getDate()).padStart(2, '0');
+    const newDateStr = `${y}-${m}-${d}`;
+    const newDueDay = targetDate.getDate();
+
+    if (item.kind === 'servicio') {
+      const svc = this.financeService.state().services.find(s => s.id === item.id);
+      if (svc) {
+        const updated = {
+          ...svc,
+          anchor: newDateStr,
+          dueDay: newDueDay
+        };
+        this.financeService.updateService(svc.id, updated);
+      }
+    } else {
+      // Deuda o préstamo
+      const debt = this.financeService.state().debts.find(db => db.id === item.id);
+      if (debt) {
+        const updated = {
+          ...debt,
+          anchor: newDateStr,
+          dueDay: newDueDay
+        };
+        this.financeService.updateDebt(debt.id, updated);
+      }
+    }
+  }
+
+  // --- Handlers para Drag & Drop nativo ---
+  onItemDragStart(event: DragEvent, item: any) {
+    if (item.kind === 'tarjeta') {
+      event.preventDefault();
+      return;
+    }
+    this.draggedItem.set(item);
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', item.id);
+    }
+  }
+
+  onItemDragEnd(_event: DragEvent) {
+    this.draggedItem.set(null);
+    this.dragOverDayDate.set(null);
+  }
+
+  onDayDragOver(event: DragEvent, day: any) {
+    const item = this.draggedItem();
+    if (!item || !day.isCurrentMonth || item.kind === 'tarjeta') return;
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    const dateKey = day.date.toISOString().slice(0, 10);
+    if (this.dragOverDayDate() !== dateKey) {
+      this.dragOverDayDate.set(dateKey);
+    }
+  }
+
+  onDayDragLeave(event: DragEvent, day: any) {
+    const dateKey = day.date.toISOString().slice(0, 10);
+    if (this.dragOverDayDate() === dateKey) {
+      this.dragOverDayDate.set(null);
+    }
+  }
+
+  onDayDrop(event: DragEvent, day: any) {
+    event.preventDefault();
+    this.dragOverDayDate.set(null);
+    const item = this.draggedItem();
+    this.draggedItem.set(null);
+    if (!item || !day.isCurrentMonth || item.kind === 'tarjeta') return;
+    this.moveItemToDate(item, day.date);
+  }
 
   prevMonth() {
     const d = this.currentCalendarDate();
@@ -349,39 +511,56 @@ export class ResumenComponent {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    let startDayOfWeek = firstDay.getDay() - 1;
-    if (startDayOfWeek === -1) startDayOfWeek = 6;
+    // Inicio en Domingo (0 = Domingo, 1 = Lunes, ..., 6 = Sábado) acorde a diseño
+    const startDayOfWeek = firstDay.getDay();
 
     const daysInMonth = lastDay.getDate();
     const prevMonthLastDay = new Date(year, month, 0).getDate();
 
-    const gridDays: { date: Date; dayNum: number; isCurrentMonth: boolean; isToday: boolean; items: any[] }[] = [];
+    const gridDays: {
+      date: Date;
+      dayNum: number;
+      isCurrentMonth: boolean;
+      isToday: boolean;
+      items: any[];
+      hasDebts: boolean;
+      hasOverdue: boolean;
+      totalAmount: number;
+    }[] = [];
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     // Mes anterior
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const d = new Date(year, month - 1, prevMonthLastDay - i);
-      d.setHours(0,0,0,0);
+      d.setHours(0, 0, 0, 0);
+      const items = this.getUpcomingItemsForDate(d);
       gridDays.push({
         date: d,
         dayNum: d.getDate(),
         isCurrentMonth: false,
         isToday: d.getTime() === today.getTime(),
-        items: this.getUpcomingItemsForDate(d)
+        items,
+        hasDebts: items.length > 0,
+        hasOverdue: items.some(it => it.days < 0),
+        totalAmount: items.reduce((sum, it) => sum + (it.amount || 0), 0)
       });
     }
 
     // Mes actual
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      d.setHours(0,0,0,0);
+      d.setHours(0, 0, 0, 0);
+      const items = this.getUpcomingItemsForDate(d);
       gridDays.push({
         date: d,
         dayNum: i,
         isCurrentMonth: true,
         isToday: d.getTime() === today.getTime(),
-        items: this.getUpcomingItemsForDate(d)
+        items,
+        hasDebts: items.length > 0,
+        hasOverdue: items.some(it => it.days < 0),
+        totalAmount: items.reduce((sum, it) => sum + (it.amount || 0), 0)
       });
     }
 
@@ -390,13 +569,17 @@ export class ResumenComponent {
     const remainingSlots = (7 - (totalSlots % 7)) % 7;
     for (let i = 1; i <= remainingSlots; i++) {
       const d = new Date(year, month + 1, i);
-      d.setHours(0,0,0,0);
+      d.setHours(0, 0, 0, 0);
+      const items = this.getUpcomingItemsForDate(d);
       gridDays.push({
         date: d,
         dayNum: i,
         isCurrentMonth: false,
         isToday: d.getTime() === today.getTime(),
-        items: this.getUpcomingItemsForDate(d)
+        items,
+        hasDebts: items.length > 0,
+        hasOverdue: items.some(it => it.days < 0),
+        totalAmount: items.reduce((sum, it) => sum + (it.amount || 0), 0)
       });
     }
 

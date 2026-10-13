@@ -19,73 +19,74 @@
 </div>
 
 <!-- Analista de Gastos IA FinOps - Diagnóstico Global de Gastos -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+<div class="card-panel" style="margin-bottom: 16px; padding: 14px 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
     <div>
-      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-        <span class="material-symbols-outlined" style="color: #7C3AED;">psychology</span>
-        Analista FinOps: Diagnóstico Global de Gastos
+      <h3 style="margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+        <span class="material-symbols-outlined" style="font-size: 17px;">analytics</span>
+        Analista FinOps: Diagnóstico Global
       </h3>
-      <span style="font-size: 12px; color: var(--text-muted);">
-        Evaluación general del impacto de tus gastos totales, presupuesto de ocio y saldo libre.
+      <span style="font-size: 11px; color: var(--text-muted);">
+        Evaluación del impacto de tus gastos totales, presupuesto de ocio y saldo libre.
       </span>
     </div>
-    <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="requestGlobalAiAudit()" [disabled]="isAuditingWithN8n()">
-      <span class="material-symbols-outlined" style="font-size: 16px;">analytics</span>
-      <span>{{ isAuditingWithN8n() ? 'Generando Diagnóstico...' : 'Generar Diagnóstico Global' }}</span>
-    </button>
-  </div>
+      <div class="tooltip-container">
+        <button class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;" (click)="requestGlobalAiAudit()" [disabled]="isAuditingWithN8n()">
+          <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
+          <span>{{ isAuditingWithN8n() ? 'Generando...' : 'Diagnóstico Global' }}</span>
+        </button>
+        <div class="tooltip-bubble">
+          Evalúa el impacto de ocio y gastos generales sobre tu balance financiero del mes.
+        </div>
+      </div>
+    </div>
 
-  <!-- Banners y Métricas Globales del Mes -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-    @if (globalMonthAnalysis().incomeExceeded) {
-      <div class="minimal-stat-box status-danger">
+    <!-- Banners y Métricas Globales del Mes -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 12px;">
+      @if (globalMonthAnalysis().incomeExceeded) {
+        <div class="minimal-stat-box">
+          <div class="stat-box-header">
+            <span class="material-symbols-outlined">warning</span>
+            <span>Gastos Superan Ingresos</span>
+          </div>
+          <p class="stat-box-text">
+            Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }} (Excedido por {{ money(globalMonthAnalysis().exceededAmount) }}).
+          </p>
+        </div>
+      } @else if (globalMonthAnalysis().totalInc > 0) {
+        <div class="minimal-stat-box">
+          <div class="stat-box-header">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Gastos dentro del Ingreso</span>
+          </div>
+          <p class="stat-box-text">
+            Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }}. Balance libre: {{ money(globalMonthAnalysis().netBalance) }}.
+          </p>
+        </div>
+      }
+
+      <div class="minimal-stat-box">
         <div class="stat-box-header">
-          <span class="material-symbols-outlined">warning</span>
-          <span>Gastos Superan Ingresos</span>
+          <span class="material-symbols-outlined">sports_esports</span>
+          <span>Impacto de Ocio & Gustos</span>
         </div>
         <p class="stat-box-text">
-          Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }} (Excedido por {{ money(globalMonthAnalysis().exceededAmount) }}).
+          Destinas <strong>{{ money(globalMonthAnalysis().ocioExp) }}</strong> a Ocio, Restaurantes y Ropa (<strong>{{ globalMonthAnalysis().ratioOcioToIncome }}%</strong> del ingreso).
         </p>
       </div>
-    } @else if (globalMonthAnalysis().totalInc > 0) {
-      <div class="minimal-stat-box status-success">
-        <div class="stat-box-header">
-          <span class="material-symbols-outlined">check_circle</span>
-          <span>Gastos dentro del Ingreso</span>
+    </div>
+
+    <!-- Caja de Diagnóstico IA Resumido (visible solo cuando se genera el análisis) -->
+    @if (globalAiDiagnosis()) {
+      <div class="minimal-ai-card">
+        <div class="minimal-ai-header">
+          <span class="material-symbols-outlined">insights</span>
+          <span>Salud Financiera Global</span>
         </div>
-        <p class="stat-box-text">
-          Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }}. Balance libre: {{ money(globalMonthAnalysis().netBalance) }}.
-        </p>
+        <p class="minimal-ai-body" [innerHTML]="globalAiDiagnosis()"></p>
       </div>
     }
-
-    <div class="minimal-stat-box status-warning">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">sports_esports</span>
-        <span>Impacto de Ocio & Gustos</span>
-      </div>
-      <p class="stat-box-text">
-        Destinas <strong>{{ money(globalMonthAnalysis().ocioExp) }}</strong> a Ocio, Restaurantes y Ropa (<strong>{{ globalMonthAnalysis().ratioOcioToIncome }}%</strong> de tu ingreso).
-      </p>
-    </div>
   </div>
-
-  <!-- Caja de Diagnóstico IA Resumido -->
-  @if (globalAiDiagnosis()) {
-    <div class="minimal-ai-card">
-      <div class="minimal-ai-header">
-        <span class="material-symbols-outlined">analytics</span>
-        <span>Dictamen de Salud Financiera Global</span>
-      </div>
-      <p class="minimal-ai-body" [innerHTML]="globalAiDiagnosis()"></p>
-    </div>
-  } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 14px; border-radius: 10px; text-align: center;">
-      Haz clic en <strong>"Generar Diagnóstico Global"</strong> para obtener una evaluación consolidada sobre cómo influye la proporción de ocio y gastos generales sobre tu balance financiero del mes.
-    </div>
-  }
-</div>
 
 <!-- Análisis de Gastos Esenciales vs No Esenciales -->
 <div class="card-panel" style="margin-bottom: 24px;">

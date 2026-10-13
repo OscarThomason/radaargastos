@@ -1,21 +1,41 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { FinanceService } from '../../core/services/finance.service';
 import { AiAdvisorService } from '../../core/services/ai-advisor.service';
 import { Debt, Installment } from '../../core/models/finance.model';
 import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
+import { TarjetasComponent } from '../tarjetas/tarjetas.component';
 
 @Component({
   selector: 'app-deudas',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModalComponent],
+  imports: [CommonModule, FormsModule, ConfirmModalComponent, TarjetasComponent],
   templateUrl: './deudas.component.html',
   styleUrl: './deudas.component.scss'
 })
 export class DeudasComponent {
   private financeService = inject(FinanceService);
   private aiAdvisor = inject(AiAdvisorService);
+  private route = inject(ActivatedRoute);
+
+  activeSection = signal<'general' | 'tarjetas' | 'prestamos'>('general');
+
+  constructor() {
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] === 'tarjetas') {
+        this.activeSection.set('tarjetas');
+      } else if (params['tab'] === 'prestamos') {
+        this.activeSection.set('prestamos');
+      } else if (params['tab'] === 'general') {
+        this.activeSection.set('general');
+      }
+    });
+  }
+
+  creditCardsCount = computed(() => this.financeService.cardsWithBalance().filter(c => c.type === 'credito').length);
+  loansCount = computed(() => this.debts().filter(d => d.group === 'prestamo').length);
 
   debts = computed(() => this.financeService.state().debts);
   incomes = computed(() => this.financeService.state().incomes);
@@ -89,6 +109,10 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
 
     let list = this.debts();
 
+    if (this.activeSection() === 'prestamos') {
+      list = list.filter(d => d.group === 'prestamo');
+    }
+
     if (q) {
       list = list.filter(d => 
         (d.name && d.name.toLowerCase().includes(q)) ||
@@ -128,12 +152,27 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
   dNotes = '';
   isModalOpen = false;
 
-  // -- Tarjeta de Crédito --
+  // -- Tarjeta de Crédito (Campos Completos) --
   dMinPayment: number | null = null;
   dNoInterest: number | null = null;
   dDebtTotal: number | null = null;
+  dLimit: number | null = null;
+  dCutoffDate = '';
+  dInterestRate: number | null = null;
+  dCatWithoutIva: number | null = null;
   dCat: number | null = null;
+  dAnnualFee: number | null = null;
+  dLatePaymentFee: number | null = null;
   dCreditTerm: number | null = null;
+  dCardId: string | null = null;
+
+  get dAvailableLimit(): number {
+    const limit = this.dLimit || 0;
+    const debt = this.dDebtTotal || 0;
+    return Math.max(0, limit - debt);
+  }
+
+  consolidatedDebt = computed(() => this.financeService.totalConsolidatedDebt());
 
   // -- Préstamo --
   dTotal: number | null = null;
@@ -214,8 +253,15 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
   }
 
   // -------- CRUD --------
-  openModal() {
+  openModal(group?: 'prestamo' | 'tarjeta') {
     this.cancelEdit();
+    if (group) {
+      this.dGroup = group;
+    } else if (this.activeSection() === 'tarjetas') {
+      this.dGroup = 'tarjeta';
+    } else if (this.activeSection() === 'prestamos') {
+      this.dGroup = 'prestamo';
+    }
     this.isModalOpen = true;
   }
 
@@ -253,10 +299,19 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
       }
     } else {
       item.debt = this.dDebtTotal || 0;
+      item.limit = this.dLimit || undefined;
+      item.availableLimit = this.dLimit ? Math.max(0, this.dLimit - (this.dDebtTotal || 0)) : undefined;
+      item.dueDate = this.dAnchor;
+      item.cutoffDate = this.dCutoffDate || undefined;
+      item.interestRate = this.dInterestRate || undefined;
+      item.catWithoutIva = this.dCatWithoutIva || undefined;
+      item.cat = this.dCat || this.dCatWithoutIva || undefined;
+      item.annualFee = this.dAnnualFee || undefined;
+      item.latePaymentFee = this.dLatePaymentFee || undefined;
       item.noInterest = this.dNoInterest || 0;
-      item.cat = this.dCat || undefined;
       item.creditTerm = this.dCreditTerm || undefined;
       item.minPayment = this.usingCatFormula ? this.calculatedMinPayment : (this.dMinPayment || 0);
+      item.cardId = this.dCardId || undefined;
     }
 
     if (this.editingId) {
@@ -286,13 +341,22 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
       this.dUseVariableInstallments = item.useVariableInstallments || false;
       this.dInstallments = item.installments ? JSON.parse(JSON.stringify(item.installments)) : [];
       this.dMinPayment = null; this.dNoInterest = null; this.dDebtTotal = null;
-      this.dCat = null; this.dCreditTerm = null;
+      this.dLimit = null; this.dCutoffDate = ''; this.dInterestRate = null;
+      this.dCatWithoutIva = null; this.dCat = null; this.dAnnualFee = null;
+      this.dLatePaymentFee = null; this.dCreditTerm = null; this.dCardId = null;
     } else {
       this.dMinPayment = item.minPayment || null;
       this.dNoInterest = item.noInterest || null;
       this.dDebtTotal = item.debt || null;
+      this.dLimit = item.limit || null;
+      this.dCutoffDate = item.cutoffDate || '';
+      this.dInterestRate = item.interestRate || null;
+      this.dCatWithoutIva = item.catWithoutIva || null;
       this.dCat = item.cat || null;
+      this.dAnnualFee = item.annualFee || null;
+      this.dLatePaymentFee = item.latePaymentFee || null;
       this.dCreditTerm = item.creditTerm || null;
+      this.dCardId = item.cardId || null;
       this.dTotal = null; this.dPagado = null; this.dCuota = null;
       this.dCuotasPagadas = null; this.dCuotasTotal = null;
       this.dUseVariableInstallments = false; this.dInstallments = [];
@@ -306,7 +370,9 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
     this.dTotal = null; this.dPagado = null; this.dCuota = null;
     this.dCuotasPagadas = null; this.dCuotasTotal = null;
     this.dMinPayment = null; this.dNoInterest = null; this.dDebtTotal = null;
-    this.dCat = null; this.dCreditTerm = null;
+    this.dLimit = null; this.dCutoffDate = ''; this.dInterestRate = null;
+    this.dCatWithoutIva = null; this.dCat = null; this.dAnnualFee = null;
+    this.dLatePaymentFee = null; this.dCreditTerm = null; this.dCardId = null;
     this.dUseVariableInstallments = false; this.dInstallments = [];
     this.dFreq = 'mensual';
     this.dAnchor = new Date().toISOString().slice(0, 10);

@@ -14,10 +14,19 @@ export interface Debt {
   debt?: number;
   notes: string;
   frequency?: string;
-  anchor?: string;
-  // Tarjeta de Crédito
-  cat?: number;         // CAT anual en %
-  creditTerm?: number;  // meses de plazo restante para cálculo de pago mínimo
+  anchor?: string; // Próxima fecha de pago / fecha límite de pago
+  // Tarjeta de Crédito (campos avanzados)
+  limit?: number;           // Línea de crédito total
+  availableLimit?: number;  // Límite disponible
+  dueDate?: string;         // Fecha límite de pago
+  cutoffDate?: string;      // Fecha de corte
+  interestRate?: number;    // Tasa de interés anual (%)
+  catWithoutIva?: number;   // CAT sin IVA (%)
+  cat?: number;             // CAT anual en %
+  annualFee?: number;       // Comisión de Anualidad ($)
+  latePaymentFee?: number;  // Comisión de Pago Tardío ($)
+  creditTerm?: number;      // Meses de plazo restante para cálculo de pago mínimo
+  cardId?: string;          // Vínculo con registro en cards
   // Préstamo
   cuota?: number;
   cuotasPagadas?: number;
@@ -81,8 +90,25 @@ export interface Card {
   id: string;
   name: string;
   type: 'credito' | 'debito';
-  limit?: number;
-  balance: number; // deuda actual (crédito) o dinero disponible (débito)
+  balance: number; // deuda actual/inicial (crédito) o dinero disponible (débito)
+  // Campos avanzados para Tarjetas de Crédito
+  limit?: number;           // Línea de crédito total
+  debt?: number;            // Deuda actual utilizada
+  availableLimit?: number;  // Límite disponible (línea - deuda)
+  dueDate?: string;         // Fecha límite de pago
+  cutoffDate?: string;      // Fecha o día de corte
+  interestRate?: number;    // Tasa de interés anual (%)
+  catWithoutIva?: number;   // CAT sin IVA (%)
+  cat?: number;             // CAT anual (%)
+  annualFee?: number;       // Comisión de Anualidad ($)
+  latePaymentFee?: number;  // Comisión de Pago Tardío / cobranza ($)
+  noInterest?: number | null;// Pago para no generar intereses ($)
+  minPayment?: number;      // Pago mínimo ($)
+  creditTerm?: number;      // Plazo en meses
+  notes?: string;
+  linkedDebtId?: string;    // Vínculo con registro en debts
+  computedBalance?: number; // Saldo computado en tiempo real con gastos/pagos
+  computedDebt?: number;    // Deuda computada en tiempo real
 }
 
 export interface WeeklyBudget {

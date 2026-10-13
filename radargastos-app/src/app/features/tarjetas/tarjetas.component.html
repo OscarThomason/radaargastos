@@ -1,145 +1,437 @@
 <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-  <h2 class="section-title" style="margin: 0;">Mis Tarjetas</h2>
-  <button class="btn-primary" style="margin: 0;" (click)="isAdding = true" *ngIf="!isAdding">+ Añadir Tarjeta</button>
+  <div>
+    <h2 class="section-title" style="margin: 0;">Tarjetas & Líneas de Crédito ({{ cards().length }})</h2>
+    <span style="font-size: 12px; color: var(--text-muted);">
+      Control integral de deuda revolvente, límites disponibles, fechas límite de pago y comisiones.
+    </span>
+  </div>
+  <button class="btn-primary" style="margin: 0;" (click)="openAddModal('credito')">+ Añadir Tarjeta</button>
 </div>
 
-<!-- Formulario para agregar -->
-@if (isAdding) {
-  <div class="card-panel" style="margin-bottom: 20px;">
-    <h3>Nueva Tarjeta</h3>
-    <div class="form-grid">
-      <div>
-        <label>Nombre de la Tarjeta</label>
-        <input [(ngModel)]="newName" placeholder="Ej. Nu, Banamex Clásica">
+<!-- Banner de Métricas Consolidadas -->
+<div class="card-panel" style="margin-bottom: 24px; padding: 16px 20px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;">
+    <!-- Deuda Total Consolidada -->
+    <div class="minimal-stat-box status-info">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">account_balance</span>
+        <span>Deuda Total Consolidada</span>
       </div>
-      <div>
-        <label>Tipo</label>
-        <select [(ngModel)]="newType">
-          <option value="credito">Crédito</option>
-          <option value="debito">Débito</option>
-        </select>
+      <p class="stat-box-text">
+        <strong>{{ money(consolidatedDebt().total) }}</strong>
+      </p>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <span>Préstamos: <strong>{{ money(consolidatedDebt().loansDebt) }}</strong></span>
+        <span>·</span>
+        <span>Tarjetas: <strong>{{ money(consolidatedDebt().creditCardsDebt) }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Deuda en Tarjetas -->
+    <div class="minimal-stat-box status-warning">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">credit_card</span>
+        <span>Deuda en Tarjetas (Revolvente)</span>
+      </div>
+      <p class="stat-box-text">
+        <strong style="color: #DC2626;">{{ money(totalCreditDebt()) }}</strong>
+      </p>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+        En {{ creditCards().length }} {{ creditCards().length === 1 ? 'tarjeta de crédito' : 'tarjetas de crédito' }}
+      </div>
+    </div>
+
+    <!-- Línea de Crédito Global -->
+    <div class="minimal-stat-box">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">account_balance_wallet</span>
+        <span>Línea de Crédito Global</span>
+      </div>
+      <p class="stat-box-text">
+        <strong>{{ money(totalCreditLimit()) }}</strong>
+      </p>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+        Capacidad total de crédito autorizada
+      </div>
+    </div>
+
+    <!-- Crédito Disponible Global -->
+    <div class="minimal-stat-box status-success">
+      <div class="stat-box-header">
+        <span class="material-symbols-outlined">check_circle</span>
+        <span>Crédito Disponible Total</span>
+      </div>
+      <p class="stat-box-text">
+        <strong style="color: #059669;">{{ money(totalCreditAvailable()) }}</strong>
+      </p>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+        Límite libre para nuevas operaciones
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cuadrícula Principal de Tarjetas -->
+<div class="grid-2col">
+  <!-- Sección: Tarjetas de Crédito -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="font-size: 18px; color: #DC2626;">credit_card</span>
+        Tarjetas de Crédito ({{ creditCards().length }})
+      </h3>
+      <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" (click)="openAddModal('credito')">+ Crédito</button>
+    </div>
+
+    @if (creditCards().length === 0) {
+      <div class="card-panel empty-state" style="padding: 24px; text-align: center; color: var(--text-muted);">
+        No tienes tarjetas de crédito registradas. Haz clic en "+ Añadir Tarjeta" para registrar tu primera línea de crédito.
+      </div>
+    }
+
+    @for (c of creditCards(); track c.id) {
+      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 4px solid #DC2626; position: relative;">
+        <!-- Header de la tarjeta -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong style="font-size: 17px; letter-spacing: -0.01em;">{{ c.name }}</strong>
+              <span class="accent-pill accent-pill-purple" style="font-size: 10px;">Crédito</span>
+              @if (c.catWithoutIva || c.cat) {
+                <span class="badge" style="font-size: 9px; background: #EFF6FF; color: #1D4ED8;">
+                  CAT {{ c.catWithoutIva || c.cat }}% sin IVA
+                </span>
+              }
+            </div>
+            @if (c.notes) {
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">{{ c.notes }}</div>
+            }
+          </div>
+
+          <div style="display: flex; gap: 4px;">
+            <button class="action-btn-mini" title="Abonar a Tarjeta" (click)="openPayModal(c)">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: #059669;">payments</span>
+            </button>
+            <button class="action-btn-mini" title="Editar Tarjeta" (click)="openEditModal(c)">
+              <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+            </button>
+            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #DC2626;" (click)="askDeleteCard(c.id, c.name)">
+              <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Utilización de Línea de Crédito -->
+        <div style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: var(--text-muted);">
+            <span>Uso de la Línea: <strong>{{ getCreditUsagePercent(c) }}%</strong></span>
+            <span>Línea: <strong>{{ money(c.limit || 0) }}</strong></span>
+          </div>
+          <div class="usage-progress-bar">
+            <div class="usage-progress-fill" 
+                 [style.width.%]="getCreditUsagePercent(c)"
+                 [style.background-color]="getCreditUsagePercent(c) > 70 ? '#DC2626' : (getCreditUsagePercent(c) > 35 ? '#D97706' : '#059669')">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Métricas Financieras Principales -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px;">
+          <div>
+            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Deuda Actual</div>
+            <div style="font-size: 15px; font-weight: 700; color: #DC2626; margin-top: 2px;">
+              {{ money(c.computedDebt !== undefined ? c.computedDebt : (c.debt || 0)) }}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Límite Disponible</div>
+            <div style="font-size: 15px; font-weight: 700; color: #059669; margin-top: 2px;">
+              {{ money(c.availableLimit !== undefined ? c.availableLimit : ((c.limit || 0) - (c.debt || 0))) }}
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Línea de Crédito</div>
+            <div style="font-size: 15px; font-weight: 700; margin-top: 2px;">
+              {{ money(c.limit || 0) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuadrícula de Parámetros y Condiciones Financieras -->
+        <div class="card-financial-grid">
+          <div class="financial-cell">
+            <span class="cell-label">Fecha Límite de Pago</span>
+            <div class="cell-val">
+              <strong>{{ formatDate(c.dueDate) }}</strong>
+              <small [style.color]="getDaysClass(c.dueDate)">({{ getDaysRemaining(c.dueDate) }})</small>
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Fecha de Corte</span>
+            <div class="cell-val">
+              <strong>{{ formatDate(c.cutoffDate) }}</strong>
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Tasa de Interés Anual</span>
+            <div class="cell-val">
+              {{ c.interestRate ? c.interestRate + '%' : 'No especificada' }}
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">CAT sin IVA</span>
+            <div class="cell-val" style="color: #1D4ED8; font-weight: 600;">
+              {{ c.catWithoutIva ? c.catWithoutIva + '%' : (c.cat ? c.cat + '%' : 'No especificado') }}
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Comisión Anualidad</span>
+            <div class="cell-val">
+              {{ c.annualFee ? money(c.annualFee) : 'Sin anualidad ($0)' }}
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Comisión Pago Tardío</span>
+            <div class="cell-val" style="color: #DC2626;">
+              {{ c.latePaymentFee ? money(c.latePaymentFee) : 'No especificada' }}
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Pago Para No Generar Intereses</span>
+            <div class="cell-val" style="color: #059669; font-weight: 600;">
+              {{ c.noInterest ? money(c.noInterest) : 'No definido' }}
+            </div>
+          </div>
+
+          <div class="financial-cell">
+            <span class="cell-label">Pago Mínimo Estimado</span>
+            <div class="cell-val" style="font-weight: 600;">
+              {{ money(calcMinPayment(c)) }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de Acción de Tarjeta -->
+        <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border);">
+          <button class="btn-ghost" style="padding: 6px 12px; font-size: 12px; display: flex; align-items: center; gap: 4px;" (click)="openEditModal(c)">
+            <span class="material-symbols-outlined" style="font-size: 15px;">tune</span>
+            Configurar
+          </button>
+          <button class="btn-primary" style="padding: 6px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="openPayModal(c)">
+            <span class="material-symbols-outlined" style="font-size: 15px;">payments</span>
+            Abonar / Pagar Tarjeta
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Sección: Tarjetas de Débito -->
+  <div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+        <span class="material-symbols-outlined" style="font-size: 18px; color: #059669;">account_balance</span>
+        Tarjetas de Débito & Cuentas ({{ debitCards().length }})
+      </h3>
+      <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" (click)="openAddModal('debito')">+ Débito</button>
+    </div>
+
+    @if (debitCards().length === 0) {
+      <div class="card-panel empty-state" style="padding: 24px; text-align: center; color: var(--text-muted);">
+        No tienes tarjetas de débito o cuentas de ahorro registradas.
+      </div>
+    }
+
+    @for (c of debitCards(); track c.id) {
+      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 4px solid #059669; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <strong style="font-size: 17px; letter-spacing: -0.01em;">{{ c.name }}</strong>
+              <span class="accent-pill accent-pill-sky" style="font-size: 10px;">Débito / Ahorro</span>
+            </div>
+            @if (c.notes) {
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">{{ c.notes }}</div>
+            }
+          </div>
+
+          <div style="display: flex; gap: 4px;">
+            <button class="action-btn-mini" title="Editar Tarjeta" (click)="openEditModal(c)">
+              <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+            </button>
+            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #DC2626;" (click)="askDeleteCard(c.id, c.name)">
+              <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <div style="padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 13px; color: var(--text-muted);">Saldo Disponible Actual:</span>
+          <strong style="font-size: 20px; color: #059669;">
+            {{ money(c.computedBalance !== undefined ? c.computedBalance : (c.balance || 0)) }}
+          </strong>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal: Añadir o Editar Tarjeta -->
+@if (isModalOpen) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 620px;">
+      <h3 style="margin-top: 0; margin-bottom: 12px;">{{ editingId ? 'Editar Tarjeta' : 'Añadir Tarjeta' }}</h3>
+      
+      <!-- Pestañas de tipo de tarjeta -->
+      <div class="modal-tabs" style="margin-bottom: 16px;">
+        <button [class.active]="cType === 'credito'" (click)="cType = 'credito'">Tarjeta de Crédito</button>
+        <button [class.active]="cType === 'debito'" (click)="cType = 'debito'">Tarjeta de Débito</button>
       </div>
 
-      @if (newType === 'credito') {
-        <div>
-          <label>Límite de Crédito</label>
-          <input [(ngModel)]="newLimit" type="number" placeholder="Ej. 10000">
-        </div>
-        <div>
-          <label>Deuda Inicial (Si ya tienes deuda)</label>
-          <input [(ngModel)]="newBalance" type="number" placeholder="Ej. 0">
-        </div>
-      } @else {
+      <div class="form-grid">
         <div style="grid-column: 1 / -1;">
-          <label>Saldo Inicial Disponible</label>
-          <input [(ngModel)]="newBalance" type="number" placeholder="Ej. 5000">
+          <label>Nombre de la Tarjeta o Banco</label>
+          <input [(ngModel)]="cName" placeholder="Ej. Nu, Banamex Platinum, BBVA Oro">
         </div>
-      }
-    </div>
-    <div style="display: flex; gap: 10px; align-items: center; margin-top: 15px;">
-      <button class="btn-primary" (click)="addCard()">Guardar</button>
-      <button class="btn-ghost" (click)="cancelAdd()">Cancelar</button>
+
+        @if (cType === 'credito') {
+          <!-- Campos de Tarjeta de Crédito -->
+          <div>
+            <label>Línea de Crédito Total ($)</label>
+            <input [(ngModel)]="cLimit" type="number" placeholder="Ej. 25000">
+          </div>
+          <div>
+            <label>Deuda Actual Utilizada ($)</label>
+            <input [(ngModel)]="cDebt" type="number" placeholder="Ej. 6500">
+          </div>
+
+          <!-- Límite Disponible en tiempo real -->
+          @if (cLimit) {
+            <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;">
+              <span style="font-size: 13px; color: var(--text-muted);">Límite de Crédito Disponible:</span>
+              <strong [style.color]="cAvailableLimit > 0 ? '#059669' : '#DC2626'" style="font-size: 15px;">
+                {{ money(cAvailableLimit) }}
+              </strong>
+            </div>
+          }
+
+          <div>
+            <label>Fecha de Corte</label>
+            <input [(ngModel)]="cCutoffDate" type="date">
+          </div>
+          <div>
+            <label>Fecha Límite de Pago</label>
+            <input [(ngModel)]="cDueDate" type="date">
+          </div>
+
+          <div>
+            <label>Tasa de Interés Anual (%)</label>
+            <input [(ngModel)]="cInterestRate" type="number" step="0.01" placeholder="Ej. 42.5">
+          </div>
+          <div>
+            <label>CAT sin IVA (%)</label>
+            <input [(ngModel)]="cCatWithoutIva" (ngModelChange)="cCat = $event" type="number" step="0.1" placeholder="Ej. 68.9">
+          </div>
+
+          <div>
+            <label>Comisión Anualidad ($)</label>
+            <input [(ngModel)]="cAnnualFee" type="number" placeholder="Ej. 650">
+          </div>
+          <div>
+            <label>Comisión Pago Tardío ($)</label>
+            <input [(ngModel)]="cLatePaymentFee" type="number" placeholder="Ej. 390">
+          </div>
+
+          <div>
+            <label>Pago para no generar intereses ($)</label>
+            <input [(ngModel)]="cNoInterest" type="number" placeholder="Ej. 6500">
+          </div>
+          <div>
+            <label>Pago mínimo mensual ($)</label>
+            <input [(ngModel)]="cMinPayment" type="number" placeholder="Ej. 500">
+          </div>
+
+          <div>
+            <label>Plazo restante (meses, opcional)</label>
+            <input [(ngModel)]="cCreditTerm" type="number" placeholder="Ej. 12">
+          </div>
+        } @else {
+          <!-- Campos de Tarjeta de Débito -->
+          <div style="grid-column: 1 / -1;">
+            <label>Saldo Inicial Disponible ($)</label>
+            <input [(ngModel)]="cBalance" type="number" placeholder="Ej. 12500">
+          </div>
+        }
+
+        <div style="grid-column: 1 / -1;">
+          <label>Notas adicionales</label>
+          <input [(ngModel)]="cNotes" placeholder="Día de corte, recordatorios, beneficios">
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-ghost" (click)="closeModal()">Cancelar</button>
+        <button class="btn-primary" (click)="saveCard()">
+          {{ editingId ? 'Actualizar Tarjeta' : 'Guardar Tarjeta' }}
+        </button>
+      </div>
     </div>
   </div>
 }
 
-<div class="grid-2col">
-  <!-- Tarjetas de Crédito -->
-  <div>
-    <h3 style="margin-top: 0;">Tarjetas de Crédito</h3>
-    @if (creditCards().length === 0) {
-      <div class="empty-state">No hay tarjetas de crédito.</div>
-    }
-    @for (c of creditCards(); track c.id) {
-      <div class="card-panel" style="margin-bottom: 15px; position: relative; border-left: 4px solid var(--danger);">
-        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="askDeleteCard(c.id, c.name)">
-          <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
-        </button>
-        <div style="font-weight: 600; font-size: 18px; margin-bottom: 10px;">{{ c.name }}</div>
+<!-- Modal: Abonar / Pagar Tarjeta -->
+@if (isPayModalOpen && payingCard) {
+  <div class="modal-overlay" (click)="closePayModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3 style="margin-top: 0;">Abonar a Tarjeta: {{ payingCard.name }}</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-top: 0; margin-bottom: 16px;">
+        Deuda actual registrada: <strong style="color: #DC2626;">{{ money(payingCard.computedDebt || 0) }}</strong>
+      </p>
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <span style="color: var(--text-muted);">Deuda Actual:</span>
-          <span class="txt-danger" style="font-weight: 600;">{{ money(c.computedBalance || 0) }}</span>
+      <div class="form-grid">
+        <div style="grid-column: 1 / -1;">
+          <label>Selecciona el tipo de abono</label>
+          <select [(ngModel)]="payAmountType" style="margin-bottom: 10px;">
+            <option value="noInterest">Para no generar intereses ({{ money(payingCard.noInterest || payingCard.computedDebt || 0) }})</option>
+            <option value="minimo">Pago Mínimo ({{ money(calcMinPayment(payingCard)) }})</option>
+            <option value="otro">Otro monto específico</option>
+          </select>
         </div>
 
-        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <span style="color: var(--text-muted);">Límite Total:</span>
-          <span>{{ money(c.limit || 0) }}</span>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px dashed var(--border);">
-          <span style="color: var(--text-muted);">Crédito Disponible:</span>
-          <span class="txt-safe" style="font-weight: 600;">{{ money((c.limit || 0) - (c.computedBalance || 0)) }}</span>
-        </div>
-
-        <!-- Detalle de pagos vinculado a deuda -->
-        @if (getLinkedDebt(c.name)) {
-          <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;">
-            Detalle de pagos
-            @if (getLinkedDebt(c.name)!.cat) {
-              <span style="color: #1D4ED8; font-weight: 600; margin-left: 6px;">CAT {{ getLinkedDebt(c.name)!.cat }}%</span>
-            }
-          </div>
-
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="color: var(--text-muted);">Pago mínimo:</span>
-            <span style="font-weight: 700;">
-              {{ money(calcMinPayment(c.name, c.computedBalance || 0) || getLinkedDebt(c.name)!.minPayment || 0) }}
-              @if (getLinkedDebt(c.name)!.cat) {
-                <span style="font-size: 10px; color: #1D4ED8; margin-left: 4px;">con CAT</span>
-              }
-            </span>
-          </div>
-
-          @if (getLinkedDebt(c.name)!.noInterest) {
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <span style="color: var(--text-muted);">Sin intereses:</span>
-              <span style="font-weight: 600; color: #059669;">{{ money(getLinkedDebt(c.name)!.noInterest || 0) }}</span>
-            </div>
-          }
-
-          @if (getLinkedDebt(c.name)!.creditTerm) {
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: var(--text-muted);">Plazo restante:</span>
-              <span>{{ getLinkedDebt(c.name)!.creditTerm }} meses</span>
-            </div>
-          }
-        } @else {
-          <div style="font-size: 11px; color: var(--text-muted); font-style: italic;">
-            Agrega esta tarjeta en "Deudas" para ver el cálculo del pago mínimo.
+        @if (payAmountType === 'otro') {
+          <div style="grid-column: 1 / -1;">
+            <label>Monto a abonar ($)</label>
+            <input [(ngModel)]="payCustomAmount" type="number" placeholder="Ej. 2000">
           </div>
         }
       </div>
-    }
-  </div>
 
-  <!-- Tarjetas de Débito -->
-  <div>
-    <h3 style="margin-top: 0;">Tarjetas de Débito</h3>
-    @if (debitCards().length === 0) {
-      <div class="empty-state">No hay tarjetas de débito.</div>
-    }
-    @for (c of debitCards(); track c.id) {
-      <div class="card-panel panel-safe" style="margin-bottom: 15px; position: relative;">
-        <button class="btn-ghost" style="position: absolute; top: 10px; right: 10px; color: var(--danger); padding: 4px;" (click)="askDeleteCard(c.id, c.name)">
-          <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
-        </button>
-        <div style="font-weight: 600; font-size: 18px; margin-bottom: 5px;">{{ c.name }}</div>
-        
-        <div style="display: flex; justify-content: space-between; padding-top: 5px;">
-          <span style="color: var(--text-muted);">Saldo Disponible:</span>
-          <span class="txt-safe" style="font-weight: 600; font-size: 16px;">{{ money(c.computedBalance || 0) }}</span>
-        </div>
+      <div style="margin-top: 16px; padding: 12px; background: var(--surface2); border-radius: var(--radius); border: 1px solid var(--border);">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+          <input type="checkbox" [(ngModel)]="payRegisterAsExpense" style="width: 18px; height: 18px;">
+          <span style="font-size: 13px;">Registrar como Gasto en Efectivo (resta de tu liquidez mensual)</span>
+        </label>
       </div>
-    }
-  </div>
-</div>
 
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button class="btn-ghost" (click)="closePayModal()">Cancelar</button>
+        <button class="btn-primary" (click)="submitPayment()">Confirmar Abono</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de Confirmación de Eliminar -->
 <app-confirm-modal 
   [isOpen]="!!confirmDeleteId" 
   [itemName]="confirmDeleteName" 
-  message="¿Estás seguro de eliminar esta tarjeta? Esta acción no se puede deshacer." 
+  message="¿Estás seguro de eliminar esta tarjeta? Si tiene deudas vinculadas, también se sincronizarán." 
   (confirm)="confirmDeleteCard()" 
   (cancel)="cancelDeleteCard()">
 </app-confirm-modal>
-

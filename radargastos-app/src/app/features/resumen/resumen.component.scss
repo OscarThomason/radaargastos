@@ -10,219 +10,14 @@
   }
 }
 
-// ========================================
-// ESTILOS DE CALENDARIO DE PAGOS
-// ========================================
-.calendar-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-}
-
-.calendar-weekdays-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-weight: 700;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 8px;
-}
-
-.calendar-days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-auto-rows: minmax(90px, auto);
-  gap: 4px;
-}
-
-.calendar-day-cell {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-height: 90px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-
-  &:hover {
-    background: var(--surface);
-    border-color: var(--text-muted);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    z-index: 10;
-  }
-
-  &.other-month {
-    opacity: 0.35;
-    background: transparent;
-    border-color: transparent;
-
-    &:hover {
-      opacity: 0.7;
-      background: var(--surface2);
-      border-color: var(--border);
-    }
-  }
-
-  &.status-danger {
-    border-left: 3px solid var(--danger);
-    background: var(--danger-dim);
-  }
-
-  &.status-warn {
-    border-left: 3px solid var(--warn);
-    background: var(--warn-dim);
-  }
-
-  &.status-safe {
-    border-left: 3px solid var(--safe);
-    background: var(--safe-dim);
-  }
-
-  &.selected-week {
-    border-color: rgba(124, 156, 245, 0.5) !important;
-    background: rgba(124, 156, 245, 0.06) !important;
-  }
-
-  &.is-today {
-    border: 2px solid var(--info) !important;
-    background: rgba(124, 156, 245, 0.03);
-
-    .day-number {
-      color: var(--info);
-      font-weight: 800;
-    }
-  }
-}
-
-.day-number-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.day-number {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.today-badge {
-  font-size: 8px;
-  font-weight: 700;
-  text-transform: uppercase;
-  background: var(--info-dim);
-  color: var(--info);
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-
-.day-events-container {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 2px;
-}
-
-.calendar-event-tag {
-  display: flex;
-  flex-direction: column;
-  padding: 4px 6px;
-  border-radius: 6px;
-  font-size: 9px;
-  font-weight: 700;
-  cursor: pointer;
-  border-left: 3px solid transparent;
-  transition: all 0.15s ease;
-  line-height: 1.1;
-
-  .event-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .event-amount {
-    font-size: 8px;
-    opacity: 0.85;
-    margin-top: 1px;
-  }
-
-  &:hover {
-    transform: scale(1.03);
-    filter: brightness(1.05);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  }
-
-  &.status-danger {
-    background: var(--danger-dim);
-    color: var(--danger);
-    border-left-color: var(--danger);
-  }
-
-  &.status-warn {
-    background: var(--warn-dim);
-    color: var(--warn);
-    border-left-color: var(--warn);
-  }
-
-  &.status-safe {
-    background: var(--safe-dim);
-    color: var(--safe);
-    border-left-color: var(--safe);
-  }
-}
-
-// ========================================
-// RESPONSIVO PARA MÓVILES
-// ========================================
-@media (max-width: 600px) {
-  .calendar-weekdays-grid {
-    font-size: 9px;
-  }
-
-  .calendar-days-grid {
-    grid-auto-rows: minmax(65px, auto);
-  }
-
-  .calendar-day-cell {
-    min-height: 65px;
-    padding: 3px;
-  }
-
-  .calendar-event-tag {
-    padding: 2px 4px;
-    font-size: 8px;
-
-    .event-amount {
-      display: none;
-    }
-  }
-
-  .today-badge {
-    display: none;
-  }
-}
-
 // Simulación de stat-card para el selector dinámico de semana
 .stat-card {
   background: var(--surface, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
+  border-radius: var(--radius);
   padding: 16px 18px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -235,6 +30,656 @@
 
   @media (max-width: 600px) {
     padding: 12px 14px;
-    border-radius: 12px;
+  }
+}
+
+// ========================================
+// CALENDARIO MINIMALISTA TIPO AGENDA (Estilo Imagen 2)
+// ========================================
+.agenda-calendar-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+  overflow: visible !important;
+}
+
+.agenda-top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 12px;
+}
+
+.agenda-title-block {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+
+  .agenda-word-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+  }
+
+  .agenda-year-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #92400E; // Tono dorado/ámbar sobrio tipo agenda
+    font-family: 'Sora', sans-serif;
+  }
+}
+
+.agenda-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .agenda-current-month-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    min-width: 110px;
+    text-align: center;
+  }
+
+  .agenda-nav-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: var(--surface2);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .material-symbols-outlined {
+      font-size: 18px;
+    }
+  }
+}
+
+// Cabecera de días de la semana: D L M M J V S
+.agenda-weekdays-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  margin-top: 18px;
+  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+}
+
+// Matriz de días
+.agenda-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 10px;
+  column-gap: 4px;
+}
+
+.agenda-day-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  min-height: 42px;
+
+  &.other-month {
+    .agenda-day-circle {
+      color: #9CA3AF;
+      opacity: 0.45;
+    }
+  }
+
+  &.is-drag-target {
+    border: 2px dashed #0284C7;
+    border-radius: 8px;
+    background: rgba(186, 230, 253, 0.45);
+    transform: scale(1.08);
+    z-index: 10;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+}
+
+// Círculos de día
+.agenda-day-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  position: relative;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  user-select: none;
+
+  // Círculo para deudas al corriente (Azul Cielo minimalista)
+  &.circle-debt {
+    background: #BAE6FD;
+    color: #0369A1;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.14);
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.28);
+    }
+  }
+
+  // Círculo rojo para pagos vencidos (Requisito clave del usuario)
+  &.circle-overdue {
+    background: #FEE2E2;
+    border: 2px solid #DC2626;
+    color: #DC2626;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.14);
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    }
+  }
+
+  // Recuadro verde para el día activo
+  &.is-active-day {
+    border: 2px solid #10B981;
+    border-radius: 7px; // Recuadro elegante
+    color: #047857;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.08);
+
+    &.circle-debt {
+      background: #BAE6FD;
+      color: #0369A1;
+      border: 2px solid #10B981;
+      border-radius: 7px;
+    }
+
+    &.circle-overdue {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 2px solid #DC2626;
+      box-shadow: 0 0 0 2px #10B981;
+      border-radius: 7px;
+    }
+  }
+}
+
+// ========================================
+// TOOLTIP FLOTANTE ELEGANTE EN HOVER
+// ========================================
+.agenda-hover-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: max-content;
+  min-width: 260px;
+  max-width: 320px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  z-index: 120;
+
+  // Alineación en columnas derechas (ej. Sábado, Viernes)
+  &.align-right {
+    left: auto;
+    right: -8px;
+    transform: translateY(4px);
+
+    &::after {
+      left: auto;
+      right: 22px;
+      transform: none;
+    }
+
+    &::before {
+      left: auto;
+      right: 22px;
+      transform: none;
+    }
+  }
+
+  // Alineación en columnas izquierdas (ej. Domingo, Lunes)
+  &.align-left {
+    left: -8px;
+    right: auto;
+    transform: translateY(4px);
+
+    &::after {
+      left: 22px;
+      right: auto;
+      transform: none;
+    }
+
+    &::before {
+      left: 22px;
+      right: auto;
+      transform: none;
+    }
+  }
+
+  // Flecha indicadora inferior hacia el círculo
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--surface);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--border);
+  }
+
+  .tooltip-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+
+    .tooltip-date-txt {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: capitalize;
+    }
+
+    .tooltip-total-amount {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+    }
+  }
+
+  .tooltip-items-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tooltip-item-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 8px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &.is-draggable {
+      cursor: grab;
+      &:active {
+        cursor: grabbing;
+      }
+    }
+
+    &:hover {
+      background: var(--surface);
+      border-color: var(--border);
+    }
+
+    .drag-handle-pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      cursor: grab;
+      opacity: 0.6;
+      transition: opacity 0.15s ease, color 0.15s ease;
+
+      &:hover {
+        opacity: 1;
+        color: #0284C7;
+      }
+
+      .drag-icon {
+        font-size: 16px;
+      }
+    }
+
+    .tooltip-item-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex: 1;
+      cursor: pointer;
+      gap: 8px;
+    }
+
+    .btn-reschedule-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+
+      &:hover {
+        background: var(--text);
+        color: var(--bg);
+      }
+
+      .material-symbols-outlined {
+        font-size: 13px;
+      }
+    }
+
+    .tooltip-item-info {
+      display: flex;
+      flex-direction: column;
+      max-width: 120px;
+
+      strong {
+        font-size: 11px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tooltip-item-type {
+        font-size: 9px;
+        color: var(--text-muted);
+      }
+    }
+
+    .tooltip-item-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+
+      .tooltip-item-val {
+        font-size: 11px;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .status-chip {
+    font-size: 8.5px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+
+    &.chip-overdue {
+      background: rgba(220, 38, 38, 0.15);
+      color: #DC2626;
+    }
+
+    &.chip-today {
+      background: rgba(217, 119, 6, 0.15);
+      color: #D97706;
+    }
+
+    &.chip-upcoming {
+      background: rgba(5, 150, 105, 0.15);
+      color: #059669;
+    }
+  }
+
+  .tooltip-hint-action {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 6px;
+    padding-top: 4px;
+    border-top: 1px dashed var(--border);
+  }
+}
+
+// Activar tooltip al pasar el cursor
+.agenda-day-cell:hover {
+  .agenda-hover-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+
+    &.align-right {
+      transform: translateY(0);
+    }
+
+    &.align-left {
+      transform: translateY(0);
+    }
+  }
+}
+
+// ========================================
+// SECCIÓN INFERIOR: OBJETIVOS DEL MES (Estilo Imagen 2)
+// ========================================
+.agenda-goals-container {
+  margin-top: 28px;
+  border-top: 1.5px solid var(--border);
+  padding-top: 16px;
+
+  .agenda-goals-header {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--text);
+    margin-bottom: 12px;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .agenda-goals-lined-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .goals-lined-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+
+    &.highlight-stat-row {
+      background: var(--surface2);
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+
+      .lined-label {
+        font-weight: 800;
+        letter-spacing: 0.05em;
+        font-size: 12px;
+        color: var(--text);
+        text-transform: uppercase;
+      }
+
+      .stat-por-generar {
+        font-size: 18px;
+        font-weight: 800;
+        font-family: 'Sora', sans-serif;
+        color: var(--text);
+        letter-spacing: -0.02em;
+
+        &.warn {
+          color: #D97706;
+        }
+      }
+    }
+
+    .lined-label {
+      color: var(--text-muted);
+    }
+
+    .lined-value {
+      font-weight: 700;
+      color: var(--text);
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .agenda-calendar-container {
+    padding: 16px 14px;
+  }
+
+  .agenda-title-block {
+    .agenda-word-title,
+    .agenda-year-text {
+      font-size: 18px;
+    }
+  }
+
+  .agenda-weekdays-row {
+    font-size: 12px;
+  }
+
+  .agenda-day-circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+}
+
+// ========================================
+// MODAL PARA MOVER DÍA DE COMPROMISO
+// ========================================
+.move-date-modal {
+  max-width: 440px !important;
+  width: 92% !important;
+  padding: 24px !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  background: var(--surface) !important;
+
+  .move-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+
+    .move-modal-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .move-header-icon {
+        font-size: 26px;
+        color: #0284C7;
+      }
+    }
+  }
+
+  .move-month-hint {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .days-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .day-picker-btn {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: var(--border);
+      background: var(--surface);
+      transform: scale(1.05);
+    }
+
+    &.selected {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .move-summary-box {
+    background: var(--surface2);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+
+    .summary-label {
+      color: var(--text-muted);
+    }
+
+    .summary-date {
+      color: var(--text);
+      font-weight: 800;
+    }
+  }
+
+  .move-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
   }
 }

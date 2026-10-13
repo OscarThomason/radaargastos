@@ -24,7 +24,12 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 body {
+  min-height: 100vh;
   margin: 0;
   background-color: var(--bg);
   background-image:
@@ -33,6 +38,8 @@ body {
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
   background-size: 100% 100%, 24px 24px, 24px 24px;
   background-position: left top;
+  background-attachment: fixed;
+  background-repeat: no-repeat, repeat, repeat;
   color: var(--text);
   font-family: 'Sora', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -464,6 +471,8 @@ h2.section-title:first-child {
       linear-gradient(90deg, transparent 16px, #E53935 16px, #E53935 18px, transparent 18px),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-attachment: fixed;
+    background-repeat: no-repeat, repeat, repeat;
   }
 }
 
@@ -774,89 +783,129 @@ tr.detail-row td {
 }
 
 // ========================================
-// RECUADROS DE ANÁLISIS MINIMALISTAS (Elegantes y Ejecutivos)
+// RECUADROS DE ANÁLISIS SOBRIOS Y MINIMALISTAS (Sin Color, Ajustados)
 // ========================================
 .minimal-stat-box {
-  background: var(--surface2);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: border-color 0.15s ease;
 
   .stat-box-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
+    gap: 6px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--text);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 
     .material-symbols-outlined {
-      font-size: 18px;
+      font-size: 16px;
+      color: var(--text);
     }
   }
 
   .stat-box-text {
     margin: 0;
     font-size: 12px;
-    line-height: 1.5;
+    line-height: 1.45;
     color: var(--text-muted);
+
+    strong {
+      color: var(--text);
+    }
   }
 
-  &.status-danger {
-    border-color: rgba(220, 38, 38, 0.25);
-    background: rgba(220, 38, 38, 0.03);
-    .stat-box-header { color: #DC2626; }
-  }
-
-  &.status-success {
-    border-color: rgba(5, 150, 105, 0.25);
-    background: rgba(5, 150, 105, 0.03);
-    .stat-box-header { color: #059669; }
-  }
-
-  &.status-warning {
-    border-color: rgba(217, 119, 6, 0.25);
-    background: rgba(217, 119, 6, 0.03);
-    .stat-box-header { color: #D97706; }
-  }
-
+  // Variantes sobrias monocromáticas (sin fondos estridentes)
+  &.status-danger,
+  &.status-success,
+  &.status-warning,
   &.status-info {
-    border-color: rgba(37, 99, 235, 0.25);
-    background: rgba(37, 99, 235, 0.03);
-    .stat-box-header { color: #2563EB; }
+    border-color: var(--border);
+    background: var(--surface);
+    .stat-box-header { 
+      color: var(--text); 
+      .material-symbols-outlined { color: var(--text); }
+    }
   }
 }
 
 .minimal-ai-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 12px 14px;
 
   .minimal-ai-header {
     font-weight: 700;
-    font-size: 13px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     color: var(--text);
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed var(--border);
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
 
     .material-symbols-outlined {
-      font-size: 18px;
-      color: #7C3AED;
+      font-size: 16px;
+      color: var(--text);
     }
   }
 
   .minimal-ai-body {
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 12.5px;
+    line-height: 1.55;
     color: var(--text);
     margin: 0;
     white-space: pre-line;
+  }
+}
+
+// ========================================
+// TOOLTIP FLOTANTE MINIMALISTA (Hover en botones de análisis)
+// ========================================
+.tooltip-container {
+  position: relative;
+  display: inline-flex;
+
+  .tooltip-bubble {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--text);
+    color: var(--bg);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    padding: 7px 11px;
+    border-radius: 4px;
+    white-space: normal;
+    width: max-content;
+    max-width: 280px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 100;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      right: 18px;
+      border: 5px solid transparent;
+      border-bottom-color: var(--text);
+    }
+  }
+
+  &:hover .tooltip-bubble {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

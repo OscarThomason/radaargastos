@@ -1,74 +1,105 @@
 <div class="header-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-  <h2 class="section-title" style="margin: 0;">Deudas Activas ({{ debts().length }})</h2>
+  <div>
+    <h2 class="section-title" style="margin: 0;">Módulo de Deudas & Tarjetas</h2>
+    <span style="font-size: 12px; color: var(--text-muted);">
+      Gestión centralizada de compromisos financieros, préstamos a plazos y líneas de crédito.
+    </span>
+  </div>
   <button class="btn-primary" style="margin: 0;" (click)="openModal()">+ Añadir Deuda</button>
 </div>
 
-<!-- Panel de Diagnóstico & Tendencia de Deudas -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
-    <div>
-      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-        <span class="material-symbols-outlined" style="color: #7C3AED;">finance_chip</span>
-        Analista FinOps: Diagnóstico & Tendencia de Deudas
-      </h3>
-      <span style="font-size: 12px; color: var(--text-muted);">
-        Evaluación de evolución de cuotas, ratio de endeudamiento y estrategia de liquidación por CAT.
-      </span>
-    </div>
-    <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="requestDebtAiAnalysis()" [disabled]="isAnalyzingWithN8n()">
-      <span class="material-symbols-outlined" style="font-size: 16px;">finance_chip</span>
-      <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Deudas' }}</span>
-    </button>
-  </div>
-
-  <!-- Banners de Métricas y Tendencia -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-    <div class="minimal-stat-box status-info">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">account_balance</span>
-        <span>Deuda Total Acumulada</span>
-      </div>
-      <p class="stat-box-text">
-        <strong>{{ money(debtAnalysis().totalDebt) }}</strong> total en {{ debts().length }} compromisos activos.
-      </p>
-    </div>
-
-    <div class="minimal-stat-box status-warning">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">price_check</span>
-        <span>Compromiso Mensual ({{ debtAnalysis().debtRatio }}% del ingreso)</span>
-      </div>
-      <p class="stat-box-text">
-        Cuota mensual requerida: <strong>{{ money(debtAnalysis().monthlyCommitment) }}</strong>.
-      </p>
-    </div>
-
-    <div class="minimal-stat-box status-success">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">trending_down</span>
-        <span>Tendencia del Periodo</span>
-      </div>
-      <p class="stat-box-text">
-        {{ debtAnalysis().trendText }}
-      </p>
-    </div>
-  </div>
-
-  <!-- Caja del Diagnóstico IA / Estrategia -->
-  @if (aiDiagnosisText()) {
-    <div class="minimal-ai-card">
-      <div class="minimal-ai-header">
-        <span class="material-symbols-outlined">insights</span>
-        <span>Dictamen de Estrategia de Desendeudamiento</span>
-      </div>
-      <p class="minimal-ai-body" [innerHTML]="aiDiagnosisText()"></p>
-    </div>
-  } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 14px; border-radius: 10px; text-align: center;">
-      Haz clic en <strong>"Analizar Deudas"</strong> para evaluar si tus pagos han disminuido y recibir una estrategia de liquidación priorizada por costo financiero (CAT).
-    </div>
-  }
+<!-- Pestañas de Navegación Interna -->
+<div class="section-nav-tabs">
+  <button [class.active]="activeSection() === 'general'" (click)="activeSection.set('general')">
+    <span class="material-symbols-outlined">dashboard</span>
+    <span>Todos los Compromisos ({{ debts().length }})</span>
+  </button>
+  <button [class.active]="activeSection() === 'tarjetas'" (click)="activeSection.set('tarjetas')">
+    <span class="material-symbols-outlined">credit_card</span>
+    <span>Tarjetas & Líneas de Crédito ({{ creditCardsCount() }})</span>
+  </button>
+  <button [class.active]="activeSection() === 'prestamos'" (click)="activeSection.set('prestamos')">
+    <span class="material-symbols-outlined">payments</span>
+    <span>Préstamos a Plazos ({{ loansCount() }})</span>
+  </button>
 </div>
+
+@if (activeSection() === 'tarjetas') {
+  <!-- Sección de Tarjetas de Crédito y Débito Integrada -->
+  <app-tarjetas></app-tarjetas>
+} @else {
+  <!-- Panel de Diagnóstico & Tendencia de Deudas -->
+  <div class="card-panel" style="margin-bottom: 16px; padding: 14px 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+      <div>
+        <h3 style="margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size: 17px;">analytics</span>
+          Analista FinOps: Diagnóstico & Tendencia
+        </h3>
+        <span style="font-size: 11px; color: var(--text-muted);">
+          Evaluación de cuotas, ratio de endeudamiento y estrategia de amortización por CAT.
+        </span>
+      </div>
+      <div class="tooltip-container">
+        <button class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;" (click)="requestDebtAiAnalysis()" [disabled]="isAnalyzingWithN8n()">
+          <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
+          <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Deudas' }}</span>
+        </button>
+        <div class="tooltip-bubble">
+          Evalúa si tus compromisos han disminuido y genera una estrategia de liquidación por costo financiero (CAT).
+        </div>
+      </div>
+    </div>
+
+    <!-- Banners de Métricas y Tendencia -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 12px;">
+      <div class="minimal-stat-box">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">account_balance</span>
+          <span>Deuda Total Consolidada</span>
+        </div>
+        <p class="stat-box-text">
+          <strong>{{ money(consolidatedDebt().total) }}</strong> activo.
+        </p>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap;">
+          <span>Préstamos: <strong>{{ money(consolidatedDebt().loansDebt) }}</strong></span>
+          <span>·</span>
+          <span>Tarjetas: <strong>{{ money(consolidatedDebt().creditCardsDebt) }}</strong></span>
+        </div>
+      </div>
+
+      <div class="minimal-stat-box">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">price_check</span>
+          <span>Compromiso Mensual ({{ debtAnalysis().debtRatio }}% del ingreso)</span>
+        </div>
+        <p class="stat-box-text">
+          Cuota mensual requerida: <strong>{{ money(debtAnalysis().monthlyCommitment) }}</strong>.
+        </p>
+      </div>
+
+      <div class="minimal-stat-box">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">trending_down</span>
+          <span>Tendencia del Periodo</span>
+        </div>
+        <p class="stat-box-text">
+          {{ debtAnalysis().trendText }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Caja del Diagnóstico IA / Estrategia (visible solo cuando se genera el análisis) -->
+    @if (aiDiagnosisText()) {
+      <div class="minimal-ai-card">
+        <div class="minimal-ai-header">
+          <span class="material-symbols-outlined">insights</span>
+          <span>Estrategia de Desendeudamiento</span>
+        </div>
+        <p class="minimal-ai-body" [innerHTML]="aiDiagnosisText()"></p>
+      </div>
+    }
+  </div>
 
 @if (isModalOpen) {
   <div class="modal-overlay" (click)="cancelEdit()">
@@ -130,41 +161,75 @@
           }
 
         } @else {
-          <!-- Tarjeta de Crédito -->
-          <div><label>Deuda total actual</label><input [(ngModel)]="dDebtTotal" type="number"></div>
-          <div><label>Pago para no generar intereses</label><input [(ngModel)]="dNoInterest" type="number"></div>
+          <!-- Tarjeta de Crédito (Gestión Completa) -->
+          <div>
+            <label>Línea de Crédito Total</label>
+            <input [(ngModel)]="dLimit" type="number" placeholder="Ej. 25000">
+          </div>
+          <div>
+            <label>Deuda Actual Utilizada</label>
+            <input [(ngModel)]="dDebtTotal" type="number" placeholder="Ej. 6500">
+          </div>
 
-          <!-- Sección CAT -->
-          <div style="grid-column: 1 / -1; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 4px;">
-            <label style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
-              Cálculo automático de pago mínimo con CAT (opcional)
-            </label>
+          <!-- Indicador de Límite Disponible en tiempo real -->
+          @if (dLimit) {
+            <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;">
+              <span style="font-size: 13px; color: var(--text-muted);">Límite de Crédito Disponible:</span>
+              <strong [style.color]="dAvailableLimit > 0 ? '#059669' : '#DC2626'" style="font-size: 15px;">
+                {{ money(dAvailableLimit) }}
+              </strong>
+            </div>
+          }
+
+          <div>
+            <label>Fecha de Corte</label>
+            <input [(ngModel)]="dCutoffDate" type="date">
           </div>
           <div>
-            <label>CAT Anual (%)</label>
-            <input [(ngModel)]="dCat" type="number" step="0.1" placeholder="Ej. 89.9">
-            <small class="hint">Costo Anual Total de tu tarjeta. Lo encuentras en tu estado de cuenta.</small>
+            <label>Fecha Límite de Pago</label>
+            <input [(ngModel)]="dAnchor" type="date">
+          </div>
+
+          <div>
+            <label>Tasa de Interés Anual (%)</label>
+            <input [(ngModel)]="dInterestRate" type="number" step="0.01" placeholder="Ej. 42.5">
           </div>
           <div>
-            <label>Plazo restante (meses)</label>
+            <label>CAT sin IVA (%)</label>
+            <input [(ngModel)]="dCatWithoutIva" (ngModelChange)="dCat = $event" type="number" step="0.1" placeholder="Ej. 68.9">
+          </div>
+
+          <div>
+            <label>Comisión Anualidad ($)</label>
+            <input [(ngModel)]="dAnnualFee" type="number" placeholder="Ej. 650">
+          </div>
+          <div>
+            <label>Comisión Pago Tardío ($)</label>
+            <input [(ngModel)]="dLatePaymentFee" type="number" placeholder="Ej. 390">
+          </div>
+
+          <div>
+            <label>Pago para no generar intereses ($)</label>
+            <input [(ngModel)]="dNoInterest" type="number" placeholder="Ej. 6500">
+          </div>
+          <div>
+            <label>Plazo restante (meses, opcional)</label>
             <input [(ngModel)]="dCreditTerm" type="number" placeholder="Ej. 12">
-            <small class="hint">Meses que faltan para liquidar la deuda.</small>
           </div>
 
-          <!-- Resultado del cálculo en tiempo real -->
+          <!-- Cálculo automático de pago mínimo con CAT o manual -->
           @if (usingCatFormula) {
             <div style="grid-column: 1 / -1; padding: 12px 14px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px;">
-              <div style="font-size: 12px; color: #1E40AF; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;">
-                ✦ Pago mínimo calculado con CAT {{ dCat }}%
+              <div style="font-size: 12px; color: #1E40AF; margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">
+                Pago Mínimo Estimado con CAT {{ dCat }}%
               </div>
-              <div style="font-size: 22px; font-weight: 700; color: #1D4ED8;">{{ money(calculatedMinPayment) }}</div>
-              <div style="font-size: 11px; color: #1E40AF; margin-top: 4px;">por mes durante {{ dCreditTerm }} meses</div>
+              <div style="font-size: 20px; font-weight: 700; color: #1D4ED8;">{{ money(calculatedMinPayment) }}</div>
+              <div style="font-size: 11px; color: #1E40AF; margin-top: 4px;">Por mes durante {{ dCreditTerm }} meses</div>
             </div>
           } @else {
-            <div>
-              <label>Pago mínimo (manual, como referencia)</label>
+            <div style="grid-column: 1 / -1;">
+              <label>Pago Mínimo del Periodo ($)</label>
               <input [(ngModel)]="dMinPayment" type="number" placeholder="Ej. 500">
-              <small class="hint">Se usará este monto si no capturas el CAT.</small>
             </div>
           }
         }
@@ -370,12 +435,52 @@
                         </div>
                       } @else {
                         <div class="detail-field">
-                          <span class="detail-label">Saldo Deuda</span>
-                          <span class="detail-value" style="color: #D32F2F;">{{ money(d.debt || 0) }}</span>
+                          <span class="detail-label">Línea de Crédito</span>
+                          <span class="detail-value">{{ d.limit ? money(d.limit) : 'No definida' }}</span>
                         </div>
+                        <div class="detail-field">
+                          <span class="detail-label">Deuda Actual</span>
+                          <span class="detail-value" style="color: #DC2626; font-weight: 700;">{{ money(d.debt || 0) }}</span>
+                        </div>
+                        <div class="detail-field">
+                          <span class="detail-label">Crédito Disponible</span>
+                          <span class="detail-value" style="color: #059669; font-weight: 700;">
+                            {{ d.limit ? money(d.limit - (d.debt || 0)) : 'N/A' }}
+                          </span>
+                        </div>
+                        @if (d.cutoffDate) {
+                          <div class="detail-field">
+                            <span class="detail-label">Fecha de Corte</span>
+                            <span class="detail-value">{{ formatDate(d.cutoffDate) }}</span>
+                          </div>
+                        }
+                        @if (d.interestRate) {
+                          <div class="detail-field">
+                            <span class="detail-label">Tasa de Interés Anual</span>
+                            <span class="detail-value">{{ d.interestRate }}%</span>
+                          </div>
+                        }
+                        @if (d.catWithoutIva || d.cat) {
+                          <div class="detail-field">
+                            <span class="detail-label">CAT sin IVA</span>
+                            <span class="detail-value" style="color: #1D4ED8; font-weight: 600;">{{ d.catWithoutIva || d.cat }}%</span>
+                          </div>
+                        }
+                        @if (d.annualFee) {
+                          <div class="detail-field">
+                            <span class="detail-label">Comisión Anualidad</span>
+                            <span class="detail-value">{{ money(d.annualFee) }}</span>
+                          </div>
+                        }
+                        @if (d.latePaymentFee) {
+                          <div class="detail-field">
+                            <span class="detail-label">Pago Tardío</span>
+                            <span class="detail-value">{{ money(d.latePaymentFee) }}</span>
+                          </div>
+                        }
                         @if (d.noInterest) {
                           <div class="detail-field">
-                            <span class="detail-label">Sin Intereses</span>
+                            <span class="detail-label">Pago Sin Intereses</span>
                             <span class="detail-value" style="color: #059669;">{{ money(d.noInterest) }}</span>
                           </div>
                         }
@@ -419,6 +524,7 @@
     </tbody>
   </table>
 </div>
+}
 
 <app-confirm-modal 
   [isOpen]="!!confirmDeleteId" 

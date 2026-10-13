@@ -68,7 +68,8 @@ export class FinanceService {
     const incomes = s.incomes || [];
 
     return cards.map(c => {
-      let currentBalance = c.balance || 0;
+      const baseDebt = c.type === 'credito' ? (c.debt !== undefined ? c.debt : (c.balance || 0)) : (c.balance || 0);
+      let currentBalance = baseDebt;
       const relatedEx = expenses.filter(e => e.paymentMethod === c.id);
       const relatedIn = incomes.filter(i => i.paymentMethod === c.id);
 
@@ -76,15 +77,57 @@ export class FinanceService {
       const totalIn = relatedIn.reduce((sum, i) => sum + i.amount, 0);
 
       if (c.type === 'credito') {
-        // En crédito, los gastos suben la deuda y los ingresos (pagos) la bajan
-        currentBalance = currentBalance + totalSpent - totalIn;
+        // En crédito, los gastos suben la deuda y los pagos/ingresos la reducen
+        const computedDebt = Math.max(0, currentBalance + totalSpent - totalIn);
+        const limit = c.limit || 0;
+        const availableLimit = Math.max(0, limit - computedDebt);
+        return {
+          ...c,
+          computedBalance: computedDebt,
+          computedDebt,
+          availableLimit
+        };
       } else {
         // En débito, los gastos bajan el dinero y los ingresos lo suben
-        currentBalance = currentBalance - totalSpent + totalIn;
+        const computedAvailable = currentBalance - totalSpent + totalIn;
+        return {
+          ...c,
+          computedBalance: computedAvailable
+        };
       }
-
-      return { ...c, computedBalance: currentBalance };
     });
+  });
+
+  /** Cálculo centralizado de la Deuda Total Consolidada (Préstamos + Tarjetas de Crédito) */
+  totalConsolidatedDebt = computed(() => {
+    const s = this.state();
+    const debts = s.debts || [];
+    const cards = this.cardsWithBalance();
+
+    // 1. Deuda de Préstamos
+    const loansDebt = debts
+      .filter(d => d.group === 'prestamo')
+      .reduce((sum, d) => sum + Math.max(0, (d.total || 0) - (d.pagado || 0)), 0);
+
+    // 2. Deuda de Tarjetas de Crédito de cardsWithBalance
+    const creditCardsDebt = cards
+      .filter(c => c.type === 'credito')
+      .reduce((sum, c) => sum + (c.computedDebt || 0), 0);
+
+    // 3. Tarjetas en debts no vinculadas a cards (para garantizar retrocompatibilidad)
+    const cardNamesInCards = new Set(cards.filter(c => c.type === 'credito').map(c => c.name.toLowerCase().trim()));
+    const cardIdsInCards = new Set(cards.filter(c => c.type === 'credito').map(c => c.id));
+    const unlinkedDebtsCards = debts
+      .filter(d => d.group === 'tarjeta' && (!d.cardId || !cardIdsInCards.has(d.cardId)) && !cardNamesInCards.has(d.name.toLowerCase().trim()))
+      .reduce((sum, d) => sum + (d.debt || 0), 0);
+
+    const total = loansDebt + creditCardsDebt + unlinkedDebtsCards;
+
+    return {
+      total,
+      loansDebt,
+      creditCardsDebt: creditCardsDebt + unlinkedDebtsCards
+    };
   });
 
   isLoading = signal<boolean>(true);
@@ -409,6 +452,46 @@ export class FinanceService {
 
   addDebt(debt: Debt) {
     const current = { ...this.state() };
+    if (!current.debts) current.debts = [];
+    if (!current.cards) current.cards = [];
+
+    // Si es tarjeta de crédito, sincronizar en cards
+    if (debt.group === 'tarjeta') {
+      const cardId = debt.cardId || ('c_' + debt.id);
+      debt.cardId = cardId;
+      const cardDebt = debt.debt || 0;
+      const cardLimit = debt.limit || 0;
+
+      const cardData: Card = {
+        id: cardId,
+        name: debt.name,
+        type: 'credito',
+        limit: cardLimit,
+        debt: cardDebt,
+        balance: cardDebt,
+        availableLimit: Math.max(0, cardLimit - cardDebt),
+        dueDate: debt.dueDate || debt.anchor,
+        cutoffDate: debt.cutoffDate,
+        interestRate: debt.interestRate,
+        catWithoutIva: debt.catWithoutIva,
+        cat: debt.cat || debt.catWithoutIva,
+        annualFee: debt.annualFee,
+        latePaymentFee: debt.latePaymentFee,
+        noInterest: debt.noInterest,
+        minPayment: debt.minPayment,
+        notes: debt.notes,
+        linkedDebtId: debt.id
+      };
+
+      const existingCardIdx = current.cards.findIndex(c => c.id === cardId || (c.linkedDebtId && c.linkedDebtId === debt.id) || (c.type === 'credito' && c.name.toLowerCase().trim() === debt.name.toLowerCase().trim()));
+      if (existingCardIdx !== -1) {
+        current.cards = [...current.cards];
+        current.cards[existingCardIdx] = { ...current.cards[existingCardIdx], ...cardData };
+      } else {
+        current.cards = [...current.cards, cardData];
+      }
+    }
+
     current.debts = [...current.debts, debt];
     this.logAction(current, `Se añadió la deuda: ${debt.name}`);
     this.saveState(current);
@@ -418,6 +501,12 @@ export class FinanceService {
     const current = { ...this.state() };
     const d = current.debts.find(x => x.id === id);
     current.debts = current.debts.filter(x => x.id !== id);
+
+    // Si estaba vinculada a una tarjeta, eliminarla también de cards
+    if (d?.group === 'tarjeta' && current.cards) {
+      current.cards = current.cards.filter(c => c.id !== d.cardId && c.linkedDebtId !== d.id);
+    }
+
     this.logAction(current, `Se eliminó la deuda: ${d?.name || 'Desconocida'}`);
     this.saveState(current);
   }
@@ -428,6 +517,43 @@ export class FinanceService {
     if (idx !== -1) {
       current.debts = [...current.debts];
       current.debts[idx] = debt;
+
+      // Sincronizar cambios en cards si es tarjeta
+      if (debt.group === 'tarjeta' && current.cards) {
+        const cardId = debt.cardId || ('c_' + debt.id);
+        const cardDebt = debt.debt || 0;
+        const cardLimit = debt.limit || 0;
+        const cardIdx = current.cards.findIndex(c => c.id === cardId || c.linkedDebtId === debt.id || (c.type === 'credito' && c.name.toLowerCase().trim() === debt.name.toLowerCase().trim()));
+
+        const cardData: Card = {
+          id: cardId,
+          name: debt.name,
+          type: 'credito',
+          limit: cardLimit,
+          debt: cardDebt,
+          balance: cardDebt,
+          availableLimit: Math.max(0, cardLimit - cardDebt),
+          dueDate: debt.dueDate || debt.anchor,
+          cutoffDate: debt.cutoffDate,
+          interestRate: debt.interestRate,
+          catWithoutIva: debt.catWithoutIva,
+          cat: debt.cat || debt.catWithoutIva,
+          annualFee: debt.annualFee,
+          latePaymentFee: debt.latePaymentFee,
+          noInterest: debt.noInterest,
+          minPayment: debt.minPayment,
+          notes: debt.notes,
+          linkedDebtId: debt.id
+        };
+
+        if (cardIdx !== -1) {
+          current.cards = [...current.cards];
+          current.cards[cardIdx] = { ...current.cards[cardIdx], ...cardData };
+        } else {
+          current.cards = [...current.cards, cardData];
+        }
+      }
+
       this.logAction(current, `Se actualizó la deuda: ${debt.name}`);
       this.saveState(current);
     }
@@ -528,6 +654,50 @@ export class FinanceService {
   addCard(card: Card) {
     const current = { ...this.state() };
     if (!current.cards) current.cards = [];
+    if (!current.debts) current.debts = [];
+
+    // Si es crédito, sincronizar en debts
+    if (card.type === 'credito') {
+      const debtId = card.linkedDebtId || ('d_' + card.id);
+      card.linkedDebtId = debtId;
+      const cardDebt = card.debt !== undefined ? card.debt : (card.balance || 0);
+      card.debt = cardDebt;
+      card.balance = cardDebt;
+      if (card.limit) {
+        card.availableLimit = Math.max(0, card.limit - cardDebt);
+      }
+
+      const debtItem: Debt = {
+        id: debtId,
+        group: 'tarjeta',
+        name: card.name,
+        debt: cardDebt,
+        limit: card.limit,
+        availableLimit: card.availableLimit,
+        anchor: card.dueDate || new Date().toISOString().slice(0, 10),
+        dueDate: card.dueDate,
+        cutoffDate: card.cutoffDate,
+        frequency: 'mensual',
+        interestRate: card.interestRate,
+        catWithoutIva: card.catWithoutIva,
+        cat: card.cat || card.catWithoutIva,
+        annualFee: card.annualFee,
+        latePaymentFee: card.latePaymentFee,
+        noInterest: card.noInterest,
+        minPayment: card.minPayment,
+        notes: card.notes || '',
+        cardId: card.id
+      };
+
+      const existingDebtIdx = current.debts.findIndex(d => d.id === debtId || (d.cardId && d.cardId === card.id) || (d.group === 'tarjeta' && d.name.toLowerCase().trim() === card.name.toLowerCase().trim()));
+      if (existingDebtIdx !== -1) {
+        current.debts = [...current.debts];
+        current.debts[existingDebtIdx] = { ...current.debts[existingDebtIdx], ...debtItem };
+      } else {
+        current.debts = [...current.debts, debtItem];
+      }
+    }
+
     current.cards = [...current.cards, card];
     this.logAction(current, `Se añadió la tarjeta: ${card.name}`);
     this.saveState(current);
@@ -536,8 +706,51 @@ export class FinanceService {
   updateCard(id: string, card: Card) {
     const current = { ...this.state() };
     if (!current.cards) current.cards = [];
+    if (!current.debts) current.debts = [];
+
     const idx = current.cards.findIndex(c => c.id === id);
     if (idx !== -1) {
+      if (card.type === 'credito') {
+        const debtId = card.linkedDebtId || ('d_' + card.id);
+        card.linkedDebtId = debtId;
+        const cardDebt = card.debt !== undefined ? card.debt : (card.balance || 0);
+        card.debt = cardDebt;
+        card.balance = cardDebt;
+        if (card.limit) {
+          card.availableLimit = Math.max(0, card.limit - cardDebt);
+        }
+
+        const debtItem: Debt = {
+          id: debtId,
+          group: 'tarjeta',
+          name: card.name,
+          debt: cardDebt,
+          limit: card.limit,
+          availableLimit: card.availableLimit,
+          anchor: card.dueDate || new Date().toISOString().slice(0, 10),
+          dueDate: card.dueDate,
+          cutoffDate: card.cutoffDate,
+          frequency: 'mensual',
+          interestRate: card.interestRate,
+          catWithoutIva: card.catWithoutIva,
+          cat: card.cat || card.catWithoutIva,
+          annualFee: card.annualFee,
+          latePaymentFee: card.latePaymentFee,
+          noInterest: card.noInterest,
+          minPayment: card.minPayment,
+          notes: card.notes || '',
+          cardId: card.id
+        };
+
+        const existingDebtIdx = current.debts.findIndex(d => d.id === debtId || d.cardId === card.id || (d.group === 'tarjeta' && d.name.toLowerCase().trim() === card.name.toLowerCase().trim()));
+        if (existingDebtIdx !== -1) {
+          current.debts = [...current.debts];
+          current.debts[existingDebtIdx] = { ...current.debts[existingDebtIdx], ...debtItem };
+        } else {
+          current.debts = [...current.debts, debtItem];
+        }
+      }
+
       current.cards = [...current.cards];
       current.cards[idx] = card;
       this.logAction(current, `Se actualizó la tarjeta: ${card.name}`);
@@ -550,7 +763,58 @@ export class FinanceService {
     if (!current.cards) current.cards = [];
     const c = current.cards.find(x => x.id === id);
     current.cards = current.cards.filter(x => x.id !== id);
+
+    // Si tenía deuda vinculada en debts, removerla también
+    if (c?.type === 'credito' && current.debts) {
+      current.debts = current.debts.filter(d => d.cardId !== id && d.id !== c.linkedDebtId);
+    }
+
     this.logAction(current, `Se eliminó la tarjeta: ${c?.name || ''}`);
+    this.saveState(current);
+  }
+
+  payCreditCard(cardId: string, amount: number, registerAsExpense: boolean = false) {
+    if (amount <= 0) return;
+    const current = { ...this.state() };
+    if (!current.cards) current.cards = [];
+    const cardIdx = current.cards.findIndex(c => c.id === cardId);
+    if (cardIdx === -1) return;
+
+    const card = { ...current.cards[cardIdx] };
+    const oldDebt = card.debt !== undefined ? card.debt : (card.balance || 0);
+    const newDebt = Math.max(0, oldDebt - amount);
+    card.debt = newDebt;
+    card.balance = newDebt;
+    if (card.limit) {
+      card.availableLimit = Math.max(0, card.limit - newDebt);
+    }
+    current.cards[cardIdx] = card;
+
+    // Sincronizar en debts
+    if (current.debts) {
+      const debtIdx = current.debts.findIndex(d => (d.cardId && d.cardId === cardId) || (card.linkedDebtId && d.id === card.linkedDebtId) || (d.group === 'tarjeta' && d.name.toLowerCase().trim() === card.name.toLowerCase().trim()));
+      if (debtIdx !== -1) {
+        const d = { ...current.debts[debtIdx] };
+        d.debt = newDebt;
+        if (d.limit) d.availableLimit = Math.max(0, d.limit - newDebt);
+        current.debts[debtIdx] = d;
+      }
+    }
+
+    if (registerAsExpense) {
+      if (!current.expenses) current.expenses = [];
+      current.expenses = [...current.expenses, {
+        id: 'e' + Date.now(),
+        date: new Date().toISOString().slice(0, 10),
+        time: new Date().toTimeString().slice(0, 5),
+        category: 'Deudas',
+        description: `Pago a tarjeta: ${card.name}`,
+        amount: amount,
+        paymentMethod: 'efectivo'
+      }];
+    }
+
+    this.logAction(current, `Se abonaron ${amount} a la tarjeta ${card.name}`);
     this.saveState(current);
   }
 

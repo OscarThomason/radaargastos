@@ -4,61 +4,62 @@
 </div>
 
 <!-- Panel de Diagnóstico Inteligente de Servicios & Suscripciones -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+<div class="card-panel" style="margin-bottom: 16px; padding: 14px 16px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
     <div>
-      <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-        <span class="material-symbols-outlined" style="color: #7C3AED;">electric_bolt</span>
-        Analista FinOps: Evaluación de Necesidad de Servicios
+      <h3 style="margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+        <span class="material-symbols-outlined" style="font-size: 17px;">analytics</span>
+        Analista FinOps: Evaluación de Servicios
       </h3>
-      <span style="font-size: 12px; color: var(--text-muted);">
+      <span style="font-size: 11px; color: var(--text-muted);">
         Distinción entre servicios esenciales del hogar y suscripciones secundarias opcionales.
       </span>
     </div>
-    <button class="btn-primary" style="margin: 0; padding: 8px 14px; font-size: 12px; display: flex; align-items: center; gap: 6px;" (click)="requestServicesAiAnalysis()" [disabled]="isAnalyzingWithN8n()">
-      <span class="material-symbols-outlined" style="font-size: 16px;">electric_bolt</span>
-      <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Servicios' }}</span>
-    </button>
+      <div class="tooltip-container">
+        <button class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;" (click)="requestServicesAiAnalysis()" [disabled]="isAnalyzingWithN8n()">
+          <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
+          <span>{{ isAnalyzingWithN8n() ? 'Analizando...' : 'Analizar Servicios' }}</span>
+        </button>
+        <div class="tooltip-bubble">
+          Identifica cuáles suscripciones son realmente necesarias y optimiza tu gasto fijo mensual.
+        </div>
+      </div>
+    </div>
+
+    <!-- Banners de Métricas y Diagnóstico -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 12px;">
+      <div class="minimal-stat-box">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">verified</span>
+          <span>Servicios Esenciales / Fijos</span>
+        </div>
+        <p class="stat-box-text">
+          <strong>{{ money(servicesAnalysis().essentialTotal) }}</strong> al mes ({{ servicesAnalysis().essentialList.length }} prioritarios).
+        </p>
+      </div>
+
+      <div class="minimal-stat-box">
+        <div class="stat-box-header">
+          <span class="material-symbols-outlined">subscriptions</span>
+          <span>Suscripciones Prescindibles</span>
+        </div>
+        <p class="stat-box-text">
+          <strong>{{ money(servicesAnalysis().optionalTotal) }}</strong> al mes ({{ money(servicesAnalysis().annualOptionalCost) }} al año en {{ servicesAnalysis().optionalList.length }} servicios).
+        </p>
+      </div>
+    </div>
+
+    <!-- Caja del Dictamen IA de Servicios (visible solo cuando se genera el análisis) -->
+    @if (aiDiagnosisText()) {
+      <div class="minimal-ai-card">
+        <div class="minimal-ai-header">
+          <span class="material-symbols-outlined">insights</span>
+          <span>Dictamen de Necesidad & Plan de Ahorro</span>
+        </div>
+        <p class="minimal-ai-body" [innerHTML]="aiDiagnosisText()"></p>
+      </div>
+    }
   </div>
-
-  <!-- Banners de Métricas y Diagnóstico -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 16px;">
-    <div class="minimal-stat-box status-success">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">verified</span>
-        <span>Servicios Esenciales / Fijos</span>
-      </div>
-      <p class="stat-box-text">
-        <strong>{{ money(servicesAnalysis().essentialTotal) }}</strong> al mes ({{ servicesAnalysis().essentialList.length }} servicios prioritarios como luz, agua, renta, internet).
-      </p>
-    </div>
-
-    <div class="minimal-stat-box status-warning">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">subscriptions</span>
-        <span>Suscripciones Prescindibles</span>
-      </div>
-      <p class="stat-box-text">
-        <strong>{{ money(servicesAnalysis().optionalTotal) }}</strong> al mes ({{ money(servicesAnalysis().annualOptionalCost) }} al año en {{ servicesAnalysis().optionalList.length }} servicios de ocio).
-      </p>
-    </div>
-  </div>
-
-  <!-- Caja del Dictamen IA de Servicios -->
-  @if (aiDiagnosisText()) {
-    <div class="minimal-ai-card">
-      <div class="minimal-ai-header">
-        <span class="material-symbols-outlined">psychology</span>
-        <span>Dictamen de Necesidad & Plan de Ahorro en Servicios</span>
-      </div>
-      <p class="minimal-ai-body" [innerHTML]="aiDiagnosisText()"></p>
-    </div>
-  } @else {
-    <div style="font-size: 12px; color: var(--text-muted); background: var(--surface2); border: 1px solid var(--border); padding: 14px; border-radius: 10px; text-align: center;">
-      Haz clic en <strong>"Analizar Servicios"</strong> para identificar cuáles suscripciones son realmente necesarias y cuánto dinero podrías ahorrar al año optimizándolas.
-    </div>
-  }
-</div>
 
 @if (isModalOpen) {
   <div class="modal-overlay" (click)="cancelEdit()">

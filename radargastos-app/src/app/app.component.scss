@@ -2,6 +2,13 @@
   max-width: 1080px;
   margin: 0 auto;
   padding: 24px 20px 80px 60px; /* Padding izquierdo extra para la línea roja */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
 }
 
 @media (max-width: 768px) {
