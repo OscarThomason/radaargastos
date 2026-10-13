@@ -136,10 +136,13 @@
                   [style.transform]="expandedId === s.id ? 'rotate(90deg)' : 'rotate(0deg)'">
                   chevron_right
                 </span>
-                <span class="accent-pill" [class.accent-pill-emerald]="isServiceEssential(s.name)" [class.accent-pill-amber]="!isServiceEssential(s.name)" style="font-size: 10px;">
-                  {{ isServiceEssential(s.name) ? 'Esencial' : 'Prescindible' }}
+                <span class="type-square-badge" 
+                      [class.square-essential]="isServiceEssential(s.name)" 
+                      [class.square-optional]="!isServiceEssential(s.name)" 
+                      [title]="isServiceEssential(s.name) ? 'Servicio Esencial' : 'Suscripción Prescindible'">
+                  {{ isServiceEssential(s.name) ? 'E' : 'P' }}
                 </span>
-                <strong style="font-size: 14px;">{{s.name}}</strong>
+                <strong style="font-size: 13.5px; color: #0F172A;">{{s.name}}</strong>
               </div>
             </td>
             <td style="text-align: right;"><strong style="font-size: 14px; color: var(--text);">{{money(s.amount)}}</strong></td>

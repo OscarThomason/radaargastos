@@ -350,17 +350,20 @@
                   [style.transform]="expandedId === d.id ? 'rotate(90deg)' : 'rotate(0deg)'">
                   chevron_right
                 </span>
-                <span class="accent-pill" [class.accent-pill-purple]="d.group === 'prestamo'" [class.accent-pill-sky]="d.group === 'tarjeta'">
-                  {{ d.group === 'prestamo' ? 'Préstamo' : 'Tarjeta' }}
+                <span class="type-square-badge" 
+                      [class.square-loan]="d.group === 'prestamo'" 
+                      [class.square-card]="d.group === 'tarjeta'" 
+                      [title]="d.group === 'prestamo' ? 'Préstamo' : 'Tarjeta de Crédito'">
+                  {{ d.group === 'prestamo' ? 'P' : 'T' }}
                 </span>
                 <div>
-                  <strong style="font-size: 14px;">{{d.name}}</strong>
+                  <strong style="font-size: 13.5px; color: #0F172A;">{{d.name}}</strong>
                   <div style="display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap;">
                     @if (d.useVariableInstallments) {
-                      <span class="badge" style="font-size: 9px; background: #EDE9FE; color: #7C3AED;">variable</span>
+                      <span class="badge-subtle">variable</span>
                     }
                     @if (d.cat) {
-                      <span class="badge" style="font-size: 9px; background: #EFF6FF; color: #1D4ED8;">CAT {{ d.cat }}%</span>
+                      <span class="badge-subtle">CAT {{ d.cat }}%</span>
                     }
                   </div>
                 </div>

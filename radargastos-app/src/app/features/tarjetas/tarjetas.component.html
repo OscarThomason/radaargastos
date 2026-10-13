@@ -96,7 +96,7 @@
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <strong style="font-size: 17px; letter-spacing: -0.01em;">{{ c.name }}</strong>
-              <span class="accent-pill accent-pill-purple" style="font-size: 10px;">Crédito</span>
+              <span class="type-square-badge square-card" title="Tarjeta de Crédito">C</span>
               @if (c.catWithoutIva || c.cat) {
                 <span class="badge" style="font-size: 9px; background: #EFF6FF; color: #1D4ED8;">
                   CAT {{ c.catWithoutIva || c.cat }}% sin IVA
@@ -254,7 +254,7 @@
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <strong style="font-size: 17px; letter-spacing: -0.01em;">{{ c.name }}</strong>
-              <span class="accent-pill accent-pill-sky" style="font-size: 10px;">Débito / Ahorro</span>
+              <span class="type-square-badge square-service" title="Débito / Ahorro">D</span>
             </div>
             @if (c.notes) {
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">{{ c.notes }}</div>

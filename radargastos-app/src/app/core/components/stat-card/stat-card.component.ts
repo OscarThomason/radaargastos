@@ -74,14 +74,16 @@ import { CommonModule } from '@angular/common';
       font-size: 18px;
     }
 
-    .icon-box.danger {
-      background: #FEE2E2;
-      color: #DC2626;
+    .icon-box.danger,
+    .icon-box.expense {
+      background: #F1F5F9;
+      color: #475569;
     }
 
-    .icon-box.safe {
-      background: #D1FAE5;
-      color: #059669;
+    .icon-box.safe,
+    .icon-box.income {
+      background: #F0F9FF;
+      color: #0284C7;
     }
 
     .icon-box.warn {
@@ -100,12 +102,14 @@ import { CommonModule } from '@angular/common';
       line-height: 1.25;
     }
 
-    .value.danger {
-      color: #DC2626;
+    .value.danger,
+    .value.expense {
+      color: #334155;
     }
 
-    .value.safe {
-      color: #059669;
+    .value.safe,
+    .value.income {
+      color: #0284C7;
     }
 
     .value.warn {
@@ -149,7 +153,7 @@ import { CommonModule } from '@angular/common';
 export class StatCardComponent {
   @Input() label: string = '';
   @Input() value: string = '';
-  @Input() valueClass: 'danger' | 'warn' | 'safe' | '' = '';
+  @Input() valueClass: 'danger' | 'warn' | 'safe' | 'expense' | 'income' | '' = '';
   @Input() icon?: string;
   @Input() subtext?: string;
 }

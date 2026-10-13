@@ -19,26 +19,27 @@
 
 <div class="summary-strip">
   <app-stat-card label="Saldo Anterior" [value]="showTotals() ? money(pastBalance()) : '****'"
-    [valueClass]="pastBalance() < 0 ? 'danger' : 'safe'" icon="history">
+    [valueClass]="pastBalance() < 0 ? 'expense' : 'income'" icon="history">
   </app-stat-card>
-  <app-stat-card label="Total Ingresos" [value]="showTotals() ? money(totalIncomes()) : '****'" valueClass="safe"
+  <app-stat-card label="Total Ingresos" [value]="showTotals() ? money(totalIncomes()) : '****'" valueClass="income"
     icon="trending_up">
   </app-stat-card>
-  <app-stat-card label="Total Gastos" [value]="showTotals() ? money(totalExpenses()) : '****'" icon="trending_down">
+  <app-stat-card label="Total Gastos" [value]="showTotals() ? money(totalExpenses()) : '****'" valueClass="expense"
+    icon="trending_down">
   </app-stat-card>
   <app-stat-card label="Balance Disponible" [value]="showTotals() ? money(balance()) : '****'"
-    [valueClass]="balance() < 0 ? 'danger' : 'safe'" icon="account_balance">
+    [valueClass]="balance() < 0 ? 'expense' : 'income'" icon="account_balance">
   </app-stat-card>
 </div>
 
-<!-- Botones de Acción Principal Estilo Sticker -->
+<!-- Botones de Acción Principal Minimalistas -->
 <div class="action-buttons-bar">
   <button class="btn-action-expense" (click)="openAddExpenseModal()" title="Registrar un nuevo gasto">
-    <span class="material-symbols-outlined">remove_circle</span>
+    <span class="material-symbols-outlined">trending_down</span>
     <span>Registrar Gasto</span>
   </button>
   <button class="btn-action-income" (click)="openAddIncomeModal()" title="Registrar un nuevo ingreso">
-    <span class="material-symbols-outlined">add_circle</span>
+    <span class="material-symbols-outlined">trending_up</span>
     <span>Registrar Ingreso</span>
   </button>
 </div>
@@ -70,7 +71,7 @@
     <!-- Columna de Gastos del Mes -->
     <div>
       <h2 class="section-title" style="margin-top: 0;">Gastos del Mes ({{ expenses().length }})</h2>
-      <div class="card-panel" style="padding: 12px;">
+      <div class="card-panel" style="padding: 14px;">
         <div class="expense-log">
           @if (expenses().length === 0) {
             <div class="empty-state">No hay gastos en este mes.</div>
@@ -78,12 +79,12 @@
             @for (e of expenses(); track e.id) {
               <div class="exp-row hoverable minimal-row" (click)="showItemDetails('expense', e)" title="Clic para ver detalles">
                 <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
-                  <span style="font-size: 18px; flex-shrink: 0;">{{ getCategoryEmoji(e.category) }}</span>
-                  <span class="accent-pill accent-pill-danger" style="font-size: 10px; padding: 3px 8px;">{{e.category}}</span>
-                  <span class="truncate-text" style="font-weight: 500;">{{e.description || 'Gasto'}}</span>
+                  <span class="type-square-badge square-expense" [title]="'Gasto: ' + e.category">G</span>
+                  <span class="badge-subtle">{{ e.category }}</span>
+                  <span class="truncate-text" style="font-weight: 500; color: #0F172A;">{{e.description || 'Gasto'}}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                  <span class="exp-amount" style="font-weight: 700;">{{ showTotals() ? money(e.amount) : '****' }}</span>
+                  <span class="exp-amount txt-expense" style="font-weight: 700;">{{ showTotals() ? money(e.amount) : '****' }}</span>
                   <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
                 </div>
               </div>
@@ -96,7 +97,7 @@
     <!-- Columna de Ingresos del Mes -->
     <div>
       <h2 class="section-title" style="margin-top: 0;">Ingresos del Mes ({{ incomes().length }})</h2>
-      <div class="card-panel" style="padding: 12px;">
+      <div class="card-panel" style="padding: 14px;">
         <div class="expense-log">
           @if (incomes().length === 0) {
             <div class="empty-state">No hay ingresos en este mes.</div>
@@ -104,12 +105,12 @@
             @for (i of incomes(); track i.id) {
               <div class="exp-row hoverable minimal-row" (click)="showItemDetails('income', i)" title="Clic para ver detalles">
                 <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
-                  <span style="font-size: 18px; flex-shrink: 0;">{{ getCategoryEmoji(i.category) }}</span>
-                  <span class="accent-pill accent-pill-emerald" style="font-size: 10px; padding: 3px 8px;">{{i.category || 'Ingreso'}}</span>
-                  <span class="truncate-text" style="font-weight: 500;">{{i.description || 'Ingreso'}}</span>
+                  <span class="type-square-badge square-income" [title]="'Ingreso: ' + (i.category || 'Ingreso')">I</span>
+                  <span class="badge-subtle-blue">{{ i.category || 'Ingreso' }}</span>
+                  <span class="truncate-text" style="font-weight: 500; color: #0F172A;">{{i.description || 'Ingreso'}}</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                  <span class="exp-amount txt-safe" style="font-weight: 700;">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>
+                  <span class="exp-amount txt-income" style="font-weight: 700;">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>
                   <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
                 </div>
               </div>

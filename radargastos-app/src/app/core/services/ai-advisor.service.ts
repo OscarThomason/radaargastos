@@ -6,11 +6,113 @@ import { Expense, Income, Debt, ServiceItem, EssentialAnalysis, EssentialCategor
 })
 export class AiAdvisorService {
   readonly n8nWebhookUrl = 'https://n8n-n8n.bg5sbc.easypanel.host/webhook/401316c1-d12f-49ef-94a8-ed3fc88c72bb';
+  readonly n8nInteractiveChatWebhookUrl = 'https://n8n-n8n.bg5sbc.easypanel.host/webhook/d44be6f0-d536-4d17-b1db-84e939c76c99';
 
   private essentialCategories = [
     'servicios', 'deudas', 'transporte', 'alimentos', 'salud',
     'nutricion y gym', 'casa', 'mascota', 'renta', 'supermercado'
   ];
+
+  /**
+   * Consulta el nuevo Agente IA de n8n dedicado al Chatbot Interactivo
+   * Enviando la pregunta junto con las estadísticas completas del perfil financiero
+   */
+  async queryInteractiveFinancialAgent(payload: {
+    message: string;
+    perfil_usuario?: any;
+    estadisticas_financieras: any;
+    historial_reciente?: { rol: string; texto: string }[];
+  }): Promise<{ reply: string; dataPoints?: { label: string; value: string }[] } | null> {
+    try {
+      const response = await fetch(this.n8nInteractiveChatWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo_solicitud: 'chat_interactivo',
+          message: payload.message,
+          pregunta: payload.message,
+          perfil_usuario: payload.perfil_usuario || { nombre: 'Oscar Thomason' },
+          estadisticas_financieras: payload.estadisticas_financieras,
+          historial_reciente: payload.historial_reciente || []
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`n8n HTTP ${response.status}`);
+      }
+
+      const text = await response.text();
+      let rawJson: any;
+
+      try {
+        rawJson = JSON.parse(text);
+      } catch {
+        const cleanText = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+        try {
+          rawJson = JSON.parse(cleanText);
+        } catch {
+          return { reply: text.trim() };
+        }
+      }
+
+      if (Array.isArray(rawJson) && rawJson.length > 0) {
+        rawJson = rawJson[0].json || rawJson[0];
+      } else if (rawJson.json) {
+        rawJson = rawJson.json;
+      }
+
+      // Si el campo output contiene un string con formato JSON anidado
+      if (typeof rawJson.output === 'string') {
+        const cleanOutput = rawJson.output.replace(/```json/gi, '').replace(/```/g, '').trim();
+        try {
+          const nested = JSON.parse(cleanOutput);
+          if (nested && typeof nested === 'object') {
+            rawJson = nested;
+          }
+        } catch {
+          return { reply: rawJson.output };
+        }
+      }
+
+      // Extraer el texto principal de la respuesta
+      let replyText = '';
+      if (rawJson.reply) replyText = rawJson.reply;
+      else if (rawJson.output) replyText = rawJson.output;
+      else if (rawJson.response) replyText = rawJson.response;
+      else if (rawJson.mensaje) replyText = rawJson.mensaje;
+      else if (rawJson.text) replyText = rawJson.text;
+      else if (rawJson.analisis_financiero) {
+        replyText = rawJson.analisis_financiero;
+        if (rawJson.accion_recomendada) {
+          replyText += `\n\n**Recomendación:** ${rawJson.accion_recomendada}`;
+        }
+      } else if (typeof rawJson === 'string') {
+        replyText = rawJson;
+      }
+
+      // Extraer datapoints si vienen estructurados
+      let dataPoints: { label: string; value: string }[] | undefined;
+      const metricsList = rawJson.dataPoints || rawJson.metricas_clave;
+      if (Array.isArray(metricsList)) {
+        dataPoints = metricsList.map((item: any) => ({
+          label: String(item.label || item.etiqueta || item.nombre),
+          value: String(item.value || item.valor || item.monto)
+        }));
+      }
+
+      if (!replyText) {
+        replyText = typeof rawJson === 'object' ? JSON.stringify(rawJson, null, 2) : String(rawJson);
+      }
+
+      return {
+        reply: replyText,
+        dataPoints
+      };
+    } catch (error) {
+      console.warn('Advertencia: El webhook de n8n no respondió o devolvió un formato no válido:', error);
+      return null;
+    }
+  }
 
   /**
    * Consulta el Agente n8n FinOps para análisis de gasto o consulta pre-compra

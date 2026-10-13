@@ -1,114 +1,136 @@
-<!-- Botón Flotante para Abrir el Asesor Pre-Compra -->
-<button class="chatbot-trigger-btn" (click)="toggleOpen()" title="Asesor FinOps: Consulta la viabilidad de una compra">
-  <div class="chatbot-trigger-inner">
-    <span class="material-symbols-outlined">shopping_cart_checkout</span>
-    <span class="chatbot-trigger-label">Asesor Pre-Compra</span>
+<!-- Botón Flotante Sencillo con Logo y Tooltip al pasar el mouse -->
+<div class="chatbot-trigger-container">
+  <button 
+    class="chatbot-trigger-btn" 
+    (click)="toggleOpen()" 
+    aria-label="Abrir asistente financiero"
+    type="button"
+  >
+    <img src="assets/assistant-icon.png" alt="Asistente Financiero" class="bot-trigger-img" />
+    <span class="bot-online-dot"></span>
+  </button>
+  
+  <!-- Tooltip al pasar el mouse indicando qué es -->
+  <div class="chatbot-hover-tooltip">
+    Asistente Financiero
   </div>
-  <span class="chatbot-ping-dot"></span>
-</button>
+</div>
 
-<!-- Ventana / Modal de Asesor Pre-Compra -->
+<!-- Ventana / Modal de Conversación Minimalista -->
 @if (isOpen()) {
-  <div class="chatbot-overlay" (click)="close()">
-    <div class="chatbot-card-container" (click)="$event.stopPropagation()">
+  <div class="chatbot-backdrop" (click)="close()">
+    <div class="chatbot-window" (click)="$event.stopPropagation()">
       
-      <!-- Header del Asesor -->
-      <div class="chatbot-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div class="bot-avatar">
-            <span class="material-symbols-outlined">balance</span>
+      <!-- Header Minimalista y Sobrio -->
+      <div class="chat-header">
+        <div class="chat-header-brand">
+          <div class="chat-avatar-mini">
+            <img src="assets/assistant-icon.png" alt="Logo" class="avatar-img" />
           </div>
-          <div>
-            <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: var(--text);">Evaluación de Compra</h4>
-            <span style="font-size: 11px; color: var(--text-muted);">Análisis de costo de oportunidad e impacto presupuestario</span>
+          <div class="chat-header-info">
+            <span class="chat-title">Asistente Financiero</span>
+            <span class="chat-status">
+              <span class="status-indicator"></span>
+              Sincronizado
+            </span>
           </div>
         </div>
-        <button class="close-btn" (click)="close()">
-          <span class="material-symbols-outlined">close</span>
-        </button>
+
+        <div class="chat-header-actions">
+          <button class="action-btn" (click)="clearChat()" title="Reiniciar chat" type="button">
+            <span class="material-symbols-outlined">restart_alt</span>
+          </button>
+          <button class="action-btn" (click)="close()" title="Cerrar" type="button">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Cuerpo del Asesor -->
-      <div class="chatbot-body">
-        @if (!lastResponse()) {
-          <div class="prompt-section">
-            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">
-              Ingresa el artículo o servicio que deseas adquirir y evaluaremos su viabilidad en relación con tu saldo y metas:
-            </p>
-
-            <div class="form-group">
-              <label>Artículo / Concepto</label>
-              <input [(ngModel)]="itemQuestion" placeholder="Ej. Chamarra de cuero, Tenis, Pantalla" (keyup.enter)="sendConsultation()">
-            </div>
-
-            <div class="form-group" style="margin-top: 10px;">
-              <label>Monto Estimado ($ MXN)</label>
-              <input [(ngModel)]="itemAmount" type="number" placeholder="Ej. 1500" (keyup.enter)="sendConsultation()">
-            </div>
-
-            <div class="form-group" style="margin-top: 10px;">
-              <label>Plazo o Oferta (opcional)</label>
-              <input [(ngModel)]="itemNotes" placeholder="Ej. A 3 meses sin intereses, oferta del mes" (keyup.enter)="sendConsultation()">
-            </div>
-
-            <!-- Sugerencias Rápidas sin Emojis -->
-            <div class="quick-pills-label">Consultas frecuentes:</div>
-            <div class="quick-pills-container">
-              <button class="quick-pill" (click)="quickAsk('Tenis deportivos', 2200)">Tenis $2,200</button>
-              <button class="quick-pill" (click)="quickAsk('Consola de videojuegos', 8500)">Consola $8,500</button>
-              <button class="quick-pill" (click)="quickAsk('Cena en restaurante', 950)">Cena $950</button>
-            </div>
-
-            <button class="btn-primary evaluate-btn" (click)="sendConsultation()" [disabled]="isThinking() || !itemQuestion.trim()">
-              @if (isThinking()) {
-                <span class="material-symbols-outlined spin-icon">sync</span>
-                <span>Evaluando Viabilidad...</span>
-              } @else {
-                <span class="material-symbols-outlined">analytics</span>
-                <span>Evaluar Viabilidad de Compra</span>
-              }
-            </button>
-          </div>
-        } @else {
-          <!-- Resultado del Análisis Pre-Compra -->
-          <div class="result-section">
-            <div class="verdict-banner" 
-              [class.verdict-recommended]="lastResponse()?.veredicto_consejero === 'Recomendado'"
-              [class.verdict-postpone]="lastResponse()?.veredicto_consejero === 'Posponer'"
-              [class.verdict-avoid]="lastResponse()?.veredicto_consejero === 'Evitar' || lastResponse()?.veredicto_consejero === 'Gasto Realizado'">
+      <!-- Área de Conversación / Mensajes -->
+      <div class="chat-body" #messagesContainer>
+        <div class="chat-messages-flow">
+          @for (msg of messages(); track msg.id) {
+            <div class="msg-row" [class.user-row]="msg.sender === 'user'" [class.bot-row]="msg.sender === 'bot'">
               
-              <div class="verdict-header">
-                <span class="material-symbols-outlined verdict-icon">
-                  {{ lastResponse()?.veredicto_consejero === 'Recomendado' ? 'verified' : (lastResponse()?.veredicto_consejero === 'Posponer' ? 'history_toggle_off' : 'block') }}
-                </span>
-                <div>
-                  <span class="verdict-label">Dictamen Ejecutivo</span>
-                  <h3 class="verdict-title">{{ lastResponse()?.veredicto_consejero || 'Posponer' }}</h3>
-                </div>
-              </div>
-            </div>
-
-            <div class="analysis-box">
-              <div class="analysis-item">
-                <span class="analysis-title"><u>Análisis Financiero:</u></span>
-                <p class="analysis-text">{{ lastResponse()?.analisis_financiero }}</p>
-              </div>
-
-              @if (lastResponse()?.accion_recomendada) {
-                <div class="analysis-item" style="margin-top: 10px;">
-                  <span class="analysis-title"><u>Acción Recomendada:</u></span>
-                  <p class="analysis-text" style="color: var(--text); font-weight: 600;">{{ lastResponse()?.accion_recomendada }}</p>
+              @if (msg.sender === 'bot') {
+                <div class="bot-bubble-avatar">
+                  <img src="assets/assistant-icon.png" alt="Bot" class="bubble-logo" />
                 </div>
               }
-            </div>
 
-            <button class="btn-ghost new-search-btn" (click)="resetForm()">
-              <span class="material-symbols-outlined">restart_alt</span>
-              <span>Evaluar otra compra</span>
-            </button>
-          </div>
-        }
+              <div class="msg-bubble" [class.user-msg]="msg.sender === 'user'" [class.bot-msg]="msg.sender === 'bot'">
+                <div class="msg-content" [innerHTML]="formatMessageText(msg.text)"></div>
+
+                <!-- Tarjetas de datos numéricos minimalistas -->
+                @if (msg.dataPoints && msg.dataPoints.length > 0) {
+                  <div class="datapoints-minimal-grid">
+                    @for (dp of msg.dataPoints; track dp.label) {
+                      <div class="datapoint-pill">
+                        <span class="dp-tag">{{ dp.label }}</span>
+                        <span class="dp-number">{{ dp.value }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <span class="msg-time">{{ msg.timestamp }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Indicador de pensamiento minimalista -->
+          @if (isThinking()) {
+            <div class="msg-row bot-row">
+              <div class="bot-bubble-avatar">
+                <img src="assets/assistant-icon.png" alt="Bot" class="bubble-logo" />
+              </div>
+              <div class="msg-bubble bot-msg thinking-bubble">
+                <div class="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span class="thinking-label">Consultando tu bitácora financiera...</span>
+              </div>
+            </div>
+          }
+        </div>
       </div>
+
+      <!-- Sugerencias Rápidas Minimalistas -->
+      <div class="quick-suggestions-bar">
+        <div class="suggestions-scroll">
+          @for (sug of quickSuggestions; track sug) {
+            <button type="button" class="suggestion-chip" (click)="askQuick(sug)" [disabled]="isThinking()">
+              {{ sug }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Barra Inferior de Entrada Minimalista -->
+      <div class="chat-input-bar">
+        <div class="input-container">
+          <input 
+            type="text" 
+            [(ngModel)]="userPrompt" 
+            placeholder="Escribe tu consulta financiera..." 
+            (keydown.enter)="sendQuestion()"
+            [disabled]="isThinking()"
+            class="clean-input"
+          />
+          <button 
+            type="button" 
+            class="send-icon-btn" 
+            (click)="sendQuestion()" 
+            [disabled]="isThinking() || !userPrompt.trim()"
+            title="Enviar mensaje"
+          >
+            <span class="material-symbols-outlined">arrow_upward</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 }

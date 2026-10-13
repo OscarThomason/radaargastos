@@ -25,12 +25,7 @@
 }
 
 html {
-  height: 100%;
-}
-
-body {
-  min-height: 100vh;
-  margin: 0;
+  min-height: 100%;
   background-color: var(--bg);
   background-image:
     linear-gradient(90deg, transparent 40px, #E53935 40px, #E53935 42px, transparent 42px),
@@ -39,7 +34,13 @@ body {
   background-size: 100% 100%, 24px 24px, 24px 24px;
   background-position: left top;
   background-attachment: fixed;
-  background-repeat: no-repeat, repeat, repeat;
+  background-repeat: repeat-y, repeat, repeat;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: transparent;
   color: var(--text);
   font-family: 'Sora', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -98,52 +99,54 @@ button {
 }
 
 button.btn-primary {
-  background: var(--text);
-  color: var(--bg);
-  border: 1px solid var(--text);
-  font-weight: 700;
+  background: #0F172A;
+  color: #FFFFFF;
+  border: none;
+  font-weight: 600;
   font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 20px;
-  border-radius: var(--radius);
+  text-transform: none;
+  letter-spacing: normal;
+  padding: 10px 18px;
+  border-radius: 10px;
   cursor: pointer;
   margin-top: 12px;
-  transition: all 0.2s ease;
-  min-height: 44px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 40px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 button.btn-primary:hover {
-  background: var(--bg);
-  color: var(--text);
+  background: #1E293B;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 button.btn-ghost {
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   color: var(--text);
   font-size: 12px;
-  padding: 8px 12px;
-  border-radius: var(--radius);
+  padding: 8px 14px;
+  border-radius: 8px;
   cursor: pointer;
-  text-transform: uppercase;
   transition: all 0.2s ease;
-  min-height: 44px;
+  min-height: 40px;
 }
 
 button.btn-ghost:hover {
-  background: var(--text);
-  color: var(--bg);
+  background: #F1F5F9;
+  color: #0F172A;
 }
 
-/* Card Panels (Ligeros y flotantes) */
+/* Card Panels (Ligeros, sobrios y flotantes) */
 .card-panel {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03);
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
   box-sizing: border-box;
   width: 100%;
@@ -197,15 +200,15 @@ table.data-table th {
 
 table.data-table tbody tr {
   background: var(--surface);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s, background 0.18s;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 table.data-table tbody tr.row-clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  background: var(--surface);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  background: #F8FAFC;
 }
 
 table.data-table td {
@@ -225,7 +228,7 @@ table.data-table tbody tr td:last-child {
 }
 
 table.data-table tbody tr.row-expanded {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.02);
   box-shadow: none;
 }
 
@@ -237,16 +240,111 @@ table.data-table tbody tr.row-expanded td:last-child {
   border-bottom-right-radius: 0;
 }
 
+/* ========================================
+   CUADRO MINIMALISTA CON LA LETRA
+   ======================================== */
+.type-square-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  user-select: none;
+  line-height: 1;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &.square-loan {
+    background: #F5F3FF;
+    color: #6D28D9;
+    border: 1px solid #DDD6FE;
+  }
+
+  &.square-card {
+    background: #F0F9FF;
+    color: #0369A1;
+    border: 1px solid #BAE6FD;
+  }
+
+  &.square-essential {
+    background: #ECFDF5;
+    color: #047857;
+    border: 1px solid #A7F3D0;
+  }
+
+  &.square-optional {
+    background: #FFFBEB;
+    color: #B45309;
+    border: 1px solid #FDE68A;
+  }
+
+  &.square-service {
+    background: #F8FAFC;
+    color: #334155;
+    border: 1px solid #E2E8F0;
+  }
+
+  &.square-expense {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid #CBD5E1;
+  }
+
+  &.square-income {
+    background: #F0F9FF;
+    color: #0284C7;
+    border: 1px solid #BAE6FD;
+  }
+}
+
+.badge-subtle {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #64748B;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.badge-subtle-blue {
+  display: inline-flex;
+  align-items: center;
+  font-size: 9.5px;
+  font-weight: 500;
+  color: #0284C7;
+  background: #F0F9FF;
+  border: 1px solid #BAE6FD;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.txt-expense {
+  color: #334155 !important;
+}
+
+.txt-income {
+  color: #0284C7 !important;
+}
+
 /* Accent Badges (Inspirados en el Modern Table Layout) */
 .accent-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .accent-pill-purple {
@@ -466,13 +564,17 @@ h2.section-title:first-child {
   }
 
   /* Ajuste de libreta para móviles */
-  body {
+  html {
     background-image:
       linear-gradient(90deg, transparent 16px, #E53935 16px, #E53935 18px, transparent 18px),
       linear-gradient(var(--grid-line) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
     background-attachment: fixed;
-    background-repeat: no-repeat, repeat, repeat;
+    background-repeat: repeat-y, repeat, repeat;
+  }
+
+  body {
+    background: transparent;
   }
 }
 
@@ -506,16 +608,16 @@ h2.section-title:first-child {
     padding-left: 38px;
     padding-right: 36px;
     border-radius: 12px;
-    border: 1.5px solid var(--border);
-    font-size: 14px;
-    height: 44px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 13.5px;
+    height: 42px;
     background: var(--surface);
     transition: all 0.2s ease;
-    box-shadow: 2px 2px 0px var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 
     &:focus {
-      border-color: var(--text);
-      box-shadow: 3px 3px 0px var(--border);
+      border-color: #0F172A;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
     }
   }
 
@@ -553,7 +655,7 @@ h2.section-title:first-child {
   .sort-icon {
     position: absolute;
     left: 12px;
-    font-size: 20px;
+    font-size: 19px;
     color: var(--text-muted);
     pointer-events: none;
     z-index: 1;
@@ -562,17 +664,24 @@ h2.section-title:first-child {
   select {
     padding-left: 38px;
     border-radius: 12px;
-    border: 1.5px solid var(--border);
+    border: 1px solid rgba(0, 0, 0, 0.08);
     font-size: 13px;
-    font-weight: 700;
-    height: 44px;
+    font-weight: 600;
+    height: 42px;
     background: var(--surface);
     cursor: pointer;
-    box-shadow: 2.5px 2.5px 0px var(--border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     transition: all 0.2s ease;
 
     &:hover {
-      box-shadow: 3.5px 3.5px 0px var(--border);
+      border-color: rgba(0, 0, 0, 0.18);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    &:focus {
+      border-color: #0F172A;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
     }
   }
 }
@@ -783,27 +892,27 @@ tr.detail-row td {
 }
 
 // ========================================
-// RECUADROS DE ANÁLISIS SOBRIOS Y MINIMALISTAS (Sin Color, Ajustados)
+// RECUADROS DE ANÁLISIS SOBRIOS Y MINIMALISTAS
 // ========================================
 .minimal-stat-box {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px 12px;
-  transition: border-color 0.15s ease;
+  background: #F8FAFC;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 12px 14px;
+  transition: all 0.15s ease;
 
   .stat-box-header {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #475569;
     margin-bottom: 4px;
 
     .material-symbols-outlined {
       font-size: 16px;
-      color: var(--text);
+      color: #64748B;
     }
   }
 
@@ -814,20 +923,21 @@ tr.detail-row td {
     color: var(--text-muted);
 
     strong {
-      color: var(--text);
+      color: #0F172A;
+      font-weight: 700;
     }
   }
 
-  // Variantes sobrias monocromáticas (sin fondos estridentes)
+  // Variantes sobrias monocromáticas
   &.status-danger,
   &.status-success,
   &.status-warning,
   &.status-info {
-    border-color: var(--border);
-    background: var(--surface);
+    border-color: rgba(0, 0, 0, 0.06);
+    background: #F8FAFC;
     .stat-box-header { 
-      color: var(--text); 
-      .material-symbols-outlined { color: var(--text); }
+      color: #475569; 
+      .material-symbols-outlined { color: #64748B; }
     }
   }
 }
