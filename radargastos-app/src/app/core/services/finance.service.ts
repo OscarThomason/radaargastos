@@ -166,7 +166,7 @@ export class FinanceService {
         localStorage.removeItem('finanzas:state');
         this.isLoading.set(false);
       }
-    });
+    }, { allowSignalWrites: true });
   }
 
   private listenToCloudState(uid: string) {
