@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AiAdvisorService } from '../../services/ai-advisor.service';
 import { FinanceService } from '../../services/finance.service';
+import { AuthService } from '../../services/auth.service';
 import { AppState, Income, Expense } from '../../models/finance.model';
 
 export interface ChatMessage {
@@ -23,12 +24,21 @@ export interface ChatMessage {
 export class ChatbotModalComponent implements AfterViewChecked {
   private aiAdvisor = inject(AiAdvisorService);
   private financeService = inject(FinanceService);
+  private authService = inject(AuthService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
 
   isOpen = signal<boolean>(false);
   isThinking = signal<boolean>(false);
   userPrompt = '';
+
+  sessionId = 'session_' + Date.now();
+
+  get currentSessionId(): string {
+    const user = this.authService.userSignal();
+    const uid = user?.uid ? user.uid : 'oscar_thomason';
+    return `${uid}_${this.sessionId}`;
+  }
 
   messages = signal<ChatMessage[]>([]);
 
@@ -85,6 +95,7 @@ export class ChatbotModalComponent implements AfterViewChecked {
   }
 
   clearChat() {
+    this.sessionId = 'session_' + Date.now();
     this.initWelcomeMessage();
     this.shouldScrollToBottom = true;
   }
@@ -542,9 +553,15 @@ export class ChatbotModalComponent implements AfterViewChecked {
 
     // 1. CONSULTAR PRIORITARIAMENTE EL AGENTE IA DE N8N CON EL CONTEXTO ESTADÍSTICO
     try {
+      const user = this.authService.userSignal();
       const n8nResult = await this.aiAdvisor.queryInteractiveFinancialAgent({
         message: enrichedMessage,
-        perfil_usuario: { nombre: 'Oscar Thomason', rol: 'Usuario Principal' },
+        sessionId: this.currentSessionId,
+        perfil_usuario: { 
+          nombre: user?.displayName || 'Oscar Thomason', 
+          uid: user?.uid,
+          rol: 'Usuario Principal' 
+        },
         estadisticas_financieras: stats,
         historial_reciente: historial
       });

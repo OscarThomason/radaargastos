@@ -19,16 +19,21 @@ export class AiAdvisorService {
    */
   async queryInteractiveFinancialAgent(payload: {
     message: string;
+    sessionId?: string;
     perfil_usuario?: any;
     estadisticas_financieras: any;
     historial_reciente?: { rol: string; texto: string }[];
   }): Promise<{ reply: string; dataPoints?: { label: string; value: string }[] } | null> {
     try {
+      const activeSession = payload.sessionId || 'default_session';
       const response = await fetch(this.n8nInteractiveChatWebhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo_solicitud: 'chat_interactivo',
+          sessionId: activeSession,
+          sessionKey: activeSession,
+          session_id: activeSession,
           message: payload.message,
           pregunta: payload.message,
           perfil_usuario: payload.perfil_usuario || { nombre: 'Oscar Thomason' },
