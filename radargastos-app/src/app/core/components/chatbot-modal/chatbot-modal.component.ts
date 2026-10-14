@@ -303,33 +303,38 @@ export class ChatbotModalComponent implements AfterViewChecked {
 
     const lowerQuery = query.toLowerCase();
 
-    // --- REGLAS INTELIGENTES DE RESPUESTA EN BASE A LA INTENCIÓN ---
+    // --- REGLAS DEL ASESOR FINANCIERO ESTRATÉGICO ---
 
     // 1. CONSULTA DE SALDO O DINERO DISPONIBLE
     if (/saldo|disponible|cuanto tengo|cuánto tengo|dinero libre|liquidez|efectivo libre/i.test(lowerQuery)) {
-      const dataPoints = [
-        { label: 'Saldo Libre Actual', value: this.money(saldoDisponible) },
-        { label: 'Ingresos Acumulados', value: this.money(totalIn) },
-        { label: 'Gastos Registrados', value: this.money(totalEx) },
-        { label: 'Compromisos de esta semana', value: this.money(totalDueNext7Days) }
-      ];
-
-      let advice = '';
-      if (saldoDisponible < 0) {
-        advice = `⚠️ Actualmente tienes un balance negativo de ${this.money(Math.abs(saldoDisponible))}. Te sugiero limitar consumos extras y priorizar los pagos indispensables.`;
-      } else if (totalDueNext7Days > saldoDisponible) {
-        advice = `💡 Tienes ${this.money(saldoDisponible)} disponibles, pero tienes compromisos por ${this.money(totalDueNext7Days)} en los próximos 7 días. Te faltan ${this.money(dineroRequerido)} por generar para cubrirlos holgadamente.`;
+      const libreReal = saldoDisponible - totalDueNext7Days;
+      let text = '';
+      if (saldoDisponible <= 0) {
+        text = `Tu saldo disponible propio está en déficit (**-${this.money(Math.abs(saldoDisponible))}**).\n\n` +
+               `• **Foco rojo:** No hay liquidez para consumos discrecionales.\n` +
+               `• **Compromisos a 7 días:** Requieres **${this.money(totalDueNext7Days)}** para pagos inmediatos.\n\n` +
+               `**Acción inmediata:** Detén cualquier compra no esencial hoy y cubre tus compromisos prioritarios.`;
+      } else if (libreReal < 0) {
+        text = `Cuentas con **${this.money(saldoDisponible)}** en caja, pero tienes compromisos por **${this.money(totalDueNext7Days)}** en los próximos 7 días.\n\n` +
+               `• **Margen real:** Tu saldo disponible propio no cubre tus vencimientos inmediatos (déficit de **${this.money(Math.abs(libreReal))}**).\n` +
+               `• **Riesgo:** Gastar ahora comprometerá tus pagos obligatorios.\n\n` +
+               `**Acción inmediata:** Reserva los **${this.money(saldoDisponible)}** íntegros para los vencimientos de esta semana.`;
       } else {
-        const libreReal = saldoDisponible - totalDueNext7Days;
-        advice = `✅ Tus finanzas están equilibradas. Después de cubrir los pagos de esta semana (${this.money(totalDueNext7Days)}), te quedará un remanente libre de ${this.money(libreReal)}.`;
+        text = `Tu saldo disponible propio es de **${this.money(saldoDisponible)}**, con un margen libre real de **${this.money(libreReal)}** tras descontar los compromisos de los próximos 7 días (**${this.money(totalDueNext7Days)}**).\n\n` +
+               `• **Posición:** Finanzas en orden y con liquidez para operar.\n` +
+               `• **Foco clave:** Conservar este excedente para tu colchón de ahorro o amortización a capital.\n\n` +
+               `**Acción inmediata:** Mantén intacta tu reserva semanal y canaliza el remanente a tus metas de ahorro.`;
       }
 
       return {
         id: 'bot_' + Date.now(),
         sender: 'bot',
-        text: `Tu situación de liquidez actual es:\n\n• **Ingresos del mes:** ${this.money(totalIn)}\n• **Gastos acumulados:** ${this.money(totalEx)}\n• **Saldo disponible:** **${this.money(saldoDisponible)}**\n\n${advice}`,
+        text,
         timestamp: this.formatCurrentTime(),
-        dataPoints
+        dataPoints: [
+          { label: 'Saldo propio', value: this.money(saldoDisponible) },
+          { label: 'Compromisos 7d', value: this.money(totalDueNext7Days) }
+        ]
       };
     }
 
@@ -339,22 +344,31 @@ export class ChatbotModalComponent implements AfterViewChecked {
       const monto = match ? parseFloat(match[1].replace(/,/g, '')) : 0;
 
       if (monto > 0) {
+        const margenTrasGasto = saldoDisponible - monto - totalDueNext7Days;
         let text = '';
+
         if (monto > saldoDisponible) {
-          const falta = monto - saldoDisponible;
-          text = `❌ **No es recomendable realizar esta compra de ${this.money(monto)} en este momento.**\n\n` +
-                 `Supera tu saldo disponible actual (${this.money(saldoDisponible)}) por un faltante de **${this.money(falta)}**.\n\n` +
-                 `Realizar este gasto pondría tus cuentas en déficit o te obligaría a endeudarte con intereses.`;
+          const faltante = monto - saldoDisponible;
+          text = `**No es viable realizar esta compra de ${this.money(monto)}.**\n\n` +
+                 `Supera tu saldo propio disponible (**${this.money(saldoDisponible)}**) por una brecha de **${this.money(faltante)}**.\n\n` +
+                 `**Plan B:**\n` +
+                 `• Pospón la adquisición al menos 15 días hasta acumular nuevo flujo de efectivo.\n` +
+                 `• Alternativa: Busca un modelo o versión equivalente por debajo de **${this.money(Math.max(0, saldoDisponible - totalDueNext7Days))}**.\n\n` +
+                 `**Acción inmediata:** No efectúes el desembolso hoy para evitar endeudamiento con intereses.`;
+        } else if (margenTrasGasto < 0) {
+          text = `**Desaconsejo realizar esta compra de ${this.money(monto)} en este momento.**\n\n` +
+                 `Aunque cuentas con el dinero nominal en cuenta (**${this.money(saldoDisponible)}**), realizar el gasto te dejaría sin liquidez para cubrir los **${this.money(totalDueNext7Days)}** de compromisos indispensables en los próximos 7 días (faltante de **${this.money(Math.abs(margenTrasGasto))}**).\n\n` +
+                 `**Plan B:**\n` +
+                 `• Liquida primero tus vencimientos programados de esta semana.\n` +
+                 `• Si es imprescindible, recorta **${this.money(Math.abs(margenTrasGasto))}** en ocio y restaurantes antes del fin de semana.\n\n` +
+                 `**Acción inmediata:** Congela esta compra hasta liquidar tus pagos de los próximos 7 días.`;
         } else {
-          const saldoRestante = saldoDisponible - monto;
-          if (saldoRestante < totalDueNext7Days) {
-            text = `⚠️ **Cuidado con esta compra de ${this.money(monto)}:**\n\n` +
-                   `Aunque físicamente tienes saldo (${this.money(saldoDisponible)}), al realizarla te quedarían **${this.money(saldoRestante)}**, lo cual es insuficiente para cubrir los **${this.money(totalDueNext7Days)}** en pagos programados de los próximos 7 días.\n\n` +
-                   `Te recomiendo posponerla hasta que liquides tus vencimientos prioritarios.`;
-          } else {
-            text = `✅ **Sí es viable realizar la compra de ${this.money(monto)}.**\n\n` +
-                   `Tu saldo disponible actual es de ${this.money(saldoDisponible)}. Después de pagar este artículo y de reservar los ${this.money(totalDueNext7Days)} de tus compromisos de esta semana, aún conservarás un colchón libre de **${this.money(saldoRestante - totalDueNext7Days)}**.`;
-          }
+          text = `**La compra de ${this.money(monto)} es financieramente viable.**\n\n` +
+                 `Tras cubrir este artículo y reservar los **${this.money(totalDueNext7Days)}** para tus compromisos inmediatos de la semana, conservarás un saldo libre de **${this.money(margenTrasGasto)}**.\n\n` +
+                 `**Plan de ejecución:**\n` +
+                 `• Liquida preferentemente en una sola exhibición o con débito propio.\n` +
+                 `• Conserva el remanente de **${this.money(margenTrasGasto)}** sin comprometerlo.\n\n` +
+                 `**Acción inmediata:** Puedes proceder con la compra manteniendo tu control de presupuesto.`;
         }
 
         return {
@@ -363,46 +377,43 @@ export class ChatbotModalComponent implements AfterViewChecked {
           text,
           timestamp: this.formatCurrentTime(),
           dataPoints: [
-            { label: 'Costo del artículo', value: this.money(monto) },
-            { label: 'Saldo disponible', value: this.money(saldoDisponible) },
-            { label: 'Compromisos 7 días', value: this.money(totalDueNext7Days) }
+            { label: 'Costo', value: this.money(monto) },
+            { label: 'Saldo Propio', value: this.money(saldoDisponible) },
+            { label: 'Compromisos 7d', value: this.money(totalDueNext7Days) }
           ]
         };
       }
     }
 
-    // 3. CONSULTA DE VENCIMIENTOS Y PAGOS PRÓXIMOS
+    // 3. CONSULTA DE VENCIMIENTOS Y PAGOS PRÓXIMOS (FOCOS ROJOS)
     if (/vence|vencen|vencimiento|esta semana|pagos|proximos|próximos|pendiente|tengo que pagar|cuando pago/i.test(lowerQuery)) {
       let text = '';
-      const points: { label: string; value: string }[] = [];
-
       if (overdue.length > 0) {
-        text += `🚨 **Atención: Tienes ${overdue.length} pago(s) vencido(s):**\n`;
+        text += `**Foco rojo prioritario: Tienes ${overdue.length} pago(s) vencido(s).**\n\n`;
         overdue.forEach(o => {
-          text += `• **${o.nombre}:** ${this.money(o.monto)} (vencido hace ${o.dias_vencido} días)\n`;
+          text += `• **${o.nombre}:** **${this.money(o.monto)}** (retraso de **${o.dias_vencido}** días).\n`;
         });
-        text += `\nTe sugiero liquidarlos de inmediato para evitar recargos o impacto en tu historial.\n\n`;
-      }
-
-      if (next7Days.length > 0) {
-        text += `📅 **Compromisos a pagar en los próximos 7 días (${this.money(totalDueNext7Days)}):**\n`;
+        text += `\n**Acción inmediata:** Liquida hoy mismo los vencidos para frenar intereses moratorios.`;
+      } else if (next7Days.length > 0) {
+        text += `**Compromisos indispensables para los próximos 7 días: ${this.money(totalDueNext7Days)}.**\n\n`;
         next7Days.forEach(item => {
-          text += `• **${item.nombre}:** ${this.money(item.monto)} — vence el ${item.fecha} (en ${item.dias_restantes}d)\n`;
+          text += `• **${item.nombre}:** **${this.money(item.monto)}** — vence el **${item.fecha}**.\n`;
         });
-        text += `\n**Monto por generar esta semana:** ${this.money(dineroRequerido)}.`;
+        text += `\n**Acción inmediata:** Reserva **${this.money(dineroRequerido > 0 ? dineroRequerido : totalDueNext7Days)}** en tu cuenta operativa hoy.`;
       } else {
-        text += `🎉 No tienes vencimientos programados para los próximos 7 días. ¡Tus cuentas están al día!`;
+        text = `**Cuentas al corriente.** No tienes pagos vencidos ni vencimientos en los próximos 7 días.\n\n` +
+               `**Acción inmediata:** Mantén tu disciplina de gasto y monitorea el corte de tus tarjetas.`;
       }
-
-      points.push({ label: 'Vencidos', value: `${overdue.length} pagos` });
-      points.push({ label: 'Total próx. 7 días', value: this.money(totalDueNext7Days) });
 
       return {
         id: 'bot_' + Date.now(),
         sender: 'bot',
         text,
         timestamp: this.formatCurrentTime(),
-        dataPoints: points
+        dataPoints: [
+          { label: 'Vencidos', value: `${overdue.length}` },
+          { label: 'Próximos 7d', value: this.money(totalDueNext7Days) }
+        ]
       };
     }
 

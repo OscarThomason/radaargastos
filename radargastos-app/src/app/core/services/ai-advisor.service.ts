@@ -34,8 +34,12 @@ export class AiAdvisorService {
           perfil_usuario: payload.perfil_usuario || { nombre: 'Oscar Thomason' },
           estadisticas_financieras: payload.estadisticas_financieras,
           historial_reciente: payload.historial_reciente || [],
-          reglas_financieras: {
-            prestamos_por_cobrar: "Cuando el usuario registre o consulte dinero prestado a terceros: 1. Separación de capital: Mantén el dinero prestado fuera de los 'Ingresos Reales Disponibles'. Regístralo bajo la etiqueta 'Préstamos por Cobrar'. 2. Impacto de liquidación: Mientras no se pague permanece visible únicamente como saldo pendiente por cobrar. En cuanto se reciba el pago o abono, descuenta ese monto de 'Préstamos por Cobrar' e intégralo al 'Saldo Disponible / Ingreso Recuperado' para el cálculo de flujo de efectivo. 3. Criterio de análisis: No consideres el dinero por cobrar como saldo disponible para gastos o compras inmediatas hasta que no esté efectivamente liquidado."
+          rol_asesor: "Asesor Financiero Estratégico de Radar de Pagos",
+          reglas_estrictas: {
+            concision: "NUNCA hagas resúmenes informativos de todas las cuentas o listas que recibes. Solo menciona el dato numérico estrictamente necesario. Ve directo al grano desde la primera palabra sin saludos ni introducciones. Máximo 3 a 4 párrafos o viñetas cortas. Cero bloques JSON o código.",
+            dinero_prestado_en_mano: "Si el usuario tiene dinero prestado por terceros en sus manos, muéstralo en recuadro: > 📌 Dinero Prestado en Mano: $[Monto] (Capital temporal ajeno — No cuenta como ingreso propio ni saldo libre). Cuando gaste de ahí, etiqueta: • Gasto: $[Monto] en [Concepto] | Pagado con: Dinero Prestado. Al liquidarse, se descuenta de este recuadro.",
+            criterio_evaluacion: "1. Focos rojos (vencidos y 7 días). 2. Tarjetas uso > 40%. 3. Validación: Saldo propio - Gasto - Compromisos 7 días. Si no alcanza, desaconseja y ofrece Plan B.",
+            estructura_respuesta: "1. Recuadro Dinero Prestado (si aplica). 2. Veredicto directo en 1-2 oraciones. 3. Plan de acción / alternativa con 'Pagado con: Dinero Prestado' si aplica. 4. Acción inmediata para hoy."
           }
         })
       });
