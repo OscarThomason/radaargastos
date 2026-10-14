@@ -519,6 +519,11 @@ export class ChatbotModalComponent implements AfterViewChecked {
         detalle: creditCards,
         nota_contable: 'Deuda viva revolvente al día de hoy. NO confundir con el gasto de un mes.'
       },
+      deudas_y_prestamos: {
+        deuda_consolidada_total: consolidated.loansDebt,
+        prestamos_activos: loans,
+        suma_cuotas_mensuales: loans.reduce((acc, l) => acc + (l.cuota_mensual || 0), 0)
+      },
       prestamos_a_plazos: {
         deuda_consolidada_total_prestamos: consolidated.loansDebt,
         suma_cuotas_mensuales: loans.reduce((acc, l) => acc + (l.cuota_mensual || 0), 0),
