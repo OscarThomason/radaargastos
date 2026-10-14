@@ -1,179 +1,258 @@
-<!-- Encabezado y Selección de Mes -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
-    <div>
-      <h2 class="section-title" style="margin: 0; text-transform: uppercase;">Estadísticas & Análisis Inteligente</h2>
-      <p style="font-size: 13px; color: var(--text-muted); margin: 4px 0 0 0;">
-        Análisis automático de patrones de gasto, diagnóstico de necesidades y asesoría IA.
-      </p>
-    </div>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <label style="font-weight: 600; font-size: 13px; color: var(--text-muted);">Periodo:</label>
-      <select [value]="selectedMonthKey()" (change)="onMonthChange($event)" style="width: auto; border: 1px solid var(--border); font-weight: bold; background: var(--surface); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-        @for (m of availableMonths(); track m.key) {
-          <option [value]="m.key">{{ m.label }}</option>
-        }
-      </select>
-    </div>
+<!-- Encabezado y Selector de Periodo -->
+<div class="stats-header-bar">
+  <div class="stats-header-info">
+    <h2 class="stats-title">Estadísticas & Diagnóstico Financiero</h2>
+    <p class="stats-subtitle">
+      Patrones de consumo, análisis de necesidades y proyecciones de ahorro
+    </p>
+  </div>
+  <div class="period-selector-wrapper">
+    <span class="period-label">Periodo:</span>
+    <select [value]="selectedMonthKey()" (change)="onMonthChange($event)" class="period-select">
+      @for (m of availableMonths(); track m.key) {
+        <option [value]="m.key">{{ m.label }}</option>
+      }
+    </select>
   </div>
 </div>
 
-<!-- Analista de Gastos IA FinOps - Diagnóstico Global de Gastos -->
-<div class="card-panel" style="margin-bottom: 16px; padding: 14px 16px;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-    <div>
-      <h3 style="margin: 0; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-        <span class="material-symbols-outlined" style="font-size: 17px;">analytics</span>
-        Analista FinOps: Diagnóstico Global
-      </h3>
-      <span style="font-size: 11px; color: var(--text-muted);">
-        Evaluación del impacto de tus gastos totales, presupuesto de ocio y saldo libre.
+<!-- INFORME EJECUTIVO FINANCIERO (Análisis continuo y detallado sin recuadros pesados) -->
+<div class="editorial-analysis-panel">
+  <div class="panel-header-row">
+    <div class="panel-header-title-group">
+      <div class="status-indicator-badge" [class.badge-deficit]="globalMonthAnalysis().incomeExceeded" [class.badge-surplus]="!globalMonthAnalysis().incomeExceeded && globalMonthAnalysis().totalInc > 0">
+        <span class="status-dot"></span>
+        <span>{{ globalMonthAnalysis().incomeExceeded ? 'Déficit Presupuestario' : (globalMonthAnalysis().totalInc > 0 ? 'Balance Positivo' : 'Sin Movimientos') }}</span>
+      </div>
+      <h3 class="panel-main-title">Diagnóstico Integral de Finanzas ({{ selectedMonthLabel() }})</h3>
+    </div>
+    
+    <button class="btn-ai-audit" (click)="requestGlobalAiAudit()" [disabled]="isAuditingWithN8n()">
+      <span class="material-symbols-outlined audit-icon">{{ isAuditingWithN8n() ? 'sync' : 'psychology' }}</span>
+      <span>{{ isAuditingWithN8n() ? 'Analizando con IA...' : 'Actualizar Auditoría IA' }}</span>
+    </button>
+  </div>
+
+  <!-- Fila Continua de Métricas Clave (KPIs sin recuadros cerrados) -->
+  <div class="kpi-continuous-strip">
+    <div class="kpi-item">
+      <span class="kpi-label">Ingresos Totales</span>
+      <span class="kpi-value text-blue">{{ money(globalMonthAnalysis().totalInc) }}</span>
+      <span class="kpi-hint">Base disponible</span>
+    </div>
+    <div class="kpi-separator"></div>
+
+    <div class="kpi-item">
+      <span class="kpi-label">Gastos Totales</span>
+      <span class="kpi-value text-gray">{{ money(globalMonthAnalysis().totalExp) }}</span>
+      <span class="kpi-hint">{{ globalMonthAnalysis().ratioToIncome }}% del ingreso</span>
+    </div>
+    <div class="kpi-separator"></div>
+
+    <div class="kpi-item">
+      <span class="kpi-label">Balance Operativo</span>
+      <span class="kpi-value" [class.text-deficit]="globalMonthAnalysis().incomeExceeded" [class.text-blue]="!globalMonthAnalysis().incomeExceeded && globalMonthAnalysis().netBalance > 0">
+        {{ globalMonthAnalysis().netBalance >= 0 ? '+' : '-' }}{{ money(abs(globalMonthAnalysis().netBalance)) }}
       </span>
+      <span class="kpi-hint">{{ globalMonthAnalysis().incomeExceeded ? 'Déficit del mes' : 'Margen libre' }}</span>
     </div>
-      <div class="tooltip-container">
-        <button class="btn-primary" style="margin: 0; padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 5px;" (click)="requestGlobalAiAudit()" [disabled]="isAuditingWithN8n()">
-          <span class="material-symbols-outlined" style="font-size: 15px;">analytics</span>
-          <span>{{ isAuditingWithN8n() ? 'Generando...' : 'Diagnóstico Global' }}</span>
-        </button>
-        <div class="tooltip-bubble">
-          Evalúa el impacto de ocio y gastos generales sobre tu balance financiero del mes.
-        </div>
-      </div>
+    <div class="kpi-separator"></div>
+
+    <div class="kpi-item">
+      <span class="kpi-label">Tasa de Ahorro</span>
+      <span class="kpi-value">{{ savingsRate() }}%</span>
+      <span class="kpi-hint">Meta óptima: 20%</span>
     </div>
+    <div class="kpi-separator"></div>
 
-    <!-- Banners y Métricas Globales del Mes -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 12px;">
-      @if (globalMonthAnalysis().incomeExceeded) {
-        <div class="minimal-stat-box">
-          <div class="stat-box-header">
-            <span class="material-symbols-outlined">warning</span>
-            <span>Gastos Superan Ingresos</span>
-          </div>
-          <p class="stat-box-text">
-            Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }} (Excedido por {{ money(globalMonthAnalysis().exceededAmount) }}).
-          </p>
-        </div>
-      } @else if (globalMonthAnalysis().totalInc > 0) {
-        <div class="minimal-stat-box">
-          <div class="stat-box-header">
-            <span class="material-symbols-outlined">check_circle</span>
-            <span>Gastos dentro del Ingreso</span>
-          </div>
-          <p class="stat-box-text">
-            Tus gastos representan el <strong>{{ globalMonthAnalysis().ratioToIncome }}%</strong> de tus ingresos de {{ money(globalMonthAnalysis().totalInc) }}. Balance libre: {{ money(globalMonthAnalysis().netBalance) }}.
-          </p>
-        </div>
-      }
-
-      <div class="minimal-stat-box">
-        <div class="stat-box-header">
-          <span class="material-symbols-outlined">sports_esports</span>
-          <span>Impacto de Ocio & Gustos</span>
-        </div>
-        <p class="stat-box-text">
-          Destinas <strong>{{ money(globalMonthAnalysis().ocioExp) }}</strong> a Ocio, Restaurantes y Ropa (<strong>{{ globalMonthAnalysis().ratioOcioToIncome }}%</strong> del ingreso).
-        </p>
-      </div>
+    <div class="kpi-item">
+      <span class="kpi-label">Gasto Diario Prom.</span>
+      <span class="kpi-value">{{ money(dailyAverage()) }}</span>
+      <span class="kpi-hint">Ritmo de consumo</span>
     </div>
+    <div class="kpi-separator"></div>
 
-    <!-- Caja de Diagnóstico IA Resumido (visible solo cuando se genera el análisis) -->
+    <div class="kpi-item">
+      <span class="kpi-label">Ocio y Gustos</span>
+      <span class="kpi-value">{{ money(globalMonthAnalysis().ocioExp) }}</span>
+      <span class="kpi-hint">{{ globalMonthAnalysis().ratioOcioToIncome }}% del ingreso</span>
+    </div>
+  </div>
+
+  <!-- Barra de Distribución Presupuestaria (Regla 50/30/20) -->
+  <div class="budget-rule-section">
+    <div class="budget-rule-header">
+      <span class="budget-rule-title">Distribución Presupuestaria: Real vs. Metodología 50/30/20</span>
+      <span class="budget-rule-sub">Esenciales (50%) · No Esenciales / Estilo de vida (30%) · Ahorro (20%)</span>
+    </div>
+    <div class="budget-progress-track">
+      <div class="progress-segment segment-essential" [style.width.%]="rule503020().essentialPct" title="Esenciales: {{ rule503020().essentialPct }}%"></div>
+      <div class="progress-segment segment-non-essential" [style.width.%]="rule503020().nonEssentialPct" title="No Esenciales: {{ rule503020().nonEssentialPct }}%"></div>
+      <div class="progress-segment segment-savings" [style.width.%]="rule503020().savingsPct" title="Ahorro: {{ rule503020().savingsPct }}%"></div>
+    </div>
+    <div class="budget-legend-row">
+      <span class="legend-item"><span class="legend-dot dot-blue"></span> Esenciales: <strong>{{ rule503020().essentialPct }}%</strong> ({{ money(essentialAnalysis().essentialTotal) }})</span>
+      <span class="legend-item"><span class="legend-dot dot-gray"></span> No Esenciales: <strong>{{ rule503020().nonEssentialPct }}%</strong> ({{ money(essentialAnalysis().nonEssentialTotal) }})</span>
+      <span class="legend-item"><span class="legend-dot dot-light"></span> Ahorro Libre: <strong>{{ rule503020().savingsPct }}%</strong> ({{ money(max(0, globalMonthAnalysis().netBalance)) }})</span>
+    </div>
+  </div>
+
+  <!-- Cuerpo Editorial del Análisis (Sin recuadros pesados) -->
+  <div class="editorial-analysis-body">
     @if (globalAiDiagnosis()) {
-      <div class="minimal-ai-card">
-        <div class="minimal-ai-header">
-          <span class="material-symbols-outlined">insights</span>
-          <span>Salud Financiera Global</span>
-        </div>
-        <p class="minimal-ai-body" [innerHTML]="globalAiDiagnosis()"></p>
-      </div>
+      <div class="ai-generated-analysis" [innerHTML]="globalAiDiagnosis()"></div>
+    } @else {
+      <div [innerHTML]="generateAdvancedLocalDiagnosis()"></div>
     }
   </div>
+</div>
 
-<!-- Análisis de Gastos Esenciales vs No Esenciales -->
-<div class="card-panel" style="margin-bottom: 24px;">
-  <h2 class="section-title" style="margin-top: 0;">Clasificación de Gastos: Esenciales vs. No Esenciales</h2>
-  <p style="font-size: 13px; color: var(--text-muted); margin-top: -8px; margin-bottom: 20px;">
-    Separa tus necesidades primarias (alimentos, salud, servicios) de consumos prescindibles (ocio, restaurantes).
-  </p>
+<!-- Clasificación de Gastos: Esenciales vs. No Esenciales (Azul y Gris sobrios) -->
+<div class="clean-section-card">
+  <div class="section-card-header">
+    <div>
+      <h3 class="section-card-title">Clasificación de Gastos: Esenciales vs. No Esenciales</h3>
+      <p class="section-card-desc">
+        Separación entre necesidades primarias y consumos prescindibles para optimizar tu liquidez
+      </p>
+    </div>
+  </div>
 
-  <div class="grid-2col" style="align-items: center;">
-    <!-- Gráfico de Donut Esenciales -->
-    <div style="display: flex; flex-direction: column; align-items: center;">
+  <div class="essential-grid">
+    <!-- Gráfico de Donut Esenciales (Azul y Gris) -->
+    <div class="chart-column">
       @if (essentialAnalysis().essentialTotal === 0 && essentialAnalysis().nonEssentialTotal === 0) {
-        <div class="empty-state">No hay gastos en este mes.</div>
+        <div class="empty-state">No hay gastos registrados en este mes.</div>
       } @else {
-        <div class="chart-box" style="height: 220px; width: 100%;"><canvas #chartEssential></canvas></div>
-        <div style="display: flex; gap: 16px; margin-top: 14px;">
-          <span style="font-size: 12px; font-weight: 700; color: #059669; display: flex; align-items: center; gap: 4px;">
-            ● Esenciales ({{ essentialAnalysis().essentialPercent }}%)
-          </span>
-          <span style="font-size: 12px; font-weight: 700; color: #DC2626; display: flex; align-items: center; gap: 4px;">
-            ● No Esenciales ({{ essentialAnalysis().nonEssentialPercent }}%)
-          </span>
+        <div class="chart-wrapper"><canvas #chartEssential></canvas></div>
+        <div class="chart-summary-legend">
+          <span class="chart-tag tag-blue">● Esenciales ({{ essentialAnalysis().essentialPercent }}%)</span>
+          <span class="chart-tag tag-gray">● No Esenciales ({{ essentialAnalysis().nonEssentialPercent }}%)</span>
         </div>
       }
     </div>
 
-    <!-- Desglose Porcentual -->
-    <div style="display: flex; flex-direction: column; gap: 14px;">
-      <!-- Esenciales -->
-      <div style="background: #ECFDF5; border: 1px solid rgba(5,150,105,0.2); border-radius: 12px; padding: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 12px; font-weight: 700; color: #059669;">🟢 GASTOS ESENCIALES</span>
-          <strong style="font-size: 15px; color: #059669;">{{ money(essentialAnalysis().essentialTotal) }}</strong>
+    <!-- Desglose Sobrio en Azul y Gris -->
+    <div class="breakdown-column">
+      <!-- Tarjeta Esenciales -->
+      <div class="breakdown-item item-blue">
+        <div class="breakdown-top">
+          <div class="breakdown-badge badge-blue">E</div>
+          <div class="breakdown-info">
+            <span class="breakdown-category-title">Gastos Esenciales</span>
+            <span class="breakdown-category-desc">Alimentos, servicios del hogar, salud, deudas primarias</span>
+          </div>
+          <div class="breakdown-amount-group">
+            <span class="breakdown-amount text-blue">{{ money(essentialAnalysis().essentialTotal) }}</span>
+            <span class="breakdown-pct">{{ essentialAnalysis().essentialPercent }}% del total</span>
+          </div>
         </div>
-        <p style="font-size: 11px; color: #047857; margin: 0;">Alimentos, Servicios, Salud, Deudas primarias</p>
+        <div class="mini-progress-bar">
+          <div class="bar-fill fill-blue" [style.width.%]="essentialAnalysis().essentialPercent"></div>
+        </div>
       </div>
 
-      <!-- No Esenciales -->
-      <div style="background: #FEF2F2; border: 1px solid rgba(220,38,38,0.2); border-radius: 12px; padding: 14px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span style="font-size: 12px; font-weight: 700; color: #DC2626;">🔴 GASTOS NO ESENCIALES</span>
-          <strong style="font-size: 15px; color: #DC2626;">{{ money(essentialAnalysis().nonEssentialTotal) }}</strong>
+      <!-- Tarjeta No Esenciales -->
+      <div class="breakdown-item item-gray">
+        <div class="breakdown-top">
+          <div class="breakdown-badge badge-gray">P</div>
+          <div class="breakdown-info">
+            <span class="breakdown-category-title">Gastos No Esenciales / Prescindibles</span>
+            <span class="breakdown-category-desc">Restaurantes, ocio, entretenimiento, compras no programadas</span>
+          </div>
+          <div class="breakdown-amount-group">
+            <span class="breakdown-amount text-gray">{{ money(essentialAnalysis().nonEssentialTotal) }}</span>
+            <span class="breakdown-pct">{{ essentialAnalysis().nonEssentialPercent }}% del total</span>
+          </div>
         </div>
-        <p style="font-size: 11px; color: #B91C1C; margin: 0;">Restaurantes, Ocio, Compras impulsivas, Suscripciones</p>
+        <div class="mini-progress-bar">
+          <div class="bar-fill fill-gray" [style.width.%]="essentialAnalysis().nonEssentialPercent"></div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="chart-grid" style="margin-bottom: 24px;">
-  <!-- Gastos -->
-  <div class="card-panel">
-    <h2 class="section-title" style="margin-top: 0">Gastos por categoría ({{ selectedMonthLabel() }})</h2>
+<!-- Gráficas de Categorías (Gastos en Grises, Ingresos en Azules) -->
+<div class="categories-dual-grid">
+  <!-- Gastos por categoría -->
+  <div class="clean-section-card">
+    <div class="section-card-header">
+      <div>
+        <h3 class="section-card-title">Gastos por Categoría</h3>
+        <p class="section-card-desc">{{ selectedMonthLabel() }} · Escala de distribución</p>
+      </div>
+    </div>
+
     @if (expCatData().labels.length === 0) {
       <div class="empty-state">Sin gastos registrados este mes.</div>
     } @else {
-      <div class="legend-custom">
+      <div class="legend-custom-sober">
         @for (item of getLegendItems('exp'); track item.label) {
-          <span><span class="legend-dot" [style.backgroundColor]="item.color"></span>{{item.label}} {{item.percent}}%</span>
+          <span class="legend-pill">
+            <span class="dot-indicator" [style.backgroundColor]="item.color"></span>
+            <span class="legend-name">{{ item.label }}</span>
+            <span class="legend-val">{{ item.percent }}%</span>
+          </span>
         }
       </div>
-      <div class="chart-box"><canvas #chartExpCat></canvas></div>
+      <div class="chart-wrapper"><canvas #chartExpCat></canvas></div>
     }
   </div>
 
-  <!-- Ingresos -->
-  <div class="card-panel">
-    <h2 class="section-title" style="margin-top: 0">Ingresos por categoría ({{ selectedMonthLabel() }})</h2>
+  <!-- Ingresos por categoría -->
+  <div class="clean-section-card">
+    <div class="section-card-header">
+      <div>
+        <h3 class="section-card-title">Ingresos por Categoría</h3>
+        <p class="section-card-desc">{{ selectedMonthLabel() }} · Fuentes de ingreso</p>
+      </div>
+    </div>
+
     @if (incCatData().labels.length === 0) {
       <div class="empty-state">Sin ingresos registrados este mes.</div>
     } @else {
-      <div class="legend-custom">
+      <div class="legend-custom-sober">
         @for (item of getLegendItems('inc'); track item.label) {
-          <span><span class="legend-dot" [style.backgroundColor]="item.color"></span>{{item.label}} {{item.percent}}%</span>
+          <span class="legend-pill">
+            <span class="dot-indicator" [style.backgroundColor]="item.color"></span>
+            <span class="legend-name">{{ item.label }}</span>
+            <span class="legend-val">{{ item.percent }}%</span>
+          </span>
         }
       </div>
-      <div class="chart-box"><canvas #chartIncCat></canvas></div>
+      <div class="chart-wrapper"><canvas #chartIncCat></canvas></div>
     }
   </div>
 </div>
 
-<div class="card-panel">
-  <h2 class="section-title" style="margin-top: 0">Evolución Histórica (Gastos vs. Ingresos - 6 Meses)</h2>
-  @if (monthData().keys.length === 0) {
-    <div class="empty-state">Sin datos suficientes todavía.</div>
-  } @else {
-    <div class="chart-box-large"><canvas #chartMonth></canvas></div>
+<!-- APARTADO DE EVOLUCIÓN HISTÓRICA (Oculto por defecto en acordeón minimalista) -->
+<div class="historical-accordion-card">
+  <button class="accordion-trigger" (click)="toggleHistorical()" type="button">
+    <div class="trigger-left">
+      <div class="trigger-icon-box">
+        <span class="material-symbols-outlined">timeline</span>
+      </div>
+      <div class="trigger-text-group">
+        <span class="trigger-title">Evolución Histórica (Últimos 6 Meses)</span>
+        <span class="trigger-subtitle">Comparativa semestral de ingresos (azul) y gastos (gris)</span>
+      </div>
+    </div>
+    <div class="trigger-right">
+      <span class="trigger-badge">{{ showHistorical() ? 'Ocultar gráfico' : 'Ver histórico' }}</span>
+      <span class="material-symbols-outlined chevron-icon" [class.rotated]="showHistorical()">expand_more</span>
+    </div>
+  </button>
+
+  @if (showHistorical()) {
+    <div class="accordion-panel">
+      @if (monthData().keys.length === 0) {
+        <div class="empty-state">Sin datos suficientes en el historial todavía.</div>
+      } @else {
+        <div class="chart-box-historical">
+          <canvas #chartMonth></canvas>
+        </div>
+      }
+    </div>
   }
 </div>
-

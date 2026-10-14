@@ -27,34 +27,30 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
   private chartMonthInstance: Chart | null = null;
   private chartEssentialInstance: Chart | null = null;
 
-  paletteExp = ['#2a78d6','#1baf7a','#eda100','#008300','#9085e9','#e34948','#e87ba4','#eb6834','#7C9CF5','#F0A93A'];
-  paletteInc = ['#35D0A8', '#1baf7a', '#7C9CF5', '#008300'];
+  // Paleta sobria y minimalista: Grises / Grafito para Gastos, Azules profesionales para Ingresos
+  paletteExp = ['#0F172A', '#1E293B', '#334155', '#475569', '#64748B', '#94A3B8', '#CBD5E1', '#374151', '#4B5563', '#6B7280'];
+  paletteInc = ['#0284C7', '#0369A1', '#075985', '#0EA5E9', '#38BDF8', '#2563EB', '#1D4ED8', '#60A5FA'];
   
   selectedMonthKey = signal<string>(new Date().toISOString().slice(0, 7));
-  activeInsightIndex = signal<number>(0);
+  showHistorical = signal<boolean>(false);
+  isAuditingWithN8n = signal<boolean>(false);
+  globalAiDiagnosis = signal<string | null>(null);
 
-  nextInsight() {
-    const total = this.aiInsights().length;
-    if (total > 0) {
-      this.activeInsightIndex.update(i => (i + 1) % total);
+  toggleHistorical() {
+    const nextState = !this.showHistorical();
+    this.showHistorical.set(nextState);
+    if (nextState) {
+      setTimeout(() => this.renderMonthChart(), 60);
+    } else {
+      if (this.chartMonthInstance) {
+        this.chartMonthInstance.destroy();
+        this.chartMonthInstance = null;
+      }
     }
-  }
-
-  prevInsight() {
-    const total = this.aiInsights().length;
-    if (total > 0) {
-      this.activeInsightIndex.update(i => (i - 1 + total) % total);
-    }
-  }
-
-  setInsightIndex(idx: number) {
-    this.activeInsightIndex.set(idx);
   }
 
   availableMonths = computed(() => {
     const monthsSet = new Set<string>();
-    
-    // Asegurar mes actual y anterior
     const now = new Date();
     const curMonthKey = now.toISOString().slice(0, 7);
     monthsSet.add(curMonthKey);
@@ -63,7 +59,6 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     const lastMonthKey = lastMonth.toISOString().slice(0, 7);
     monthsSet.add(lastMonthKey);
 
-    // Agregar meses de transacciones
     this.financeService.state().expenses.forEach(e => {
       if (e.date) monthsSet.add(e.date.slice(0, 7));
     });
@@ -89,6 +84,12 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     const label = dateObj.toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
     return label.charAt(0).toUpperCase() + label.slice(1);
   });
+
+  onMonthChange(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.selectedMonthKey.set(select.value);
+    this.globalAiDiagnosis.set(null);
+  }
 
   expCatData = computed(() => {
     const monthKey = this.selectedMonthKey();
@@ -125,6 +126,20 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     return { labels, values, total };
   });
 
+  monthExpenses = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    return this.financeService.state().expenses.filter(e => e.date.slice(0, 7) === monthKey);
+  });
+
+  monthIncomes = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    return this.financeService.state().incomes.filter(i => i.date.slice(0, 7) === monthKey);
+  });
+
+  essentialAnalysis = computed(() => {
+    return this.aiAdvisor.analyzeEssentialVsNonEssential(this.monthExpenses());
+  });
+
   recurrentExpenses = computed(() => {
     const monthKey = this.selectedMonthKey();
     const recurrentList = this.financeService.state().expenses
@@ -149,11 +164,90 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     return Math.round((rec / total) * 100);
   });
 
-  onMonthChange(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    this.selectedMonthKey.set(select.value);
-    this.activeInsightIndex.set(0);
-  }
+  dailyAverage = computed(() => {
+    const total = this.expCatData().total;
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return Math.round(total / daysInMonth);
+  });
+
+  savingsRate = computed(() => {
+    const inc = this.incCatData().total;
+    const exp = this.expCatData().total;
+    if (inc === 0) return 0;
+    const rem = inc - exp;
+    return Math.max(0, Math.round((rem / inc) * 100));
+  });
+
+  globalMonthAnalysis = computed(() => {
+    const monthKey = this.selectedMonthKey();
+    const expensesList = this.financeService.state().expenses
+      .filter(e => e.date.slice(0, 7) === monthKey);
+
+    const totalExp = expensesList.reduce((sum, e) => sum + e.amount, 0);
+    const incomesList = this.financeService.state().incomes
+      .filter(i => i.date.slice(0, 7) === monthKey);
+    const totalInc = incomesList.reduce((sum, i) => sum + i.amount, 0);
+
+    const ocioExp = expensesList
+      .filter(e => e.category === 'Oscio' || e.category === 'Restaurantes' || e.category === 'ropa o accesorios')
+      .reduce((sum, e) => sum + e.amount, 0);
+
+    const ratioToIncome = totalInc > 0 ? Math.round((totalExp / totalInc) * 100) : 0;
+    const ratioOcioToIncome = totalInc > 0 ? Math.round((ocioExp / totalInc) * 100) : 0;
+    const ratioOcioToExp = totalExp > 0 ? Math.round((ocioExp / totalExp) * 100) : 0;
+
+    const incomeExceeded = totalInc > 0 && totalExp > totalInc;
+
+    return {
+      totalExp,
+      totalInc,
+      ocioExp,
+      ratioToIncome,
+      ratioOcioToIncome,
+      ratioOcioToExp,
+      incomeExceeded,
+      exceededAmount: Math.max(0, totalExp - totalInc),
+      netBalance: totalInc - totalExp
+    };
+  });
+
+  rule503020 = computed(() => {
+    const analysis = this.globalMonthAnalysis();
+    const ess = this.essentialAnalysis();
+    const totalInc = analysis.totalInc;
+    const base = totalInc > 0 ? totalInc : analysis.totalExp;
+    if (base === 0) return { essentialPct: 0, nonEssentialPct: 0, savingsPct: 0 };
+    
+    const essentialPct = Math.round((ess.essentialTotal / base) * 100);
+    const nonEssentialPct = Math.round((ess.nonEssentialTotal / base) * 100);
+    const savingsPct = totalInc > 0 ? Math.max(0, Math.round((analysis.netBalance / totalInc) * 100)) : 0;
+    
+    return {
+      essentialPct,
+      nonEssentialPct,
+      savingsPct
+    };
+  });
+
+  topExpenseCategory = computed(() => {
+    const data = this.expCatData();
+    if (data.labels.length === 0) return null;
+    const maxVal = Math.max(...data.values);
+    const maxIdx = data.values.indexOf(maxVal);
+    return {
+      name: data.labels[maxIdx],
+      amount: data.values[maxIdx],
+      percent: Math.round((data.values[maxIdx] / (data.total || 1)) * 100)
+    };
+  });
+
+  potentialSavings = computed(() => {
+    const ess = this.essentialAnalysis();
+    const monthly = Math.round(ess.nonEssentialTotal * 0.3);
+    const annual = monthly * 12;
+    return { monthly, annual };
+  });
 
   monthData = computed(() => {
     const expTotals: Record<string, number> = {};
@@ -183,61 +277,177 @@ export class EstadisticasComponent implements AfterViewInit, OnDestroy {
     return { keys, labels, expValues, incValues };
   });
 
-  monthExpenses = computed(() => {
-    const monthKey = this.selectedMonthKey();
-    return this.financeService.state().expenses.filter(e => e.date.slice(0, 7) === monthKey);
-  });
+  constructor() {
+    effect(() => {
+      this.expCatData();
+      this.incCatData();
+      this.essentialAnalysis();
+      setTimeout(() => {
+        this.renderCharts();
+        if (this.showHistorical()) {
+          this.renderMonthChart();
+        }
+      }, 0);
+    });
+  }
 
-  monthIncomes = computed(() => {
-    const monthKey = this.selectedMonthKey();
-    return this.financeService.state().incomes.filter(i => i.date.slice(0, 7) === monthKey);
-  });
+  ngAfterViewInit() {
+    this.renderCharts();
+  }
 
-  essentialAnalysis = computed(() => {
-    return this.aiAdvisor.analyzeEssentialVsNonEssential(this.monthExpenses());
-  });
+  ngOnDestroy() {
+    if (this.chartExpCatInstance) this.chartExpCatInstance.destroy();
+    if (this.chartIncCatInstance) this.chartIncCatInstance.destroy();
+    if (this.chartMonthInstance) this.chartMonthInstance.destroy();
+    if (this.chartEssentialInstance) this.chartEssentialInstance.destroy();
+  }
 
-  aiInsights = computed(() => {
-    const debts = this.financeService.state().debts;
-    return this.aiAdvisor.generateInsights(this.monthExpenses(), this.monthIncomes(), debts, this.selectedMonthLabel());
-  });
+  renderCharts() {
+    // 1. Gráfico Esenciales vs No Esenciales (Azul y Gris)
+    const ess = this.essentialAnalysis();
+    if (this.chartEssentialInstance) this.chartEssentialInstance.destroy();
+    if ((ess.essentialTotal > 0 || ess.nonEssentialTotal > 0) && this.chartEssentialRef) {
+      this.chartEssentialInstance = new Chart(this.chartEssentialRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: ['Gastos Esenciales', 'Gastos No Esenciales'],
+          datasets: [{
+            data: [ess.essentialTotal, ess.nonEssentialTotal],
+            backgroundColor: ['#0284C7', '#64748B'], // Azul profesional & Gris pizarra
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            borderRadius: 6,
+            spacing: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
 
-  isAuditingWithN8n = signal(false);
-  globalAiDiagnosis = signal<string | null>(null);
+    // 2. Gráfico Gastos por Categoría (Escala de Grises Sobrios)
+    const exp = this.expCatData();
+    if (this.chartExpCatInstance) this.chartExpCatInstance.destroy();
+    if (exp.labels.length > 0 && this.chartExpCatRef) {
+      this.chartExpCatInstance = new Chart(this.chartExpCatRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: exp.labels,
+          datasets: [{
+            data: exp.values,
+            backgroundColor: this.paletteExp,
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            borderRadius: 6,
+            spacing: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '66%',
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
 
-  globalMonthAnalysis = computed(() => {
-    const monthKey = this.selectedMonthKey();
-    const expensesList = this.financeService.state().expenses
-      .filter(e => e.date.slice(0, 7) === monthKey);
+    // 3. Gráfico Ingresos por Categoría (Escala de Azules)
+    const inc = this.incCatData();
+    if (this.chartIncCatInstance) this.chartIncCatInstance.destroy();
+    if (inc.labels.length > 0 && this.chartIncCatRef) {
+      this.chartIncCatInstance = new Chart(this.chartIncCatRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: inc.labels,
+          datasets: [{
+            data: inc.values,
+            backgroundColor: this.paletteInc,
+            borderWidth: 2,
+            borderColor: '#ffffff',
+            borderRadius: 6,
+            spacing: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '66%',
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+  }
 
-    const totalExp = expensesList.reduce((sum, e) => sum + e.amount, 0);
-    const incomesList = this.financeService.state().incomes
-      .filter(i => i.date.slice(0, 7) === monthKey);
-    const totalInc = incomesList.reduce((sum, i) => sum + i.amount, 0);
+  renderMonthChart() {
+    const month = this.monthData();
+    if (this.chartMonthInstance) this.chartMonthInstance.destroy();
+    if (month.keys.length > 0 && this.chartMonthRef) {
+      this.chartMonthInstance = new Chart(this.chartMonthRef.nativeElement, {
+        type: 'bar',
+        data: { 
+          labels: month.labels, 
+          datasets: [
+            { label: 'Ingresos', data: month.incValues, backgroundColor: '#0284C7', borderRadius: 6, borderSkipped: false }, // Azul
+            { label: 'Gastos', data: month.expValues, backgroundColor: '#64748B', borderRadius: 6, borderSkipped: false }     // Gris
+          ] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              display: true, 
+              labels: { 
+                color: '#334155', 
+                font: { family: "'Sora', sans-serif", size: 12, weight: 'bold' },
+                boxWidth: 12,
+                boxHeight: 12,
+                borderRadius: 3
+              } 
+            } 
+          },
+          scales: { 
+            y: { 
+              beginAtZero: true, 
+              grid: { color: 'rgba(0,0,0,0.04)' }, 
+              ticks: { color: '#64748B', font: { family: "'Sora', sans-serif", size: 11 } } 
+            }, 
+            x: { 
+              grid: { display: false }, 
+              ticks: { color: '#64748B', font: { family: "'Sora', sans-serif", size: 11, weight: 'bold' } } 
+            } 
+          }
+        }
+      });
+    }
+  }
 
-    // Ocio y Comida fuera
-    const ocioExp = expensesList
-      .filter(e => e.category === 'Oscio' || e.category === 'Restaurantes' || e.category === 'ropa o accesorios')
-      .reduce((sum, e) => sum + e.amount, 0);
+  getLegendItems(type: 'exp' | 'inc') {
+    const data = type === 'exp' ? this.expCatData() : this.incCatData();
+    const palette = type === 'exp' ? this.paletteExp : this.paletteInc;
+    return data.labels.map((label, i) => ({
+      label,
+      color: palette[i % palette.length],
+      percent: Math.round(data.values[i] / (data.total || 1) * 100)
+    }));
+  }
 
-    const ratioToIncome = totalInc > 0 ? Math.round((totalExp / totalInc) * 100) : 0;
-    const ratioOcioToIncome = totalInc > 0 ? Math.round((ocioExp / totalInc) * 100) : 0;
-    const ratioOcioToExp = totalExp > 0 ? Math.round((ocioExp / totalExp) * 100) : 0;
+  abs(val: number): number {
+    return Math.abs(val);
+  }
 
-    const incomeExceeded = totalInc > 0 && totalExp > totalInc;
+  max(a: number, b: number): number {
+    return Math.max(a, b);
+  }
 
-    return {
-      totalExp,
-      totalInc,
-      ocioExp,
-      ratioToIncome,
-      ratioOcioToIncome,
-      ratioOcioToExp,
-      incomeExceeded,
-      exceededAmount: totalExp - totalInc,
-      netBalance: totalInc - totalExp
-    };
-  });
+  money(amount: number) {
+
+    return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
 
   async requestGlobalAiAudit() {
     const analysis = this.globalMonthAnalysis();
@@ -260,244 +470,100 @@ EVALUACIÓN Y DIAGNÓSTICO FINANCIERO GLOBAL DEL MES (${this.selectedMonthLabel(
 - Gasto Total Acumulado: $${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${analysis.ratioToIncome}% de tus ingresos)
 - Saldo / Margen Libre: $${analysis.netBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN
 - Gastos Esenciales: $${essData.essentialTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${essData.essentialPercent}% del gasto total)
-- Gastos No Esenciales / Ocio / Gustos: $${essData.nonEssentialTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${essData.nonEssentialPercent}% del gasto total, destinas $${analysis.ocioExp} solo a ocio/restaurantes)
+- Gastos No Esenciales / Ocio / Gustos: $${essData.nonEssentialTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN (${essData.nonEssentialPercent}% del gasto total, destinas $${analysis.ocioExp} a ocio/restaurantes)
 
 DESGLOSE COMPLETO DE GASTOS POR CATEGORÍA:
 ${categoriesBreakdown}
 
-INSTRUCCIÓN: Genera un dictamen ejecutivo de salud financiera global en 2 o 3 párrafos. Analiza si la proporción de gasto en ocio o no esenciales compromete el margen de ahorro o la seguridad financiera ante imprevistos, proponiendo ajustes específicos.
+INSTRUCCIÓN: Genera un informe financiero ejecutivo en formato continuo, sin listas repetitivas, analizando si la proporción de gasto compromete la solvencia y proponiendo optimizaciones cuantificables.
 `;
 
-    const res = await this.aiAdvisor.queryN8nAgent({
-      tipo_solicitud: 'consulta_compra',
-      pregunta: promptText,
-      descripcion: `Diagnóstico Financiero Global ${this.selectedMonthLabel()}`,
-      monto: analysis.totalExp
+    const res = await this.aiAdvisor.queryInteractiveFinancialAgent({
+      message: promptText,
+      estadisticas_financieras: {
+        mes: this.selectedMonthLabel(),
+        ingresos: analysis.totalInc,
+        gastos: analysis.totalExp,
+        balance_libre: analysis.netBalance,
+        esenciales: essData.essentialTotal,
+        no_esenciales: essData.nonEssentialTotal,
+        ocio: analysis.ocioExp
+      }
     });
 
     this.isAuditingWithN8n.set(false);
 
-    // Verificar si la respuesta de n8n es útil o si devolvió el mensaje por defecto de falta de concepto
-    const n8nText = res?.analisis_financiero || '';
-    const isInvalidN8nText = !res || !n8nText || n8nText.toLowerCase().includes('no hay concepto') || n8nText.toLowerCase().includes('información disponible no es posible');
-
-    if (!isInvalidN8nText && res) {
-      let cleanDiagnosis = (res.analisis_financiero || '')
+    if (res && res.reply) {
+      const cleanReply = res.reply
         .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n\n/g, '<br><br>')
         .replace(/\n/g, '<br>');
-      let cleanAction = (res.accion_recomendada || '')
-        .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-      this.globalAiDiagnosis.set(cleanDiagnosis + (cleanAction ? `<br><br><strong><u>Recomendación Clave:</u></strong> ${cleanAction}` : ''));
+      this.globalAiDiagnosis.set(cleanReply);
     } else {
-      // Diagnóstico Financiero Global Inteligente Avanzado de Respaldo
-      this.globalAiDiagnosis.set(this.generateAdvancedLocalDiagnosis(analysis, essData, expData));
+      this.globalAiDiagnosis.set(this.generateAdvancedLocalDiagnosis());
     }
   }
 
-  private generateAdvancedLocalDiagnosis(
-    analysis: { totalExp: number; totalInc: number; ocioExp: number; ratioToIncome: number; ratioOcioToIncome: number; ratioOcioToExp: number; incomeExceeded: boolean; exceededAmount: number; netBalance: number },
-    essData: { essentialTotal: number; nonEssentialTotal: number; essentialPercent: number; nonEssentialPercent: number },
-    expData: { labels: string[]; values: number[]; total: number }
-  ): string {
+  generateAdvancedLocalDiagnosis(): string {
+    const analysis = this.globalMonthAnalysis();
+    const essData = this.essentialAnalysis();
+    const expData = this.expCatData();
     const month = this.selectedMonthLabel();
-    const incStr = `$${analysis.totalInc.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-    const expStr = `$${analysis.totalExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-    const balStr = `$${analysis.netBalance.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-    const ocioStr = `$${analysis.ocioExp.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+    const rule = this.rule503020();
+    const topCat = this.topExpenseCategory();
+    const potential = this.potentialSavings();
 
-    let diagnosis = `<strong><u>Diagnóstico Ejecutivo de Finanzas (${month}):</u></strong><br><br>`;
+    const incStr = this.money(analysis.totalInc);
+    const expStr = this.money(analysis.totalExp);
+    const balStr = this.money(Math.abs(analysis.netBalance));
+    const ocioStr = this.money(analysis.ocioExp);
 
+    let html = `<div class="editorial-analysis-content">`;
+
+    // 1. Evaluación de Balance y Liquidez
+    html += `<div class="analysis-section">
+      <h4 class="analysis-section-title">1. Balance Operativo y Solvencia</h4>
+      <p class="analysis-paragraph">`;
     if (analysis.incomeExceeded) {
-      diagnosis += `<u>Alerta de Déficit Presupuestario:</u> Tus gastos en ${month} (${expStr}) superaron tus ingresos (${incStr}) por un monto de <strong>$${analysis.exceededAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>. Tus consumos alcanzaron el <strong>${analysis.ratioToIncome}%</strong> de tus recursos disponibles.<br><br>`;
+      html += `Durante <strong>${month}</strong> se registra un <strong>déficit presupuestario de ${this.money(analysis.exceededAmount)}</strong>. Los compromisos totales absorbieron el <strong>${analysis.ratioToIncome}%</strong> de los ingresos disponibles (${incStr}), lo que implica que se recurrió a ahorros previos o financiamiento con deuda para solventar la diferencia.`;
     } else if (analysis.ratioToIncome >= 90) {
-      diagnosis += `<u>Margen Financiero Ajustado:</u> Tus gastos consumen el <strong>${analysis.ratioToIncome}%</strong> de tus ingresos totales (${incStr}), dejándote con un remanente libre reducido de únicamente <strong>${balStr}</strong> para ahorros o eventualidades.<br><br>`;
+      html += `Tus finanzas operan con un <strong>margen de maniobra sumamente ajustado</strong>. Los egresos consumieron el <strong>${analysis.ratioToIncome}%</strong> de tus ingresos (${incStr}), preservando únicamente un remanente libre de <strong>${balStr}</strong>.`;
     } else {
-      diagnosis += `<u>Salud Financiera Estable:</u> Mantienes tus gastos (${expStr}) dentro del límite de tus ingresos (${incStr}), conservando una liquidez disponible de <strong>${balStr}</strong> (${100 - analysis.ratioToIncome}% de margen libre).<br><br>`;
+      html += `Mantienes una posición de <strong>solvencia y superávit saludable</strong>. Tus gastos consumieron el <strong>${analysis.ratioToIncome}%</strong> de tus ingresos, consolidando un margen neto de liquidez de <strong>${balStr}</strong> disponible para fondos de inversión o metas patrimoniales.`;
+    }
+    html += `</p></div>`;
+
+    // 2. Desglose Estructural (Regla 50/30/20)
+    html += `<div class="analysis-section">
+      <h4 class="analysis-section-title">2. Distribución Presupuestaria (Metodología 50/30/20)</h4>
+      <p class="analysis-paragraph">
+        Tus gastos de primera necesidad (vivienda, alimentación, servicios, transporte y deudas primarias) representan el <strong>${rule.essentialPct}%</strong> (${this.money(essData.essentialTotal)}). 
+        Por su parte, los desembolsos discrecionales en estilo de vida y ocio absorben el <strong>${rule.nonEssentialPct}%</strong> (${this.money(essData.nonEssentialTotal)}). 
+        ${rule.savingsPct > 0 ? `Tu capacidad efectiva de ahorro se sitúa en un <strong>${rule.savingsPct}%</strong> del ingreso.` : `Actualmente no existe margen efectivo para conformar ahorro este mes.`}
+      </p>
+    </div>`;
+
+    // 3. Fuga de Capital y Concentración
+    if (topCat) {
+      html += `<div class="analysis-section">
+        <h4 class="analysis-section-title">3. Concentración de Egresos y Fugas</h4>
+        <p class="analysis-paragraph">
+          La partida con mayor peso financiero este periodo es <strong>${topCat.name}</strong>, acumulando <strong>${this.money(topCat.amount)}</strong> (${topCat.percent}% del gasto total). 
+          ${analysis.ocioExp > 0 ? `Asimismo, el rubro de ocio y comidas fuera representó <strong>${ocioStr}</strong> (${analysis.ratioOcioToIncome}% del ingreso total).` : ''}
+        </p>
+      </div>`;
     }
 
-    // Análisis de Ocio y Gustos Prescindibles
-    if (analysis.ocioExp > 0) {
-      diagnosis += `<u>Impacto de Ocio y Comida Fuera:</u> Destinas <strong>${ocioStr}</strong> a conceptos prescindibles (ocio, restaurantes y ropa), lo que equivale al <strong>${analysis.ratioOcioToIncome}%</strong> de tus ingresos de este mes (${analysis.ratioOcioToExp}% de tu gasto total). `;
-      
-      if (analysis.ratioToIncome >= 85 && analysis.ocioExp > analysis.netBalance) {
-        const ahorroSugerido = Math.round(analysis.ocioExp * 0.35);
-        diagnosis += `Debido a que tu margen libre actual es de solo ${balStr}, tus consumos en ocio absorben casi la totalidad de tu capacidad de ahorro. Si optimizas un 35% de esta categoría, recuperarías <strong>$${ahorroSugerido.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN</strong> adicionales de liquidez mensual.<br><br>`;
-      } else {
-        diagnosis += `Este nivel de consumo se encuentra en un rango de equilibrio respecto a tus ingresos.<br><br>`;
-      }
-    }
+    // 4. Estrategia de Optimización Cuantificable
+    html += `<div class="analysis-section">
+      <h4 class="analysis-section-title">4. Plan de Acción y Ahorro Proyectado</h4>
+      <p class="analysis-paragraph">
+        Si moderas un 30% los consumos no prioritarios durante las próximas semanas, recuperarías <strong>${this.money(potential.monthly)} MXN mensuales</strong>, lo que equivale a una capitalización anual proyectada de <strong>${this.money(potential.annual)} MXN</strong> para tu fondo de respaldo ante emergencias.
+      </p>
+    </div>`;
 
-    // Análisis por Categorías Principales
-    if (expData.labels.length > 0) {
-      const topCatIndex = expData.values.indexOf(Math.max(...expData.values));
-      const topCatName = expData.labels[topCatIndex];
-      const topCatAmount = expData.values[topCatIndex];
-      const topCatPct = Math.round((topCatAmount / expData.total) * 100);
-
-      diagnosis += `<u>Concentración Principal:</u> La categoría con mayor impacto este mes es <strong>${topCatName}</strong> con <strong>$${topCatAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN</strong> (${topCatPct}% del presupuesto total).<br><br>`;
-    }
-
-    // Recomendación Final
-    diagnosis += `<strong><u>Recomendación Estratégica:</u></strong> Prioriza cubrir tus compromisos esenciales (${essData.essentialPercent}% del presupuesto) y establece un tope mensual para consumos en ocio equivalente al 15% de tus ingresos para consolidar tu fondo de emergencia.`;
-
-    return diagnosis;
-  }
-
-  dailyAverage = computed(() => {
-    const total = this.expCatData().total;
-    const now = new Date();
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    return Math.round(total / daysInMonth);
-  });
-
-  savingsRate = computed(() => {
-    const inc = this.incCatData().total;
-    const exp = this.expCatData().total;
-    if (inc === 0) return 0;
-    const rem = inc - exp;
-    return Math.max(0, Math.round((rem / inc) * 100));
-  });
-
-  constructor() {
-    effect(() => {
-      this.expCatData();
-      this.incCatData();
-      this.monthData();
-      this.essentialAnalysis();
-      setTimeout(() => this.renderCharts(), 0);
-    });
-  }
-
-  ngAfterViewInit() {
-    this.renderCharts();
-  }
-
-  ngOnDestroy() {
-    if (this.chartExpCatInstance) this.chartExpCatInstance.destroy();
-    if (this.chartIncCatInstance) this.chartIncCatInstance.destroy();
-    if (this.chartMonthInstance) this.chartMonthInstance.destroy();
-    if (this.chartEssentialInstance) this.chartEssentialInstance.destroy();
-  }
-
-  renderCharts() {
-    // 1. Gráfico de Esenciales vs No Esenciales 3D
-    const ess = this.essentialAnalysis();
-    if (this.chartEssentialInstance) this.chartEssentialInstance.destroy();
-    if ((ess.essentialTotal > 0 || ess.nonEssentialTotal > 0) && this.chartEssentialRef) {
-      this.chartEssentialInstance = new Chart(this.chartEssentialRef.nativeElement, {
-        type: 'doughnut',
-        data: {
-          labels: ['Gastos Esenciales', 'Gastos No Esenciales'],
-          datasets: [{
-            data: [ess.essentialTotal, ess.nonEssentialTotal],
-            backgroundColor: ['#059669', '#DC2626'],
-            borderWidth: 3,
-            borderColor: '#ffffff',
-            borderRadius: 8,
-            spacing: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '64%',
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    // 2. Gráfico Gastos por Categoría 3D
-    const exp = this.expCatData();
-    if (this.chartExpCatInstance) this.chartExpCatInstance.destroy();
-    if (exp.labels.length > 0 && this.chartExpCatRef) {
-      this.chartExpCatInstance = new Chart(this.chartExpCatRef.nativeElement, {
-        type: 'doughnut',
-        data: {
-          labels: exp.labels,
-          datasets: [{
-            data: exp.values,
-            backgroundColor: this.paletteExp,
-            borderWidth: 3,
-            borderColor: '#ffffff',
-            borderRadius: 6,
-            spacing: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    // 3. Gráfico Ingresos por Categoría 3D
-    const inc = this.incCatData();
-    if (this.chartIncCatInstance) this.chartIncCatInstance.destroy();
-    if (inc.labels.length > 0 && this.chartIncCatRef) {
-      this.chartIncCatInstance = new Chart(this.chartIncCatRef.nativeElement, {
-        type: 'doughnut',
-        data: {
-          labels: inc.labels,
-          datasets: [{
-            data: inc.values,
-            backgroundColor: this.paletteInc,
-            borderWidth: 3,
-            borderColor: '#ffffff',
-            borderRadius: 6,
-            spacing: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '62%',
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    // 4. Gráfico Histórico 6 Meses 3D
-    const month = this.monthData();
-    if (this.chartMonthInstance) this.chartMonthInstance.destroy();
-    if (month.keys.length > 0 && this.chartMonthRef) {
-      this.chartMonthInstance = new Chart(this.chartMonthRef.nativeElement, {
-        type: 'bar',
-        data: { 
-          labels: month.labels, 
-          datasets: [
-            { label: 'Ingresos', data: month.incValues, backgroundColor: '#059669', borderRadius: 8, borderSkipped: false },
-            { label: 'Gastos', data: month.expValues, backgroundColor: '#DC2626', borderRadius: 8, borderSkipped: false }
-          ] 
-        },
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false,
-          plugins: { legend: { display: true, labels: { color: 'var(--text)', font: { weight: 'bold' } } } },
-          scales: { 
-            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: 'var(--text-muted)' } }, 
-            x: { grid: { display: false }, ticks: { color: 'var(--text-muted)' } } 
-          }
-        }
-      });
-    }
-  }
-
-  getLegendItems(type: 'exp' | 'inc') {
-    const data = type === 'exp' ? this.expCatData() : this.incCatData();
-    const palette = type === 'exp' ? this.paletteExp : this.paletteInc;
-    return data.labels.map((label, i) => ({
-      label,
-      color: palette[i % palette.length],
-      percent: Math.round(data.values[i] / data.total * 100)
-    }));
-  }
-
-  money(amount: number) {
-    return this.financeService.currency() + amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    html += `</div>`;
+    return html;
   }
 }
