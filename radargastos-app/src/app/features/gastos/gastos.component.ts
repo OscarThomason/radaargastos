@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
 import { AiAdvisorService } from '../../core/services/ai-advisor.service';
-import { Expense, Income, N8nAgentResponse } from '../../core/models/finance.model';
+import { Expense, Income, N8nAgentResponse, Card } from '../../core/models/finance.model';
 import { StatCardComponent } from '../../core/components/stat-card/stat-card.component';
 import { ConfirmModalComponent } from '../../core/components/confirm-modal/confirm-modal.component';
 
@@ -21,13 +21,10 @@ export class GastosComponent {
   categories = this.financeService.expenseCategories;
   incomeCategories = this.financeService.incomeCategories;
 
-  // Estado IA Categorización
-  isAiCategorizing = signal(false);
-  aiAnalysisResult = signal<N8nAgentResponse | null>(null);
-  
   allExpenses = computed(() => this.financeService.state().expenses);
   allIncomes = computed(() => this.financeService.state().incomes);
-  cards = computed(() => this.financeService.state().cards || []);
+  debts = computed(() => this.financeService.state().debts || []);
+  cards = computed(() => this.financeService.cardsWithBalance());
 
   selectedMonth = signal<string>(new Date().toISOString().slice(0, 7));
   showTotals = signal(true);
@@ -35,6 +32,59 @@ export class GastosComponent {
   toggleTotals() {
     this.showTotals.set(!this.showTotals());
   }
+
+  /** Determina si un ingreso proviene de un préstamo recibido por el usuario (pasivo que no debe inflar ingresos propios) */
+  isLoanIncome(income?: Income | null): boolean {
+    if (!income) return false;
+    const cat = (income.category || '').toLowerCase().trim();
+    const desc = (income.description || '').toLowerCase().trim();
+
+    // Préstamos por cobrar representan préstamos otorgados por el usuario a terceros (activos recuperados), sí son dinero propio
+    if (cat.includes('por cobrar') || cat.includes('cobrado') || desc.includes('cobro préstamo') || desc.includes('abono a préstamo')) {
+      return false;
+    }
+
+    return cat.includes('préstamo') || cat.includes('prestamo') || /prestamo recibido|préstamo recibido|dinero prestado en mano/i.test(desc);
+  }
+
+  // --- Lógica de Dinero Prestado Activo en Mano (Ajuste por Fecha: Vigencia a partir de Octubre 2026) ---
+  private readonly startBorrowedTrackingMonth = '2026-10';
+
+  // 1. Ingresos clasificados como préstamos recibidos en mano desde Octubre 2026 hasta el mes seleccionado
+  activeBorrowedIncomes = computed(() => {
+    const activeMonth = this.selectedMonth();
+    return this.allIncomes()
+      .filter(i => {
+        const m = i.date.slice(0, 7);
+        return m >= this.startBorrowedTrackingMonth && m <= activeMonth && this.isLoanIncome(i);
+      })
+      .reduce((sum, i) => sum + i.amount, 0);
+  });
+
+  // 2. Gastos financiados con dinero prestado activo desde Octubre 2026 hasta el mes seleccionado
+  activeBorrowedSpent = computed(() => {
+    const activeMonth = this.selectedMonth();
+    return this.allExpenses()
+      .filter(e => {
+        const m = e.date.slice(0, 7);
+        return m >= this.startBorrowedTrackingMonth && m <= activeMonth && e.fundingSource === 'prestamo';
+      })
+      .reduce((sum, e) => sum + e.amount, 0);
+  });
+
+  // 3. Saldo disponible real en mano de Dinero Prestado Activo
+  activeBorrowedMoney = computed(() => {
+    return Math.max(0, this.activeBorrowedIncomes() - this.activeBorrowedSpent());
+  });
+
+  // Tarjetas de crédito y Crédito disponible a usar global
+  creditCards = computed(() => this.cards().filter(c => c.type === 'credito'));
+  totalAvailableCredit = computed(() => {
+    return this.creditCards().reduce((sum, c) => {
+      const avail = c.availableLimit !== undefined ? c.availableLimit : Math.max(0, (c.limit || 0) - (c.computedDebt || 0));
+      return sum + Math.max(0, avail);
+    }, 0);
+  });
 
   availableMonths = computed(() => {
     const months = new Set<string>();
@@ -107,6 +157,7 @@ export class GastosComponent {
     });
   });
 
+  // Saldo anterior acumulado de meses previos (sin distorsión retroactiva)
   pastBalance = computed(() => {
     const activeMonth = this.selectedMonth();
     const pastIn = this.allIncomes()
@@ -118,9 +169,32 @@ export class GastosComponent {
     return pastIn - pastEx;
   });
 
-  totalIncomes = computed(() => this.incomes().reduce((acc, curr) => acc + curr.amount, 0));
+  // Total de ingresos del mes: únicamente ingresos ordinarios propios (aislando préstamos recibidos para no inflar liquidez)
+  totalIncomes = computed(() => {
+    return this.incomes()
+      .filter(i => !this.isLoanIncome(i))
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  });
+
+  // Gastos del mes con fondos propios
+  ownExpenses = computed(() => {
+    return this.expenses()
+      .filter(e => e.fundingSource !== 'prestamo')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  });
+
+  // Gastos del mes financiados con dinero prestado activo
+  borrowedExpenses = computed(() => {
+    return this.expenses()
+      .filter(e => e.fundingSource === 'prestamo')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+  });
+
+  // Total de gastos del mes registrados
   totalExpenses = computed(() => this.expenses().reduce((acc, curr) => acc + curr.amount, 0));
-  balance = computed(() => this.pastBalance() + this.totalIncomes() - this.totalExpenses());
+
+  // Balance disponible propio en tiempo real (Saldo anterior + Ingresos propios - Gastos propios)
+  balance = computed(() => this.pastBalance() + this.totalIncomes() - this.ownExpenses());
 
   // Modales
   isExpenseModalOpen = false;
@@ -133,7 +207,71 @@ export class GastosComponent {
   exDesc = '';
   exAmount: number | null = null;
   exPaymentMethod = 'efectivo';
+  exFundingSource: 'propios' | 'prestamo' = 'propios';
   editingExId: string | null = null;
+  editingExOriginalBorrowedAmount = 0;
+  editingExOriginalAmount: number | null = null;
+  editingExOriginalPaymentMethod: string | null = null;
+
+  // Cupo de préstamo disponible para el modal actual (incluyendo el monto original si se está editando)
+  availableBorrowedForModal = computed(() => {
+    return this.activeBorrowedMoney() + this.editingExOriginalBorrowedAmount;
+  });
+
+  /** Retorna el saldo o límite disponible de una tarjeta, contemplando edición de gasto previo */
+  getCardAvailable(card: Card): number {
+    let available = 0;
+    if (card.type === 'credito') {
+      available = card.availableLimit !== undefined ? card.availableLimit : 0;
+    } else {
+      available = card.computedBalance !== undefined ? card.computedBalance : 0;
+    }
+
+    // Si estamos editando un gasto y este gasto ya estaba pagado con esta tarjeta, le sumamos de vuelta el monto original
+    if (this.editingExId && this.editingExOriginalPaymentMethod === card.id && this.editingExOriginalAmount) {
+      available += this.editingExOriginalAmount;
+    }
+
+    return Math.max(0, available);
+  }
+
+  /** Determina si una tarjeta debe estar deshabilitada por saldo <= 0 o por no cubrir el monto ingresado */
+  isCardDisabled(card: Card): boolean {
+    const available = this.getCardAvailable(card);
+    if (available <= 0) return true;
+    if (this.exAmount !== null && this.exAmount > 0 && this.exAmount > available) {
+      return true;
+    }
+    return false;
+  }
+
+  /** Determina si Dinero Prestado debe estar deshabilitado por saldo <= 0 o por no cubrir el monto ingresado */
+  isBorrowedDisabled(): boolean {
+    const available = this.availableBorrowedForModal();
+    if (available <= 0) return true;
+    if (this.exAmount !== null && this.exAmount > 0 && this.exAmount > available) {
+      return true;
+    }
+    return false;
+  }
+
+  /** Verifica si el método de pago actualmente seleccionado no cubre el monto ingresado */
+  isCurrentPaymentMethodInsufficient(): boolean {
+    if (this.exAmount === null || this.exAmount <= 0) return false;
+
+    if (this.exPaymentMethod === 'dinero_prestado') {
+      return this.exAmount > this.availableBorrowedForModal();
+    }
+
+    if (this.exPaymentMethod !== 'efectivo') {
+      const card = this.cards().find(c => c.id === this.exPaymentMethod);
+      if (card) {
+        return this.exAmount > this.getCardAvailable(card);
+      }
+    }
+
+    return false;
+  }
 
   inDate = new Date().toISOString().slice(0, 10);
   inCat = this.incomeCategories()[0];
@@ -144,12 +282,16 @@ export class GastosComponent {
 
   openAddExpenseModal() {
     this.editingExId = null;
+    this.editingExOriginalBorrowedAmount = 0;
+    this.editingExOriginalAmount = null;
+    this.editingExOriginalPaymentMethod = null;
     this.exDate = new Date().toISOString().slice(0, 10);
     this.exTime = new Date().toTimeString().slice(0, 5);
     this.exCat = this.categories()[0] || 'General';
     this.exDesc = '';
     this.exAmount = null;
     this.exPaymentMethod = 'efectivo';
+    this.exFundingSource = 'propios';
     this.isExpenseModalOpen = true;
   }
 
@@ -205,12 +347,22 @@ export class GastosComponent {
 
   editExpense(item: Expense) {
     this.editingExId = item.id;
+    this.editingExOriginalAmount = item.amount;
+    this.editingExOriginalPaymentMethod = item.paymentMethod || 'efectivo';
     this.exDate = item.date;
     this.exTime = item.time || '';
     this.exCat = item.category;
     this.exDesc = item.description;
     this.exAmount = item.amount;
-    this.exPaymentMethod = item.paymentMethod || 'efectivo';
+    const isBorrowed = item.fundingSource === 'prestamo' || item.paymentMethod === 'dinero_prestado';
+    this.exPaymentMethod = isBorrowed ? 'dinero_prestado' : (item.paymentMethod || 'efectivo');
+    this.exFundingSource = isBorrowed ? 'prestamo' : 'propios';
+    this.editingExOriginalBorrowedAmount = isBorrowed ? item.amount : 0;
+  }
+
+  onPaymentMethodChange(val: string) {
+    this.exPaymentMethod = val;
+    this.exFundingSource = val === 'dinero_prestado' ? 'prestamo' : 'propios';
   }
 
   editIncome(item: Income) {
@@ -222,54 +374,39 @@ export class GastosComponent {
     this.inPaymentMethod = item.paymentMethod || 'efectivo';
   }
 
-  onDescChange(val: string) {
-    this.exDesc = val;
-    if (!val.trim()) return;
-    // Categorización instantánea en tiempo real por coincidencia local
-    const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(undefined, val);
-    if (mapped && mapped !== 'Otros') {
-      this.exCat = mapped;
-    }
-  }
-
-  async autoCategorizeWithN8n() {
-    if (!this.exDesc.trim()) return;
-    this.isAiCategorizing.set(true);
-
-    const result = await this.aiAdvisor.queryN8nAgent({
-      tipo_solicitud: 'analisis_gasto',
-      descripcion: this.exDesc,
-      monto: this.exAmount || 0,
-      fecha: this.exDate,
-      metodo_pago: this.getCardName(this.exPaymentMethod),
-      categorias_validas: this.categories().join(', ')
-    });
-
-    this.isAiCategorizing.set(false);
-
-    // Mapear siempre con el respaldo inteligente local y n8n
-    const mapped = this.aiAdvisor.mapN8nCategoryToAppCategory(result?.categoria, this.exDesc);
-    this.exCat = mapped;
-
-    if (result) {
-      // Si n8n devolvió el mensaje génerico de "No hay concepto ni contexto suficiente", lo sanitizamos
-      if (result.analisis_financiero && result.analisis_financiero.toLowerCase().includes('no hay concepto')) {
-        const isEss = this.aiAdvisor.isEssential(mapped);
-        result.categoria = mapped;
-        result.nivel_necesidad = isEss ? 'Esencial' : 'Opcional';
-        result.analisis_financiero = `Gasto clasificado automáticamente en la categoría "${mapped}" basándonos en la descripción ingresada.`;
-        result.accion_recomendada = isEss ? 'Gasto necesario. Procurar comparar proveedores si es servicio recurrente.' : 'Evaluar si este gasto en ocio se alinea con tu presupuesto del mes.';
-      }
-      this.aiAnalysisResult.set(result);
-    }
-  }
-
   addExpense() {
     if (!this.exDate || this.exAmount === null) {
       alert('Completa fecha y monto'); return;
     }
 
-    const aiRes = this.aiAnalysisResult();
+    if (this.exAmount <= 0) {
+      alert('Ingresa un monto válido mayor a cero'); return;
+    }
+
+    const isBorrowed = this.exPaymentMethod === 'dinero_prestado' || this.exFundingSource === 'prestamo';
+
+    // Validación de Dinero Prestado Activo
+    if (isBorrowed) {
+      const availableBorrowed = this.availableBorrowedForModal();
+      if (this.exAmount > availableBorrowed) {
+        alert(`El monto ingresado (${this.money(this.exAmount)}) supera el saldo disponible de Dinero Prestado Activo (${this.money(availableBorrowed)}).`);
+        return;
+      }
+    }
+
+    // Validación de Tarjetas de Crédito / Débito
+    if (this.exPaymentMethod !== 'efectivo' && !isBorrowed) {
+      const selectedCard = this.cards().find(c => c.id === this.exPaymentMethod);
+      if (selectedCard) {
+        const available = this.getCardAvailable(selectedCard);
+        if (this.exAmount > available) {
+          const tipoTexto = selectedCard.type === 'credito' ? 'límite de crédito disponible' : 'saldo disponible';
+          alert(`La tarjeta "${selectedCard.name}" solo cuenta con ${this.money(available)} de ${tipoTexto} y no cubre este importe de ${this.money(this.exAmount)}.`);
+          return;
+        }
+      }
+    }
+
     const isEss = this.aiAdvisor.isEssential(this.exCat);
     
     const item: Expense = {
@@ -280,11 +417,9 @@ export class GastosComponent {
       description: this.exDesc.trim(),
       amount: this.exAmount,
       paymentMethod: this.exPaymentMethod,
-      esEvitable: aiRes ? aiRes.es_evitable : !isEss,
-      nivelNecesidad: aiRes ? aiRes.nivel_necesidad : (isEss ? 'Esencial' : 'Opcional'),
-      veredictoConsejero: aiRes?.veredicto_consejero,
-      analisisFinanciero: aiRes?.analisis_financiero,
-      accionRecomendada: aiRes?.accion_recomendada
+      fundingSource: isBorrowed ? 'prestamo' : 'propios',
+      esEvitable: !isEss,
+      nivelNecesidad: isEss ? 'Esencial' : 'Opcional'
     };
 
     if (this.editingExId) {
@@ -299,12 +434,15 @@ export class GastosComponent {
 
   cancelExEdit() {
     this.editingExId = null;
+    this.editingExOriginalBorrowedAmount = 0;
+    this.editingExOriginalAmount = null;
+    this.editingExOriginalPaymentMethod = null;
     this.exDate = new Date().toISOString().slice(0, 10);
     this.exTime = '';
     this.exDesc = '';
     this.exAmount = null;
     this.exPaymentMethod = 'efectivo';
-    this.aiAnalysisResult.set(null);
+    this.exFundingSource = 'propios';
     this.isExpenseModalOpen = false;
   }
 
@@ -392,6 +530,7 @@ export class GastosComponent {
 
   getCardName(id?: string) {
     if (!id || id === 'efectivo') return 'Efectivo';
+    if (id === 'dinero_prestado') return 'Dinero Prestado Activo';
     const c = this.cards().find(x => x.id === id);
     return c ? c.name : 'Efectivo';
   }

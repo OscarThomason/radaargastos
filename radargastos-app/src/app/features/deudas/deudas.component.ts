@@ -173,6 +173,27 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
   }
 
   consolidatedDebt = computed(() => this.financeService.totalConsolidatedDebt());
+  creditCards = computed(() => this.financeService.cardsWithBalance().filter(c => c.type === 'credito'));
+  totalCreditLimit = computed(() => this.creditCards().reduce((sum, c) => sum + (c.limit || 0), 0));
+  totalCreditDebt = computed(() => this.consolidatedDebt().creditCardsDebt);
+  totalAvailableCredit = computed(() => Math.max(0, this.totalCreditLimit() - this.totalCreditDebt()));
+  creditUsagePercentage = computed(() => {
+    const limit = this.totalCreditLimit();
+    if (limit <= 0) return 0;
+    return Math.min(100, Math.round((this.totalCreditDebt() / limit) * 100));
+  });
+  creditUsageStatus = computed(() => {
+    const pct = this.creditUsagePercentage();
+    if (pct <= 30) return 'Óptimo';
+    if (pct <= 50) return 'Moderado';
+    return 'Elevado';
+  });
+  creditUsageColor = computed(() => {
+    const pct = this.creditUsagePercentage();
+    if (pct <= 30) return '#0284C7';
+    if (pct <= 50) return '#0369A1';
+    return '#334155';
+  });
 
   // -- Préstamo --
   dTotal: number | null = null;
@@ -508,9 +529,9 @@ Evalúa si los compromisos de deuda han aumentado o disminuido, y brinda una est
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffDays = Math.ceil((anchorDate.getTime() - today.getTime()) / 86400000);
-    if (diffDays < 0) return '#D32F2F';
-    if (diffDays <= 2) return '#92400E';
-    return 'inherit';
+    if (diffDays < 0) return '#0369A1';
+    if (diffDays <= 2) return '#0284C7';
+    return '#64748B';
   }
 
   toggleExpand(id: string) {

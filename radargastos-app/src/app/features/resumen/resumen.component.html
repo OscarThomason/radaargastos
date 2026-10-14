@@ -52,12 +52,12 @@
              (dragleave)="onDayDragLeave($event, day)"
              (drop)="onDayDrop($event, day)">
           
-          <!-- Círculo del Día / Recuadro para día activo -->
+          <!-- Círculo del Día / Recuadro para día actual (fijo e inamovible) -->
           <div class="agenda-day-circle"
                [class.circle-debt]="day.hasDebts && !day.hasOverdue"
                [class.circle-overdue]="day.hasDebts && day.hasOverdue"
                [class.is-today]="day.isToday"
-               [class.is-active-day]="isActiveDay(day.date, day.isToday)"
+               [class.is-selected-day]="isSelectedDay(day.date)"
                (click)="selectDay(day.date); (day.hasDebts ? onMarkPaid({id: day.items[0].id, kind: day.items[0].kind}) : null)">
             <span class="agenda-day-num">{{ day.dayNum }}</span>
           </div>
@@ -132,11 +132,29 @@
   <div class="agenda-goals-container">
     <div class="agenda-goals-header">OBJETIVOS DEL MES:</div>
     <div class="agenda-goals-lined-sheet">
-      <!-- Dato solicitado: POR GENERAR ESTA SEMANA -->
-      <div class="goals-lined-row highlight-stat-row">
-        <span class="lined-label">POR GENERAR ESTA SEMANA:</span>
-        <strong class="lined-value stat-por-generar" [class.warn]="dineroRequeridoSemana() > 0">
+      <!-- Dato solicitado: POR GENERAR ESTA SEMANA (LUN - DOM) -->
+      <div class="goals-lined-row">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span class="lined-label">Por generar esta semana (Lun – Dom):</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">
+            Semana del {{ currentWeekRangeFormatted() }} • {{ currentWeekItems().length }} compromiso(s)
+          </span>
+        </div>
+        <strong class="lined-value week-goal-val">
           {{ showTotals() ? money(dineroRequeridoSemana()) : '****' }}
+        </strong>
+      </div>
+
+      <!-- Dato solicitado: POR GENERAR LA PRÓXIMA SEMANA (LUN - DOM) -->
+      <div class="goals-lined-row">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <span class="lined-label">Por generar la próxima semana (Lun – Dom):</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">
+            Semana del {{ nextWeekRangeFormatted() }} • {{ nextWeekItems().length }} compromiso(s)
+          </span>
+        </div>
+        <strong class="lined-value week-goal-val">
+          {{ showTotals() ? money(dineroRequeridoProximaSemana()) : '****' }}
         </strong>
       </div>
       <div class="goals-lined-row">
@@ -211,10 +229,11 @@
 </div>
 }
 
-<!-- MODAL MINIMALISTA PARA MOVER COMPROMISO DE DÍA -->
+<!-- MODAL DE CALENDARIO ESTRUCTURADO PARA MOVER COMPROMISO DE DÍA -->
 @if (isMoveDateModalOpen() && movingItem()) {
 <div class="modal-overlay" (click)="closeMoveDateModal()">
   <div class="modal-content move-date-modal" (click)="$event.stopPropagation()">
+    <!-- Cabecera del modal -->
     <div class="move-modal-header">
       <div class="move-modal-title-group">
         <span class="material-symbols-outlined move-header-icon">calendar_month</span>
@@ -227,28 +246,104 @@
     </div>
 
     <div class="move-modal-body">
-      <div class="move-month-hint">
-        Selecciona el día de <strong>{{ currentMonthTitle() }} {{ currentYear() }}</strong>:
+      <!-- Navegación de mes dentro del modal -->
+      <div class="move-calendar-header">
+        <button type="button" class="move-nav-btn" (click)="prevMoveModalMonth()" title="Mes anterior">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <span class="move-calendar-month-title">{{ moveModalMonthTitle() }} {{ moveModalYear() }}</span>
+        <button type="button" class="move-nav-btn" (click)="nextMoveModalMonth()" title="Siguiente mes">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
       </div>
 
-      <!-- Cuadrícula minimalista de días del mes -->
-      <div class="days-picker-grid">
-        @for (dNum of daysInCurrentCalendarMonth(); track dNum) {
-          <button type="button"
-                  class="day-picker-btn"
-                  [class.selected]="selectedNewDay() === dNum"
-                  (click)="selectedNewDay.set(dNum)">
-            {{ dNum }}
-          </button>
+      <!-- Leyenda visual de guía -->
+      <div class="move-calendar-legend">
+        <span class="legend-item"><span class="legend-box legend-today"></span> Hoy (Guía)</span>
+        <span class="legend-item"><span class="legend-box legend-other"></span> Otros pagos</span>
+        <span class="legend-item"><span class="legend-box legend-selected"></span> Nueva fecha</span>
+      </div>
+
+      <!-- Fila de días de la semana -->
+      <div class="move-weekdays-row">
+        <div>D</div>
+        <div>L</div>
+        <div>M</div>
+        <div>M</div>
+        <div>J</div>
+        <div>V</div>
+        <div>S</div>
+      </div>
+
+      <!-- Matriz estructurada del calendario -->
+      <div class="move-days-grid">
+        @for (week of moveModalCalendarWeeks(); track $index) {
+          @for (day of week; track day.date) {
+            @if (!day.isCurrentMonth) {
+              <div class="move-day-cell other-month">
+                <span class="move-day-num">{{ day.dayNum }}</span>
+              </div>
+            } @else {
+              <button type="button"
+                      class="move-day-cell current-month"
+                      [class.is-today]="day.isToday"
+                      [class.has-other-debts]="day.hasOtherDebts"
+                      [class.has-overdue]="day.hasOverdue"
+                      [class.is-selected]="selectedNewDay() === day.dayNum"
+                      [class.is-original-day]="day.isOriginalDay"
+                      (click)="selectedNewDay.set(day.dayNum)"
+                      [title]="getDayMoveTooltip(day)">
+                <span class="move-day-num">{{ day.dayNum }}</span>
+                @if (day.hasOtherDebts) {
+                  <span class="move-other-indicator" [class.overdue]="day.hasOverdue">
+                    <span class="indicator-dot"></span>
+                  </span>
+                }
+              </button>
+            }
+          }
         }
       </div>
 
+      <!-- Caja informativa y de guía de impacto -->
       <div class="move-summary-box">
-        <span class="summary-label">Nueva fecha programada:</span>
-        <strong class="summary-date">{{ selectedNewDay() }} de {{ currentMonthTitle() }} de {{ currentYear() }}</strong>
+        <div class="summary-primary-row">
+          <span class="summary-label">Nueva fecha programada:</span>
+          <strong class="summary-date">{{ selectedNewDay() }} de {{ moveModalMonthTitle() }} de {{ moveModalYear() }}</strong>
+        </div>
+
+        @if (selectedDayInfoInMoveModal().isToday) {
+          <div class="summary-guide-tag guide-today">
+            <span class="material-symbols-outlined guide-icon">my_location</span>
+            <span>Día de hoy (tu punto de referencia)</span>
+          </div>
+        }
+
+        @if (selectedDayInfoInMoveModal().isOriginal) {
+          <div class="summary-guide-tag guide-original">
+            <span class="material-symbols-outlined guide-icon">schedule</span>
+            <span>Fecha actual en la que está programado este compromiso</span>
+          </div>
+        }
+
+        @if (selectedDayInfoInMoveModal().otherCount > 0) {
+          <div class="summary-guide-tag guide-alert">
+            <span class="material-symbols-outlined guide-icon">info</span>
+            <div>
+              <strong>{{ selectedDayInfoInMoveModal().otherCount }} otro(s) pago(s) en este día ({{ money(selectedDayInfoInMoveModal().otherTotal) }}):</strong>
+              <div class="other-names-list">{{ selectedDayInfoInMoveModal().otherNames }}</div>
+            </div>
+          </div>
+        } @else {
+          <div class="summary-guide-tag guide-free">
+            <span class="material-symbols-outlined guide-icon">check_circle</span>
+            <span>Día libre de otros compromisos programados</span>
+          </div>
+        }
       </div>
     </div>
 
+    <!-- Botones de acción -->
     <div class="move-modal-actions">
       <button class="btn-ghost" (click)="closeMoveDateModal()">Cancelar</button>
       <button class="btn-primary" (click)="confirmMoveDate()">

@@ -8,68 +8,7 @@
   <button class="btn-primary" style="margin: 0;" (click)="openAddModal('credito')">+ Añadir Tarjeta</button>
 </div>
 
-<!-- Banner de Métricas Consolidadas -->
-<div class="card-panel" style="margin-bottom: 24px; padding: 16px 20px;">
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px;">
-    <!-- Deuda Total Consolidada -->
-    <div class="minimal-stat-box status-info">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">account_balance</span>
-        <span>Deuda Total Consolidada</span>
-      </div>
-      <p class="stat-box-text">
-        <strong>{{ money(consolidatedDebt().total) }}</strong>
-      </p>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap;">
-        <span>Préstamos: <strong>{{ money(consolidatedDebt().loansDebt) }}</strong></span>
-        <span>·</span>
-        <span>Tarjetas: <strong>{{ money(consolidatedDebt().creditCardsDebt) }}</strong></span>
-      </div>
-    </div>
 
-    <!-- Deuda en Tarjetas -->
-    <div class="minimal-stat-box status-warning">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">credit_card</span>
-        <span>Deuda en Tarjetas (Revolvente)</span>
-      </div>
-      <p class="stat-box-text">
-        <strong style="color: #DC2626;">{{ money(totalCreditDebt()) }}</strong>
-      </p>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-        En {{ creditCards().length }} {{ creditCards().length === 1 ? 'tarjeta de crédito' : 'tarjetas de crédito' }}
-      </div>
-    </div>
-
-    <!-- Línea de Crédito Global -->
-    <div class="minimal-stat-box">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">account_balance_wallet</span>
-        <span>Línea de Crédito Global</span>
-      </div>
-      <p class="stat-box-text">
-        <strong>{{ money(totalCreditLimit()) }}</strong>
-      </p>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-        Capacidad total de crédito autorizada
-      </div>
-    </div>
-
-    <!-- Crédito Disponible Global -->
-    <div class="minimal-stat-box status-success">
-      <div class="stat-box-header">
-        <span class="material-symbols-outlined">check_circle</span>
-        <span>Crédito Disponible Total</span>
-      </div>
-      <p class="stat-box-text">
-        <strong style="color: #059669;">{{ money(totalCreditAvailable()) }}</strong>
-      </p>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
-        Límite libre para nuevas operaciones
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- Cuadrícula Principal de Tarjetas -->
 <div class="grid-2col">
@@ -77,7 +16,7 @@
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
       <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-        <span class="material-symbols-outlined" style="font-size: 18px; color: #DC2626;">credit_card</span>
+        <span class="material-symbols-outlined" style="font-size: 18px; color: #0284C7;">credit_card</span>
         Tarjetas de Crédito ({{ creditCards().length }})
       </h3>
       <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" (click)="openAddModal('credito')">+ Crédito</button>
@@ -90,7 +29,7 @@
     }
 
     @for (c of creditCards(); track c.id) {
-      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 4px solid #DC2626; position: relative;">
+      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 3px solid #0284C7; position: relative;">
         <!-- Header de la tarjeta -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
           <div>
@@ -98,7 +37,7 @@
               <strong style="font-size: 17px; letter-spacing: -0.01em;">{{ c.name }}</strong>
               <span class="type-square-badge square-card" title="Tarjeta de Crédito">C</span>
               @if (c.catWithoutIva || c.cat) {
-                <span class="badge" style="font-size: 9px; background: #EFF6FF; color: #1D4ED8;">
+                <span class="badge" style="font-size: 9px; background: #F0F9FF; color: #0369A1; border: 1px solid #BAE6FD;">
                   CAT {{ c.catWithoutIva || c.cat }}% sin IVA
                 </span>
               }
@@ -110,12 +49,12 @@
 
           <div style="display: flex; gap: 4px;">
             <button class="action-btn-mini" title="Abonar a Tarjeta" (click)="openPayModal(c)">
-              <span class="material-symbols-outlined" style="font-size: 16px; color: #059669;">payments</span>
+              <span class="material-symbols-outlined" style="font-size: 16px; color: #0284C7;">payments</span>
             </button>
             <button class="action-btn-mini" title="Editar Tarjeta" (click)="openEditModal(c)">
               <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
             </button>
-            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #DC2626;" (click)="askDeleteCard(c.id, c.name)">
+            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #64748B;" (click)="askDeleteCard(c.id, c.name)">
               <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
             </button>
           </div>
@@ -130,7 +69,7 @@
           <div class="usage-progress-bar">
             <div class="usage-progress-fill" 
                  [style.width.%]="getCreditUsagePercent(c)"
-                 [style.background-color]="getCreditUsagePercent(c) > 70 ? '#DC2626' : (getCreditUsagePercent(c) > 35 ? '#D97706' : '#059669')">
+                 [style.background-color]="getCreditUsagePercent(c) > 70 ? '#0F172A' : (getCreditUsagePercent(c) > 35 ? '#0369A1' : '#0284C7')">
             </div>
           </div>
         </div>
@@ -139,13 +78,13 @@
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px;">
           <div>
             <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Deuda Actual</div>
-            <div style="font-size: 15px; font-weight: 700; color: #DC2626; margin-top: 2px;">
+            <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 2px;">
               {{ money(c.computedDebt !== undefined ? c.computedDebt : (c.debt || 0)) }}
             </div>
           </div>
           <div>
             <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Límite Disponible</div>
-            <div style="font-size: 15px; font-weight: 700; color: #059669; margin-top: 2px;">
+            <div style="font-size: 15px; font-weight: 700; color: #0284C7; margin-top: 2px;">
               {{ money(c.availableLimit !== undefined ? c.availableLimit : ((c.limit || 0) - (c.debt || 0))) }}
             </div>
           </div>
@@ -197,14 +136,14 @@
 
           <div class="financial-cell">
             <span class="cell-label">Comisión Pago Tardío</span>
-            <div class="cell-val" style="color: #DC2626;">
+            <div class="cell-val" style="color: #475569;">
               {{ c.latePaymentFee ? money(c.latePaymentFee) : 'No especificada' }}
             </div>
           </div>
 
           <div class="financial-cell">
             <span class="cell-label">Pago Para No Generar Intereses</span>
-            <div class="cell-val" style="color: #059669; font-weight: 600;">
+            <div class="cell-val" style="color: #0284C7; font-weight: 600;">
               {{ c.noInterest ? money(c.noInterest) : 'No definido' }}
             </div>
           </div>
@@ -236,7 +175,7 @@
   <div>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
       <h3 style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-        <span class="material-symbols-outlined" style="font-size: 18px; color: #059669;">account_balance</span>
+        <span class="material-symbols-outlined" style="font-size: 18px; color: #0284C7;">account_balance</span>
         Tarjetas de Débito & Cuentas ({{ debitCards().length }})
       </h3>
       <button class="btn-ghost" style="padding: 4px 10px; font-size: 11px;" (click)="openAddModal('debito')">+ Débito</button>
@@ -249,7 +188,7 @@
     }
 
     @for (c of debitCards(); track c.id) {
-      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 4px solid #059669; position: relative;">
+      <div class="card-panel card-item-panel" style="margin-bottom: 18px; border-left: 3px solid #64748B; position: relative;">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
           <div>
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -265,7 +204,7 @@
             <button class="action-btn-mini" title="Editar Tarjeta" (click)="openEditModal(c)">
               <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
             </button>
-            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #DC2626;" (click)="askDeleteCard(c.id, c.name)">
+            <button class="action-btn-mini" title="Eliminar Tarjeta" style="color: #64748B;" (click)="askDeleteCard(c.id, c.name)">
               <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
             </button>
           </div>
@@ -273,7 +212,7 @@
 
         <div style="padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 13px; color: var(--text-muted);">Saldo Disponible Actual:</span>
-          <strong style="font-size: 20px; color: #059669;">
+          <strong style="font-size: 20px; color: #0284C7;">
             {{ money(c.computedBalance !== undefined ? c.computedBalance : (c.balance || 0)) }}
           </strong>
         </div>
@@ -290,8 +229,8 @@
       
       <!-- Pestañas de tipo de tarjeta -->
       <div class="modal-tabs" style="margin-bottom: 16px;">
-        <button [class.active]="cType === 'credito'" (click)="cType = 'credito'">Tarjeta de Crédito</button>
-        <button [class.active]="cType === 'debito'" (click)="cType = 'debito'">Tarjeta de Débito</button>
+        <button [class.active]="cType === 'credito'" (click)="cType = 'credito'">Crédito</button>
+        <button [class.active]="cType === 'debito'" (click)="cType = 'debito'">Débito</button>
       </div>
 
       <div class="form-grid">
@@ -315,7 +254,7 @@
           @if (cLimit) {
             <div style="grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;">
               <span style="font-size: 13px; color: var(--text-muted);">Límite de Crédito Disponible:</span>
-              <strong [style.color]="cAvailableLimit > 0 ? '#059669' : '#DC2626'" style="font-size: 15px;">
+              <strong [style.color]="cAvailableLimit > 0 ? '#0284C7' : '#0F172A'" style="font-size: 15px;">
                 {{ money(cAvailableLimit) }}
               </strong>
             </div>
@@ -378,7 +317,7 @@
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
         <button class="btn-ghost" (click)="closeModal()">Cancelar</button>
         <button class="btn-primary" (click)="saveCard()">
-          {{ editingId ? 'Actualizar Tarjeta' : 'Guardar Tarjeta' }}
+          {{ editingId ? 'Actualizar' : 'Guardar' }}
         </button>
       </div>
     </div>
@@ -391,7 +330,7 @@
     <div class="modal-content" (click)="$event.stopPropagation()">
       <h3 style="margin-top: 0;">Abonar a Tarjeta: {{ payingCard.name }}</h3>
       <p style="font-size: 13px; color: var(--text-muted); margin-top: 0; margin-bottom: 16px;">
-        Deuda actual registrada: <strong style="color: #DC2626;">{{ money(payingCard.computedDebt || 0) }}</strong>
+        Deuda actual registrada: <strong style="color: #0F172A;">{{ money(payingCard.computedDebt || 0) }}</strong>
       </p>
 
       <div class="form-grid">

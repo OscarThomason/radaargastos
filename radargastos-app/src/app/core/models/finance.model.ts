@@ -68,6 +68,7 @@ export interface Expense {
   description: string;
   amount: number;
   paymentMethod?: string; // id de tarjeta o 'efectivo'
+  fundingSource?: 'propios' | 'prestamo'; // Método de financiamiento: 'propios' (por defecto) o 'prestamo'
   // Campos de Inteligencia IA FinOps (n8n)
   esEvitable?: boolean | null;
   nivelNecesidad?: 'Esencial' | 'Opcional' | 'Impulso' | 'Inversión';

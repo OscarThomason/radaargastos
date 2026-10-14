@@ -13,7 +13,13 @@ main {
 
 @media (max-width: 768px) {
   #app {
-    padding: 16px 12px 80px 32px; /* Reducido en móvil, línea roja a 20px */
+    padding: 16px 10px 80px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  #app {
+    padding: 12px 6px 80px 20px;
   }
 }
 

@@ -77,21 +77,23 @@ textarea {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  color: var(--text);
-  border-radius: var(--radius);
-  padding: 10px 12px;
-  font-size: 14px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid #CBD5E1;
+  color: var(--text, #0F172A);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13.5px;
   font-family: 'Sora', sans-serif;
   touch-action: manipulation;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--info);
+  border-color: #64748B;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.12);
 }
 
 button {
@@ -259,27 +261,27 @@ table.data-table tbody tr.row-expanded td:last-child {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &.square-loan {
-    background: #F5F3FF;
-    color: #6D28D9;
-    border: 1px solid #DDD6FE;
+    background: #F8FAFC;
+    color: #334155;
+    border: 1px solid #CBD5E1;
   }
 
   &.square-card {
+    background: #F0F9FF;
+    color: #0284C7;
+    border: 1px solid #BAE6FD;
+  }
+
+  &.square-essential {
     background: #F0F9FF;
     color: #0369A1;
     border: 1px solid #BAE6FD;
   }
 
-  &.square-essential {
-    background: #ECFDF5;
-    color: #047857;
-    border: 1px solid #A7F3D0;
-  }
-
   &.square-optional {
-    background: #FFFBEB;
-    color: #B45309;
-    border: 1px solid #FDE68A;
+    background: #F8FAFC;
+    color: #64748B;
+    border: 1px solid #E2E8F0;
   }
 
   &.square-service {
@@ -405,13 +407,13 @@ table.data-table tbody tr.row-expanded td:last-child {
 }
 
 .modal-content {
-  background: var(--surface);
-  border: 2px solid var(--border);
-  box-shadow: 6px 6px 0px rgba(0, 0, 0, 1);
-  padding: 20px;
-  border-radius: 16px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12), 0 8px 16px -6px rgba(15, 23, 42, 0.06);
+  padding: 22px;
+  border-radius: 14px;
   width: 100%;
-  max-width: 480px;
+  max-width: 500px;
   max-height: calc(100dvh - 28px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
@@ -423,35 +425,51 @@ table.data-table tbody tr.row-expanded td:last-child {
 
 .modal-content h3 {
   margin-top: 0;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   padding-bottom: 10px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid #E2E8F0;
   font-size: 16px;
+  font-weight: 700;
+  color: #0F172A;
 }
 
 .modal-tabs {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 16px;
   width: 100%;
   box-sizing: border-box;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 3px;
 }
 
 .modal-tabs button {
   flex: 1;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  padding: 10px 8px;
+  background: transparent;
+  border: none;
+  padding: 7px 12px;
   cursor: pointer;
-  border-radius: var(--radius);
+  border-radius: 7px;
   font-weight: 600;
-  transition: all 0.2s;
-  min-height: 44px;
+  font-size: 13px;
+  color: #64748B;
+  transition: all 0.18s ease;
+  min-height: 36px;
+  font-family: 'Sora', sans-serif;
+}
+
+.modal-tabs button:hover:not(.active) {
+  color: #0F172A;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .modal-tabs button.active {
-  background: var(--text);
-  color: var(--bg);
+  background: #FFFFFF;
+  color: #0F172A;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* Typography */
@@ -500,17 +518,23 @@ h2.section-title:first-child {
 
   main {
     padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-    padding-left: calc(10px + env(safe-area-inset-left, 0px));
-    padding-right: calc(10px + env(safe-area-inset-right, 0px));
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .summary-strip {
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   .grid-2col {
     grid-template-columns: 1fr !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
   .form-grid {
@@ -687,19 +711,87 @@ h2.section-title:first-child {
 }
 
 @media (max-width: 600px) {
+  .header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    .section-title {
+      font-size: 15px !important;
+      line-height: 1.2;
+    }
+
+    button.btn-primary {
+      margin: 0 !important;
+      padding: 6px 10px !important;
+      font-size: 11px !important;
+      min-height: 32px !important;
+      border-radius: 8px !important;
+      white-space: nowrap;
+    }
+  }
+
   .search-sort-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
   }
 
-  .search-input-wrapper,
+  .search-input-wrapper {
+    flex: 1;
+    min-width: 0;
+
+    .search-icon {
+      left: 8px;
+      font-size: 16px;
+    }
+
+    input {
+      font-size: 12px !important;
+      min-height: 34px !important;
+      padding: 5px 8px 5px 28px;
+    }
+
+    .clear-search-btn {
+      right: 6px;
+      .material-symbols-outlined {
+        font-size: 15px;
+      }
+    }
+  }
+
   .sort-selector-wrapper {
-    width: 100%;
+    flex-shrink: 0;
+    width: auto;
+
+    .sort-icon {
+      left: 6px;
+      font-size: 15px;
+    }
+
+    select {
+      font-size: 11px !important;
+      min-height: 34px !important;
+      padding: 5px 16px 5px 24px;
+      border-radius: 8px;
+    }
   }
 
-  .sort-selector-wrapper select {
-    width: 100%;
+  .card-panel {
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .type-square-badge {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    font-size: 9.5px !important;
+    border-radius: 5px !important;
   }
 }
 // FILAS EXPANDIBLES CON PANEL DE DETALLE

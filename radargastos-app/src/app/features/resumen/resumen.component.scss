@@ -203,28 +203,35 @@
     }
   }
 
-  // Recuadro verde para el día activo
+  // Recuadro verde para el DÍA ACTUAL - GUÍA PERMANENTE E INAMOVIBLE
+  &.is-today,
   &.is-active-day {
-    border: 2px solid #10B981;
+    border: 2px solid #10B981 !important;
     border-radius: 7px; // Recuadro elegante
-    color: #047857;
-    font-weight: 700;
-    background: rgba(16, 185, 129, 0.08);
+    color: #047857 !important;
+    font-weight: 800;
+    background: rgba(16, 185, 129, 0.12) !important;
 
     &.circle-debt {
-      background: #BAE6FD;
-      color: #0369A1;
-      border: 2px solid #10B981;
+      background: #BAE6FD !important;
+      color: #0369A1 !important;
+      border: 2px solid #10B981 !important;
       border-radius: 7px;
     }
 
     &.circle-overdue {
-      background: #FEE2E2;
-      color: #DC2626;
-      border: 2px solid #DC2626;
-      box-shadow: 0 0 0 2px #10B981;
+      background: #FEE2E2 !important;
+      color: #DC2626 !important;
+      border: 2px solid #DC2626 !important;
+      box-shadow: 0 0 0 2px #10B981 !important;
       border-radius: 7px;
     }
+  }
+
+  // Selección manual de cualquier otro día sin afectar al día actual
+  &.is-selected-day:not(.is-today) {
+    box-shadow: 0 0 0 2px #0284C7;
+    border-radius: 7px;
   }
 }
 
@@ -522,32 +529,12 @@
     border-bottom: 1px solid var(--border);
     font-size: 12px;
 
-    &.highlight-stat-row {
-      background: var(--surface2);
-      padding: 10px 14px;
-      border-radius: 6px;
-      margin-bottom: 10px;
-      border: 1px solid var(--border);
-
-      .lined-label {
-        font-weight: 800;
-        letter-spacing: 0.05em;
-        font-size: 12px;
-        color: var(--text);
-        text-transform: uppercase;
-      }
-
-      .stat-por-generar {
-        font-size: 18px;
-        font-weight: 800;
-        font-family: 'Sora', sans-serif;
-        color: var(--text);
-        letter-spacing: -0.02em;
-
-        &.warn {
-          color: #D97706;
-        }
-      }
+    .week-goal-val {
+      font-size: 13.5px;
+      font-weight: 700;
+      font-family: 'Sora', sans-serif;
+      color: #0284C7;
+      letter-spacing: -0.01em;
     }
 
     .lined-label {
@@ -582,15 +569,42 @@
     height: 30px;
     font-size: 12px;
   }
+
+  .agenda-goals-container {
+    margin-top: 16px;
+    padding-top: 10px;
+
+    .agenda-goals-header {
+      font-size: 11.5px;
+      margin-bottom: 6px;
+    }
+
+    .goals-lined-row {
+      padding: 5px 0;
+      font-size: 10.5px;
+
+      .lined-label {
+        font-size: 10.5px;
+      }
+
+      .week-goal-val {
+        font-size: 11.5px;
+      }
+
+      .lined-value {
+        font-size: 11px;
+      }
+    }
+  }
 }
 
 // ========================================
-// MODAL PARA MOVER DÍA DE COMPROMISO
+// MODAL PARA MOVER DÍA DE COMPROMISO (CALENDARIO ESTRUCTURADO)
 // ========================================
 .move-date-modal {
-  max-width: 440px !important;
-  width: 92% !important;
-  padding: 24px !important;
+  max-width: 450px !important;
+  width: 94% !important;
+  padding: 22px !important;
   border: 1.5px solid var(--border) !important;
   border-radius: 12px !important;
   background: var(--surface) !important;
@@ -599,7 +613,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 12px;
 
@@ -615,65 +629,288 @@
     }
   }
 
-  .move-month-hint {
-    font-size: 12.5px;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-  }
-
-  .days-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-
-  .day-picker-btn {
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface2);
-    border: 1px solid transparent;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text);
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    &:hover {
-      border-color: var(--border);
-      background: var(--surface);
-      transform: scale(1.05);
-    }
-
-    &.selected {
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-  }
-
-  .move-summary-box {
-    background: var(--surface2);
-    border: 1px dashed var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 12px;
+  // Cabecera de mes dentro del modal
+  .move-calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 
-    .summary-label {
-      color: var(--text-muted);
+    .move-calendar-month-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.02em;
+      font-family: 'Sora', sans-serif;
     }
 
-    .summary-date {
+    .move-nav-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
       color: var(--text);
-      font-weight: 800;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: var(--text);
+        color: var(--bg);
+        border-color: var(--text);
+      }
+
+      .material-symbols-outlined {
+        font-size: 18px;
+      }
+    }
+  }
+
+  // Leyenda de guía rápida
+  .move-calendar-legend {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .legend-box {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+
+      &.legend-today {
+        border: 2px solid #10B981;
+        background: rgba(16, 185, 129, 0.2);
+      }
+
+      &.legend-other {
+        background: #BAE6FD;
+        border: 1px solid #0284C7;
+      }
+
+      &.legend-selected {
+        background: #0F172A;
+        border: 1px solid #0F172A;
+      }
+    }
+  }
+
+  // Fila de días de la semana
+  .move-weekdays-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  // Matriz de días
+  .move-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 16px;
+  }
+
+  .move-day-cell {
+    height: 38px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    position: relative;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border: 1.5px solid transparent;
+    padding: 0;
+
+    &.other-month {
+      color: #9CA3AF;
+      opacity: 0.35;
+      background: transparent;
+      cursor: default;
+      user-select: none;
+    }
+
+    &.current-month {
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &:hover {
+        background: var(--surface);
+        border-color: var(--border);
+        transform: scale(1.08);
+        z-index: 2;
+      }
+    }
+
+    // Recuadro verde para el DÍA ACTUAL (GUÍA INAMOVIBLE)
+    &.is-today {
+      border: 2px solid #10B981 !important;
+      color: #047857 !important;
+      font-weight: 800 !important;
+      background: rgba(16, 185, 129, 0.12) !important;
+    }
+
+    // Día que ya tiene otros compromisos programados
+    &.has-other-debts {
+      background: #E0F2FE;
+      color: #0369A1;
+      font-weight: 700;
+
+      &.has-overdue {
+        background: #FEE2E2;
+        color: #DC2626;
+        border-color: rgba(220, 38, 38, 0.3);
+      }
+    }
+
+    // Indicador sutil para la fecha actual original del compromiso
+    &.is-original-day:not(.is-selected) {
+      border: 1.5px dashed #94A3B8;
+    }
+
+    // Día seleccionado por el usuario para reprogramar
+    &.is-selected {
+      background: #0F172A !important;
+      color: #ffffff !important;
+      border-color: #0F172A !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+      transform: scale(1.08);
+      z-index: 5;
+
+      .move-day-num {
+        color: #ffffff !important;
+      }
+
+      &.is-today {
+        border: 2px solid #10B981 !important;
+        box-shadow: 0 0 0 2px #0F172A, 0 4px 12px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    .move-day-num {
+      line-height: 1;
+    }
+
+    .move-other-indicator {
+      position: absolute;
+      bottom: 3px;
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      justify-content: center;
+
+      .indicator-dot {
+        width: 4.5px;
+        height: 4.5px;
+        border-radius: 50%;
+        background: #0284C7;
+      }
+
+      &.overdue .indicator-dot {
+        background: #DC2626;
+      }
+    }
+  }
+
+  // Caja de resumen informativa y preventiva
+  .move-summary-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    margin-bottom: 20px;
+
+    .summary-primary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+
+      .summary-label {
+        color: var(--text-muted);
+        font-size: 11.5px;
+      }
+
+      .summary-date {
+        color: var(--text);
+        font-weight: 800;
+        font-size: 13px;
+      }
+    }
+
+    .summary-guide-tag {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      line-height: 1.35;
+      margin-top: 6px;
+
+      .guide-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+        margin-top: 1px;
+      }
+
+      &.guide-today {
+        background: rgba(16, 185, 129, 0.12);
+        color: #047857;
+        font-weight: 600;
+      }
+
+      &.guide-original {
+        background: rgba(100, 116, 139, 0.1);
+        color: #475569;
+      }
+
+      &.guide-alert {
+        background: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+
+        .other-names-list {
+          font-size: 10.5px;
+          opacity: 0.95;
+          margin-top: 2px;
+          color: #78350F;
+        }
+      }
+
+      &.guide-free {
+        background: rgba(16, 185, 129, 0.08);
+        color: #059669;
+        font-weight: 600;
+      }
     }
   }
 

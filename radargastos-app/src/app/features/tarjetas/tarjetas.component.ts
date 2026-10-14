@@ -97,9 +97,9 @@ export class TarjetasComponent {
     today.setHours(0, 0, 0, 0);
     const due = new Date(dueDate + 'T00:00:00');
     const diffDays = Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays < 0) return '#DC2626';
-    if (diffDays <= 3) return '#D97706';
-    return '#059669';
+    if (diffDays < 0) return '#0369A1';
+    if (diffDays <= 3) return '#0284C7';
+    return '#64748B';
   }
 
   getCreditUsagePercent(card: Card): number {

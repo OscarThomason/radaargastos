@@ -17,15 +17,97 @@ export class ResumenComponent {
 
   upcomingItems = computed(() => this.financeService.getUpcomingItems());
   
-  dineroRequeridoSemana = computed(() => {
-    const vencimientosSemana = this.upcomingItems().filter(i => i.days <= 7);
-    const totalGastosSemana = vencimientosSemana.reduce((acc, item) => acc + item.amount, 0);
+  /** Rango estricto de Lunes a Domingo de la semana actual */
+  currentWeekRange = computed(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    return { monday, sunday };
+  });
+
+  currentWeekRangeFormatted = computed(() => {
+    const { monday, sunday } = this.currentWeekRange();
+    const monStr = monday.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+    const sunStr = sunday.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+    return `${monStr} al ${sunStr}`;
+  });
+
+  currentWeekItems = computed(() => {
+    const { monday, sunday } = this.currentWeekRange();
+    return this.upcomingItems().filter(item => {
+      const itemDate = new Date(item.due);
+      return itemDate >= monday && itemDate <= sunday;
+    });
+  });
+
+  totalCompromisosSemanaActual = computed(() => {
+    return this.currentWeekItems().reduce((acc, item) => acc + item.amount, 0);
+  });
+
+  /** Rango estricto de Lunes a Domingo de la próxima semana */
+  nextWeekRange = computed(() => {
+    const { monday } = this.currentWeekRange();
+    const nextMonday = new Date(monday);
+    nextMonday.setDate(monday.getDate() + 7);
+    nextMonday.setHours(0, 0, 0, 0);
+
+    const nextSunday = new Date(nextMonday);
+    nextSunday.setDate(nextMonday.getDate() + 6);
+    nextSunday.setHours(23, 59, 59, 999);
+
+    return { monday: nextMonday, sunday: nextSunday };
+  });
+
+  nextWeekRangeFormatted = computed(() => {
+    const { monday, sunday } = this.nextWeekRange();
+    const monStr = monday.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+    const sunStr = sunday.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
+    return `${monStr} al ${sunStr}`;
+  });
+
+  nextWeekItems = computed(() => {
+    const { monday, sunday } = this.nextWeekRange();
+    return this.upcomingItems().filter(item => {
+      const itemDate = new Date(item.due);
+      return itemDate >= monday && itemDate <= sunday;
+    });
+  });
+
+  totalCompromisosProximaSemana = computed(() => {
+    return this.nextWeekItems().reduce((acc, item) => acc + item.amount, 0);
+  });
+
+  saldoDisponiblePropio = computed(() => {
     const totalIn = this.financeService.state().incomes.reduce((acc, curr) => acc + curr.amount, 0);
     const totalEx = this.financeService.state().expenses.reduce((acc, curr) => acc + curr.amount, 0);
-    const saldoDisponible = totalIn - totalEx;
+    return Math.max(0, totalIn - totalEx);
+  });
+  
+  dineroRequeridoSemana = computed(() => {
+    const totalGastosSemana = this.totalCompromisosSemanaActual();
+    const saldoDisponible = this.saldoDisponiblePropio();
 
     const requerido = totalGastosSemana - saldoDisponible;
+    return requerido > 0 ? requerido : 0;
+  });
+
+  dineroRequeridoProximaSemana = computed(() => {
+    const totalGastosEstaSemana = this.totalCompromisosSemanaActual();
+    const saldoDisponible = this.saldoDisponiblePropio();
+
+    // El remanente disponible tras cubrir esta semana amortigua la siguiente
+    const remanenteParaProxima = Math.max(0, saldoDisponible - totalGastosEstaSemana);
+    const requerido = this.totalCompromisosProximaSemana() - remanenteParaProxima;
     return requerido > 0 ? requerido : 0;
   });
   
@@ -33,7 +115,7 @@ export class ResumenComponent {
   showReminderToast = signal(true);
 
   upcomingWeekPaymentInfo = computed(() => {
-    const weekItems = this.upcomingItems().filter(i => i.days >= 0 && i.days <= 7);
+    const weekItems = this.currentWeekItems();
     if (weekItems.length === 0) return null;
 
     const totalNeeded = weekItems.reduce((acc, item) => acc + item.amount, 0);
@@ -311,13 +393,16 @@ export class ResumenComponent {
     this.activeSelectedDate.set(d);
   }
 
-  isActiveDay(d: Date, isToday: boolean): boolean {
+  isSelectedDay(d: Date): boolean {
     const sel = this.activeSelectedDate();
-    if (sel) {
-      return sel.getFullYear() === d.getFullYear() &&
-             sel.getMonth() === d.getMonth() &&
-             sel.getDate() === d.getDate();
-    }
+    if (!sel) return false;
+    return sel.getFullYear() === d.getFullYear() &&
+           sel.getMonth() === d.getMonth() &&
+           sel.getDate() === d.getDate();
+  }
+
+  isActiveDay(d: Date, isToday: boolean): boolean {
+    // El recuadro verde siempre pertenece exclusivamente al día de hoy como guía fija
     return isToday;
   }
 
@@ -328,8 +413,165 @@ export class ResumenComponent {
   draggedItem = signal<any>(null);
   dragOverDayDate = signal<string | null>(null);
 
+  moveModalDate = signal<Date>(new Date());
+
+  moveModalMonthTitle = computed(() => {
+    const d = this.moveModalDate();
+    const str = d.toLocaleDateString('es-MX', { month: 'long' });
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  });
+
+  moveModalYear = computed(() => this.moveModalDate().getFullYear());
+
+  prevMoveModalMonth() {
+    const d = this.moveModalDate();
+    const nextD = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    this.moveModalDate.set(nextD);
+    this.adjustSelectedNewDayLimit(nextD);
+  }
+
+  nextMoveModalMonth() {
+    const d = this.moveModalDate();
+    const nextD = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    this.moveModalDate.set(nextD);
+    this.adjustSelectedNewDayLimit(nextD);
+  }
+
+  private adjustSelectedNewDayLimit(baseDate: Date) {
+    const maxDays = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0).getDate();
+    if (this.selectedNewDay() > maxDays) {
+      this.selectedNewDay.set(maxDays);
+    }
+  }
+
+  moveModalCalendarWeeks = computed(() => {
+    const baseDate = this.moveModalDate();
+    const year = baseDate.getFullYear();
+    const month = baseDate.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const startDayOfWeek = firstDay.getDay(); // 0 = Domingo
+    const daysInMonth = lastDay.getDate();
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+    const currentItem = this.movingItem();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const gridDays: any[] = [];
+
+    // Días del mes anterior
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(year, month - 1, prevMonthLastDay - i);
+      d.setHours(0, 0, 0, 0);
+      gridDays.push({
+        date: d,
+        dayNum: d.getDate(),
+        isCurrentMonth: false,
+        isToday: d.getTime() === today.getTime(),
+        isOriginalDay: false,
+        items: [],
+        otherItems: [],
+        hasOtherDebts: false,
+        hasOverdue: false,
+        otherTotalAmount: 0
+      });
+    }
+
+    // Días del mes actual
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(year, month, i);
+      d.setHours(0, 0, 0, 0);
+      const allItems = this.getUpcomingItemsForDate(d);
+      const otherItems = currentItem ? allItems.filter(it => it.id !== currentItem.id) : allItems;
+      const isOriginalDay = currentItem ? (new Date(currentItem.due).toDateString() === d.toDateString()) : false;
+
+      gridDays.push({
+        date: d,
+        dayNum: i,
+        isCurrentMonth: true,
+        isToday: d.getTime() === today.getTime(),
+        isOriginalDay,
+        items: allItems,
+        otherItems,
+        hasOtherDebts: otherItems.length > 0,
+        hasOverdue: otherItems.some(it => it.days < 0),
+        otherTotalAmount: otherItems.reduce((sum, it) => sum + (it.amount || 0), 0)
+      });
+    }
+
+    // Días del mes siguiente para completar la cuadrícula
+    const totalSlots = gridDays.length;
+    const remainingSlots = (7 - (totalSlots % 7)) % 7;
+    for (let i = 1; i <= remainingSlots; i++) {
+      const d = new Date(year, month + 1, i);
+      d.setHours(0, 0, 0, 0);
+      gridDays.push({
+        date: d,
+        dayNum: i,
+        isCurrentMonth: false,
+        isToday: d.getTime() === today.getTime(),
+        isOriginalDay: false,
+        items: [],
+        otherItems: [],
+        hasDebts: false,
+        hasOtherDebts: false,
+        hasOverdue: false,
+        otherTotalAmount: 0
+      });
+    }
+
+    const weeks: any[][] = [];
+    for (let i = 0; i < gridDays.length; i += 7) {
+      weeks.push(gridDays.slice(i, i + 7));
+    }
+    return weeks;
+  });
+
+  selectedDayInfoInMoveModal = computed(() => {
+    const dayNum = this.selectedNewDay();
+    const base = this.moveModalDate();
+    const d = new Date(base.getFullYear(), base.getMonth(), dayNum);
+    d.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const isToday = d.getTime() === today.getTime();
+
+    const currentItem = this.movingItem();
+    const isOriginal = currentItem ? (new Date(currentItem.due).toDateString() === d.toDateString()) : false;
+
+    const allItems = this.getUpcomingItemsForDate(d);
+    const otherItems = currentItem ? allItems.filter(it => it.id !== currentItem.id) : allItems;
+    const otherTotal = otherItems.reduce((sum, it) => sum + (it.amount || 0), 0);
+
+    return {
+      dayNum,
+      isToday,
+      isOriginal,
+      otherCount: otherItems.length,
+      otherTotal,
+      otherNames: otherItems.map(it => it.name).join(', ')
+    };
+  });
+
+  getDayMoveTooltip(day: any): string {
+    if (!day || !day.isCurrentMonth) return '';
+    let txt = `Día ${day.dayNum}`;
+    if (day.isToday) txt += ' (Hoy)';
+    if (day.isOriginalDay) txt += ' [Fecha actual]';
+    if (day.hasOtherDebts) {
+      txt += ` • ${day.otherItems.length} otro(s) pago(s): ${day.otherItems.map((i: any) => i.name).join(', ')}`;
+    } else {
+      txt += ' • Sin otros compromisos';
+    }
+    return txt;
+  }
+
   daysInCurrentCalendarMonth = computed(() => {
-    const base = this.currentCalendarDate();
+    const base = this.moveModalDate();
     const lastDay = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
     return Array.from({ length: lastDay }, (_, i) => i + 1);
   });
@@ -342,6 +584,7 @@ export class ResumenComponent {
     if (item.kind === 'tarjeta') return; // Excluir tarjetas de crédito
     this.movingItem.set(item);
     const itemDate = new Date(item.due);
+    this.moveModalDate.set(new Date(itemDate.getFullYear(), itemDate.getMonth(), 1));
     this.selectedNewDay.set(itemDate.getDate());
     this.isMoveDateModalOpen.set(true);
   }
@@ -354,12 +597,14 @@ export class ResumenComponent {
   confirmMoveDate() {
     const item = this.movingItem();
     if (!item) return;
-    this.moveItemToDay(item, this.selectedNewDay());
+    const base = this.moveModalDate();
+    const targetDate = new Date(base.getFullYear(), base.getMonth(), this.selectedNewDay());
+    this.moveItemToDate(item, targetDate);
     this.closeMoveDateModal();
   }
 
   moveItemToDay(item: any, dayNumber: number) {
-    const cur = this.currentCalendarDate();
+    const cur = this.moveModalDate();
     const targetDate = new Date(cur.getFullYear(), cur.getMonth(), dayNumber);
     this.moveItemToDate(item, targetDate);
   }

@@ -237,8 +237,8 @@ Evalúa cuáles servicios son realmente necesarios y cuáles suscripciones secun
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const diffDays = Math.ceil((anchorDate.getTime() - today.getTime()) / 86400000);
-    if (diffDays < 0) return '#D32F2F';
-    if (diffDays <= 2) return '#92400E';
-    return 'inherit';
+    if (diffDays < 0) return '#0369A1'; // Azul profundo para vencido
+    if (diffDays <= 2) return '#0284C7'; // Azul medio
+    return '#64748B'; // Gris pizarra
   }
 }

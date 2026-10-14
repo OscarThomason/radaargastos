@@ -25,19 +25,20 @@ import { CommonModule } from '@angular/common';
     .stat-card {
       background: var(--surface, #ffffff);
       border: 1px solid var(--border, #e2e8f0);
-      border-radius: 14px;
-      padding: 16px 18px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.02);
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.02);
       transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      min-height: 68px;
     }
 
     .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
     }
 
     .stat-card-header {
@@ -48,20 +49,20 @@ import { CommonModule } from '@angular/common';
     }
 
     .label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted, #64748b);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       font-weight: 700;
       white-space: normal;
-      line-height: 1.25;
+      line-height: 1.2;
       flex: 1;
     }
 
     .icon-box {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
       background: var(--surface2, #f1f5f9);
       color: var(--text-muted, #64748b);
       display: flex;
@@ -71,7 +72,7 @@ import { CommonModule } from '@angular/common';
     }
 
     .icon-box .material-symbols-outlined {
-      font-size: 18px;
+      font-size: 15px;
     }
 
     .icon-box.danger,
@@ -92,14 +93,14 @@ import { CommonModule } from '@angular/common';
     }
 
     .value {
-      font-size: 22px;
-      font-weight: 800;
-      margin-top: 8px;
+      font-size: 17px;
+      font-weight: 700;
+      margin-top: 4px;
       font-family: 'Sora', sans-serif;
       color: var(--text, #0f172a);
       letter-spacing: -0.02em;
       white-space: normal;
-      line-height: 1.25;
+      line-height: 1.2;
     }
 
     .value.danger,
@@ -117,15 +118,16 @@ import { CommonModule } from '@angular/common';
     }
 
     .subtext {
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted, #64748b);
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     @media (max-width: 600px) {
       .stat-card {
-        padding: 12px 14px;
-        border-radius: 12px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        min-height: 60px;
       }
 
       .label {

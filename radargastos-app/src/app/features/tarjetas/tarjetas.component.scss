@@ -71,35 +71,7 @@
   }
 }
 
-.modal-tabs {
-  display: flex;
-  gap: 8px;
-  border-bottom: 1.5px solid var(--border);
-  padding-bottom: 8px;
 
-  button {
-    background: transparent;
-    border: 1px solid transparent;
-    padding: 6px 14px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    transition: all 0.2s ease;
-
-    &.active {
-      background: var(--text);
-      color: var(--bg);
-      border-color: var(--text);
-    }
-
-    &:hover:not(.active) {
-      background: var(--surface2);
-      color: var(--text);
-    }
-  }
-}
 
 .card-item-panel {
   transition: transform 0.15s ease, box-shadow 0.15s ease;

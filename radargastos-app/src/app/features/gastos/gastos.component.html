@@ -1,19 +1,31 @@
 <div class="month-selector-bar">
-  <div style="display: flex; align-items: center; gap: 8px;">
+  <div class="title-with-actions">
     <h2 class="section-title" style="margin: 0;">Resumen del mes</h2>
     <button class="btn-ghost" style="padding: 4px; border: none; margin-top: 0; min-width: unset;"
-      (click)="toggleTotals()">
-      <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off'
-        }}</span>
+      (click)="toggleTotals()" [title]="showTotals() ? 'Ocultar montos' : 'Mostrar montos'">
+      <span class="material-symbols-outlined" style="font-size: 20px;">{{ showTotals() ? 'visibility' : 'visibility_off' }}</span>
     </button>
   </div>
-  <div class="selector-wrapper">
-    <label>Historial Mensual: </label>
-    <select (change)="onMonthChange($event)" [value]="selectedMonth()">
-      @for (m of availableMonths(); track m) {
-      <option [value]="m">{{ formatMonth(m) }}</option>
-      }
-    </select>
+  
+  <div class="header-right-controls">
+    <!-- Botones solo con símbolo para Egreso (Gasto) e Ingreso -->
+    <div class="symbol-actions-group">
+      <button class="btn-symbol-action expense" (click)="openAddExpenseModal()" title="Registrar Gasto (Egreso)">
+        <span class="material-symbols-outlined">trending_down</span>
+      </button>
+      <button class="btn-symbol-action income" (click)="openAddIncomeModal()" title="Registrar Ingreso">
+        <span class="material-symbols-outlined">trending_up</span>
+      </button>
+    </div>
+
+    <div class="selector-wrapper">
+      <label>Historial Mensual: </label>
+      <select (change)="onMonthChange($event)" [value]="selectedMonth()">
+        @for (m of availableMonths(); track m) {
+        <option [value]="m">{{ formatMonth(m) }}</option>
+        }
+      </select>
+    </div>
   </div>
 </div>
 
@@ -30,18 +42,35 @@
   <app-stat-card label="Balance Disponible" [value]="showTotals() ? money(balance()) : '****'"
     [valueClass]="balance() < 0 ? 'expense' : 'income'" icon="account_balance">
   </app-stat-card>
-</div>
+  
+  <!-- Recuadro Dual: Dinero Prestado Activo + Crédito Disponible a Usar -->
+  <div class="stat-card dual-credit-loan-card">
+    <div class="dual-metric-section">
+      <div class="metric-top">
+        <span class="metric-label" title="Dinero prestado en mano (capital ajeno)">Prestado</span>
+        <div class="mini-icon-box warn">
+          <span class="material-symbols-outlined">handshake</span>
+        </div>
+      </div>
+      <div class="metric-value warn" [title]="showTotals() ? money(activeBorrowedMoney()) : '****'">
+        {{ showTotals() ? money(activeBorrowedMoney()) : '****' }}
+      </div>
+    </div>
 
-<!-- Botones de Acción Principal Minimalistas -->
-<div class="action-buttons-bar">
-  <button class="btn-action-expense" (click)="openAddExpenseModal()" title="Registrar un nuevo gasto">
-    <span class="material-symbols-outlined">trending_down</span>
-    <span>Registrar Gasto</span>
-  </button>
-  <button class="btn-action-income" (click)="openAddIncomeModal()" title="Registrar un nuevo ingreso">
-    <span class="material-symbols-outlined">trending_up</span>
-    <span>Registrar Ingreso</span>
-  </button>
+    <div class="dual-metric-divider"></div>
+
+    <div class="dual-metric-section">
+      <div class="metric-top">
+        <span class="metric-label" title="Crédito disponible total a usar en tarjetas">Crédito Disp.</span>
+        <div class="mini-icon-box credit">
+          <span class="material-symbols-outlined">credit_card</span>
+        </div>
+      </div>
+      <div class="metric-value credit" [title]="showTotals() ? money(totalAvailableCredit()) : '****'">
+        {{ showTotals() ? money(totalAvailableCredit()) : '****' }}
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Barra de Búsqueda y Ordenamiento -->
@@ -69,7 +98,7 @@
 
   <div class="grid-2col">
     <!-- Columna de Gastos del Mes -->
-    <div>
+    <div style="min-width: 0; max-width: 100%;">
       <h2 class="section-title" style="margin-top: 0;">Gastos del Mes ({{ expenses().length }})</h2>
       <div class="card-panel" style="padding: 14px;">
         <div class="expense-log">
@@ -78,14 +107,20 @@
           } @else {
             @for (e of expenses(); track e.id) {
               <div class="exp-row hoverable minimal-row" (click)="showItemDetails('expense', e)" title="Clic para ver detalles">
-                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                <div class="row-left-content">
                   <span class="type-square-badge square-expense" [title]="'Gasto: ' + e.category">G</span>
                   <span class="badge-subtle">{{ e.category }}</span>
+                  @if (e.fundingSource === 'prestamo') {
+                    <span class="badge-borrowed-chip" title="Financiado con dinero prestado activo">
+                      <span class="material-symbols-outlined" style="font-size: 13px;">handshake</span>
+                      Pagado con: Préstamo
+                    </span>
+                  }
                   <span class="truncate-text" style="font-weight: 500; color: #0F172A;">{{e.description || 'Gasto'}}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <div class="row-right-content">
                   <span class="exp-amount txt-expense" style="font-weight: 700;">{{ showTotals() ? money(e.amount) : '****' }}</span>
-                  <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+                  <span class="material-symbols-outlined chevron-icon">chevron_right</span>
                 </div>
               </div>
             }
@@ -95,7 +130,7 @@
     </div>
 
     <!-- Columna de Ingresos del Mes -->
-    <div>
+    <div style="min-width: 0; max-width: 100%;">
       <h2 class="section-title" style="margin-top: 0;">Ingresos del Mes ({{ incomes().length }})</h2>
       <div class="card-panel" style="padding: 14px;">
         <div class="expense-log">
@@ -104,14 +139,14 @@
           } @else {
             @for (i of incomes(); track i.id) {
               <div class="exp-row hoverable minimal-row" (click)="showItemDetails('income', i)" title="Clic para ver detalles">
-                <div style="display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1;">
+                <div class="row-left-content">
                   <span class="type-square-badge square-income" [title]="'Ingreso: ' + (i.category || 'Ingreso')">I</span>
                   <span class="badge-subtle-blue">{{ i.category || 'Ingreso' }}</span>
                   <span class="truncate-text" style="font-weight: 500; color: #0F172A;">{{i.description || 'Ingreso'}}</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <div class="row-right-content">
                   <span class="exp-amount txt-income" style="font-weight: 700;">{{ showTotals() ? '+' + money(i.amount) : '****' }}</span>
-                  <span class="material-symbols-outlined" style="font-size: 18px; color: var(--text-muted);">chevron_right</span>
+                  <span class="material-symbols-outlined chevron-icon">chevron_right</span>
                 </div>
               </div>
             }
@@ -139,35 +174,43 @@
       </div>
       <div>
         <label>Descripción</label>
-        <input [(ngModel)]="exDesc" (ngModelChange)="onDescChange($event)" (blur)="autoCategorizeWithN8n()" placeholder="Ej. Starbucks, Súper Chedraui, Uber, Renta de la casa">
+        <input [(ngModel)]="exDesc" placeholder="Ej. Starbucks, Súper Chedraui, Uber, Renta de la casa">
       </div>
       <div><label>Monto</label><input [(ngModel)]="exAmount" type="number" step="0.01" placeholder="0.00"></div>
       <div style="grid-column: 1 / -1;">
-        <label>Método de Pago</label>
-        <select [(ngModel)]="exPaymentMethod">
-          <option value="efectivo">Efectivo</option>
-          @for (c of cards(); track c.id) {
-          <option [value]="c.id">{{ c.name }}</option>
-          }
-        </select>
-      </div>
-
-      @if (aiAnalysisResult()) {
-        <div style="grid-column: 1 / -1; background: var(--surface2); padding: 12px; border-radius: 10px; font-size: 12px; border-left: 4px solid var(--accent); margin-top: 6px;">
-          <div style="font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: space-between;">
-            <span>🤖 FinOps Agent n8n: {{ aiAnalysisResult()?.categoria }}</span>
-            <span class="badge" [style.background]="aiAnalysisResult()?.es_evitable ? '#FEE2E2' : '#D1FAE5'" [style.color]="aiAnalysisResult()?.es_evitable ? '#DC2626' : '#059669'">
-              {{ aiAnalysisResult()?.nivel_necesidad || 'Evaluado' }}
+        <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span>Método de Pago</span>
+          @if (exPaymentMethod === 'dinero_prestado') {
+            <span class="badge-borrowed-chip">
+              <span class="material-symbols-outlined">handshake</span>
+              Dinero Prestado Activo
             </span>
+          }
+        </label>
+        <select [(ngModel)]="exPaymentMethod" (ngModelChange)="onPaymentMethodChange($event)">
+          <option value="efectivo">💵 Efectivo</option>
+          @for (c of cards(); track c.id) {
+            <option [value]="c.id" [disabled]="isCardDisabled(c)">
+              {{ c.type === 'credito' ? '💳' : '🏦' }} {{ c.name }} (Disponible: {{ money(getCardAvailable(c)) }}){{ isCardDisabled(c) ? ' - Insuficiente' : '' }}
+            </option>
+          }
+          <option value="dinero_prestado" [disabled]="isBorrowedDisabled()">
+            🤝 Dinero Prestado (Disponible: {{ money(availableBorrowedForModal()) }}){{ isBorrowedDisabled() ? ' - Insuficiente' : '' }}
+          </option>
+        </select>
+        @if (exPaymentMethod === 'dinero_prestado') {
+          <div class="funding-notice-borrowed">
+            <span class="material-symbols-outlined">info</span>
+            <span>Este gasto se restará de tu <strong>Dinero Prestado Activo</strong> y <strong>no descontará</strong> de tu Balance Disponible propio.</span>
           </div>
-          @if (aiAnalysisResult()?.es_evitable) {
-            <div style="color: #DC2626; font-weight: 700; margin-top: 4px;">⚠️ Detectado como gasto evitable / prescindible</div>
-          }
-          @if (aiAnalysisResult()?.analisis_financiero) {
-            <div style="margin-top: 4px; color: var(--text-muted); font-style: italic;">"{{ aiAnalysisResult()?.analisis_financiero }}"</div>
-          }
-        </div>
-      }
+        }
+        @if (isCurrentPaymentMethodInsufficient()) {
+          <div class="funding-notice-danger" style="display: flex; align-items: center; gap: 8px; background: #FEF2F2; border: 1px solid #FEE2E2; border-left: 3px solid #EF4444; border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-size: 12px; color: #991B1B;">
+            <span class="material-symbols-outlined" style="font-size: 17px; color: #EF4444; flex-shrink: 0;">error</span>
+            <span>El método seleccionado no cuenta con suficiente saldo disponible para cubrir este importe.</span>
+          </div>
+        }
+      </div>
     </div>
     <div style="display:flex; gap:10px; justify-content: flex-end; margin-top: 20px;">
       <button class="btn-ghost" (click)="cancelExEdit()">Cancelar</button>
@@ -256,6 +299,22 @@
         <span style="font-size: 12px; color: var(--text-muted);">Cuenta / Método</span>
         <span style="font-size: 13px; font-weight: 600;">{{ getCardName(selectedDetailData.paymentMethod) }}</span>
       </div>
+      @if (selectedDetailIsExpense) {
+        <div
+          style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 6px;">
+          <span style="font-size: 12px; color: var(--text-muted);">Financiado con</span>
+          <span style="font-size: 13px; font-weight: 600;">
+            @if (selectedDetailData.fundingSource === 'prestamo') {
+              <span class="badge-borrowed-chip">
+                <span class="material-symbols-outlined" style="font-size: 13px;">handshake</span>
+                Dinero Prestado Activo
+              </span>
+            } @else {
+              <span style="color: var(--text);">Fondos propios</span>
+            }
+          </span>
+        </div>
+      }
       <div style="display: flex; justify-content: space-between;">
         <span style="font-size: 12px; color: var(--text-muted);">Tipo</span>
         <span class="badge" [class.bg-safe-dim]="!selectedDetailIsExpense" [class.txt-safe]="!selectedDetailIsExpense">

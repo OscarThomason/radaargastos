@@ -184,6 +184,21 @@ export class ChatbotModalComponent implements AfterViewChecked {
       .filter(e => /presté|prestamo a|prestamo otorgado|dinero prestado/i.test(e.description || '') || (e.category && e.category.toLowerCase().includes('préstamo por cobrar')))
       .reduce((acc, curr) => acc + curr.amount, 0);
 
+    // Dinero prestado recibido por el usuario (en mano / activo a partir de Octubre 2026)
+    const gastosFinanciadosConPrestamo = s.expenses
+      .filter(e => e.date.slice(0, 7) >= '2026-10' && e.fundingSource === 'prestamo')
+      .reduce((acc, e) => acc + e.amount, 0);
+    const ingresosPrestamosRecibidos = s.incomes
+      .filter(i => {
+        const m = i.date.slice(0, 7);
+        const cat = (i.category || '').toLowerCase();
+        const desc = (i.description || '').toLowerCase();
+        const isCobrar = cat.includes('por cobrar') || cat.includes('cobrado');
+        return m >= '2026-10' && !isCobrar && (cat.includes('préstamo') || cat.includes('prestamo') || /prestamo recibido|préstamo recibido/i.test(desc));
+      })
+      .reduce((acc, i) => acc + i.amount, 0);
+    const dineroPrestadoEnMano = Math.max(0, ingresosPrestamosRecibidos - gastosFinanciadosConPrestamo);
+
     const saldoPendientePorCobrar = Math.max(0, prestamosPorCobrarOtorgados - prestamosPorCobrarAbonos);
 
     // 5. Gastos desglosados por categoría
@@ -217,6 +232,12 @@ export class ChatbotModalComponent implements AfterViewChecked {
         compromiso_semana_7_dias: totalDueNext7Days,
         por_generar_esta_semana: dineroRequerido
       },
+      dinero_prestado_en_mano: {
+        etiqueta: 'Dinero Prestado en Mano',
+        monto_activo: dineroPrestadoEnMano,
+        gastado_con_prestamo: gastosFinanciadosConPrestamo,
+        criterio_liquidez: 'Capital temporal ajeno en mano. NO cuenta como ingreso propio ni saldo libre disponible.'
+      },
       prestamos_por_cobrar: {
         etiqueta: 'Préstamos por Cobrar',
         saldo_pendiente_por_cobrar: saldoPendientePorCobrar,
@@ -244,7 +265,7 @@ export class ChatbotModalComponent implements AfterViewChecked {
         detalle: creditCards
       },
       deudas_y_prestamos: {
-        deuda_consolidada_total: consolidated.total,
+        deuda_consolidada_total: consolidated.loansDebt, // No incluye importe de tarjetas de crédito
         deuda_prestamos: consolidated.loansDebt,
         prestamos_activos: loans
       },
