@@ -13,7 +13,7 @@ const DEFAULT_STATE: AppState = {
   incomes: [],
   weeklyBudgets: [],
   customExpenseCategories: [...CATEGORIES],
-  customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'],
+  customIncomeCategories: ['Sueldo', 'Negocio', 'Préstamos por Cobrar', 'Regalías'],
   cards: [],
   history: [],
   currency: '$'
@@ -39,7 +39,7 @@ export class FinanceService {
     const s = this.state();
     return s.customIncomeCategories && s.customIncomeCategories.length > 0 
       ? s.customIncomeCategories 
-      : ['Sueldo', 'Negocio', 'Préstamos', 'Regalías'];
+      : ['Sueldo', 'Negocio', 'Préstamos por Cobrar', 'Regalías'];
   });
 
   /** Formatea una hora en formato 'HH:MM' según la preferencia del usuario ('12h' o '24h') */

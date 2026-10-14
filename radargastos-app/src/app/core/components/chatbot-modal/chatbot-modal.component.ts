@@ -165,7 +165,7 @@ export class ChatbotModalComponent implements AfterViewChecked {
     const totalCreditDebt = creditCards.reduce((acc, c) => acc + c.deuda_actual, 0);
     const totalCreditLimit = creditCards.reduce((acc, c) => acc + c.limite_total, 0);
 
-    // 4. Préstamos y Deudas
+    // 4. Préstamos por cobrar y Deudas
     const consolidated = this.financeService.totalConsolidatedDebt();
     const loans = (s.debts || []).filter(d => d.group === 'prestamo').map(l => ({
       nombre: l.name,
@@ -174,6 +174,17 @@ export class ChatbotModalComponent implements AfterViewChecked {
       cuota_mensual: l.cuota || 0,
       cat: l.cat || null
     }));
+
+    // Dinero prestado a terceros (Préstamos por cobrar)
+    const prestamosPorCobrarAbonos = s.incomes
+      .filter(i => (i.category && (i.category.toLowerCase().includes('préstamo') || i.category.toLowerCase().includes('prestamo'))) || /préstamo cobrado|abono préstamo|pago de préstamo/i.test(i.description || ''))
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    const prestamosPorCobrarOtorgados = s.expenses
+      .filter(e => /presté|prestamo a|prestamo otorgado|dinero prestado/i.test(e.description || '') || (e.category && e.category.toLowerCase().includes('préstamo por cobrar')))
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    const saldoPendientePorCobrar = Math.max(0, prestamosPorCobrarOtorgados - prestamosPorCobrarAbonos);
 
     // 5. Gastos desglosados por categoría
     const catMap: { [cat: string]: number } = {};
@@ -205,6 +216,12 @@ export class ChatbotModalComponent implements AfterViewChecked {
         saldo_libre_disponible: saldoDisponible,
         compromiso_semana_7_dias: totalDueNext7Days,
         por_generar_esta_semana: dineroRequerido
+      },
+      prestamos_por_cobrar: {
+        etiqueta: 'Préstamos por Cobrar',
+        saldo_pendiente_por_cobrar: saldoPendientePorCobrar,
+        abonos_o_pagos_recibidos: prestamosPorCobrarAbonos,
+        criterio_liquidez: 'El capital por cobrar permanece FUERA de los ingresos disponibles hasta que esté efectivamente liquidado.'
       },
       compromisos_urgentes: {
         pagos_vencidos_total: overdue.length,
@@ -440,7 +457,26 @@ export class ChatbotModalComponent implements AfterViewChecked {
       };
     }
 
-    // 5. CONSULTA DE DEUDAS Y PRÉSTAMOS (TOTALES Y ESTRATEGIA)
+    // 5. CONSULTA DE DINERO PRESTADO A TERCEROS / PRÉSTAMOS POR COBRAR
+    if (/prestado|presté|dinero prestado|me deben|por cobrar|préstamos por cobrar|prestamos por cobrar|abono de préstamo|liquidar préstamo por cobrar/i.test(lowerQuery)) {
+      return {
+        id: 'bot_' + Date.now(),
+        sender: 'bot',
+        text: `📌 **Manejo de Préstamos por Cobrar y Liquidez:**\n\n` +
+              `1. **Separación de capital:** El dinero prestado a terceros se mantiene fuera de tus "Ingresos Reales Disponibles" y se registra bajo la etiqueta **"Préstamos por Cobrar"**.\n\n` +
+              `2. **Impacto de liquidación:**\n` +
+              `   • **Mientras no se pague:** Permanece visible únicamente como saldo pendiente por cobrar (activo circulante), nunca como saldo para gastar.\n` +
+              `   • **En cuanto recibas el pago o abono:** Se descuenta de "Préstamos por Cobrar" y se integra de inmediato a tu **"Saldo Disponible / Ingreso Recuperado"** para el cálculo de flujo de efectivo real.\n\n` +
+              `3. **Criterio de análisis:** No consideres el dinero por cobrar como saldo disponible para gastos o compras inmediatas hasta que no esté efectivamente liquidado y depositado.`,
+        timestamp: this.formatCurrentTime(),
+        dataPoints: [
+          { label: 'Estatus', value: 'Por Cobrar' },
+          { label: 'Criterio', value: 'No disponible hasta liquidar' }
+        ]
+      };
+    }
+
+    // 6. CONSULTA DE DEUDAS Y PRÉSTAMOS POR PAGAR (TOTALES Y ESTRATEGIA)
     if (/deuda|deudas|prestamo|préstamos|cuanto debo|cuánto debo|desendeudamiento|liquidar deudas/i.test(lowerQuery)) {
       const debts = s.debts || [];
       const loans = debts.filter(d => d.group === 'prestamo');
