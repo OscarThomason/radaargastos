@@ -26,9 +26,14 @@ export class AiAdvisorService {
   }): Promise<{ reply: string; dataPoints?: { label: string; value: string }[] } | null> {
     try {
       const activeSession = payload.sessionId || 'default_session';
-      const response = await fetch(this.n8nInteractiveChatWebhookUrl, {
+      const urlWithSession = `${this.n8nInteractiveChatWebhookUrl}?sessionId=${encodeURIComponent(activeSession)}&session_id=${encodeURIComponent(activeSession)}`;
+      const response = await fetch(urlWithSession, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Session-Id': activeSession,
+          'Session-Id': activeSession
+        },
         body: JSON.stringify({
           tipo_solicitud: 'chat_interactivo',
           sessionId: activeSession,
