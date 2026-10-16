@@ -368,7 +368,7 @@ export class FinanceService {
 
     current.debts.forEach(d => {
       const due = this.nextOccurrence(d.dueDay, d.interval, d.anchor, d.frequency);
-      const amount = d.group === 'prestamo' ? (d.cuota || 0) : (d.minPayment || 0);
+      const amount = d.group === 'prestamo' ? (d.cuota || d.total || 0) : (d.minPayment || d.noInterest || d.debt || 0);
       items.push({
         id: d.id,
         kind: d.group,

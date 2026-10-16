@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnDestroy } from '@angular/core';
 import { FinanceService } from '../../core/services/finance.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,14 +12,23 @@ import { CountdownCardComponent } from '../../core/components/countdown-card/cou
   templateUrl: './resumen.component.html',
   styleUrl: './resumen.component.scss'
 })
-export class ResumenComponent {
+export class ResumenComponent implements OnDestroy {
   private financeService = inject(FinanceService);
+
+  /** Señal de fecha viva para actualizar automáticamente al cambiar de día/semana */
+  currentDateSignal = signal<Date>(new Date());
+  private timerInterval: any;
+  private focusListener?: () => void;
+  private visibilityListener?: () => void;
 
   upcomingItems = computed(() => this.financeService.getUpcomingItems());
   
   /** Rango estricto de Lunes a Domingo de la semana actual */
   currentWeekRange = computed(() => {
-    const today = new Date();
+    // Al registrar lectura del estado de finanzas y la señal de fecha viva,
+    // se recalcula de inmediato ante cualquier movimiento de datos o cambio de día/semana
+    this.financeService.state();
+    const today = new Date(this.currentDateSignal());
     today.setHours(0, 0, 0, 0);
     const dayOfWeek = today.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -51,7 +60,7 @@ export class ResumenComponent {
   });
 
   totalCompromisosSemanaActual = computed(() => {
-    return this.currentWeekItems().reduce((acc, item) => acc + item.amount, 0);
+    return this.currentWeekItems().reduce((acc, item) => acc + (item.amount || 0), 0);
   });
 
   /** Rango estricto de Lunes a Domingo de la próxima semana */
@@ -84,7 +93,7 @@ export class ResumenComponent {
   });
 
   totalCompromisosProximaSemana = computed(() => {
-    return this.nextWeekItems().reduce((acc, item) => acc + item.amount, 0);
+    return this.nextWeekItems().reduce((acc, item) => acc + (item.amount || 0), 0);
   });
 
   saldoDisponiblePropio = computed(() => {
@@ -93,22 +102,14 @@ export class ResumenComponent {
     return Math.max(0, totalIn - totalEx);
   });
   
+  /** Suma directa de lo que se debe pagar de Lunes a Domingo de la semana presente */
   dineroRequeridoSemana = computed(() => {
-    const totalGastosSemana = this.totalCompromisosSemanaActual();
-    const saldoDisponible = this.saldoDisponiblePropio();
-
-    const requerido = totalGastosSemana - saldoDisponible;
-    return requerido > 0 ? requerido : 0;
+    return this.totalCompromisosSemanaActual();
   });
 
+  /** Suma directa de lo que se debe pagar de Lunes a Domingo de la próxima semana */
   dineroRequeridoProximaSemana = computed(() => {
-    const totalGastosEstaSemana = this.totalCompromisosSemanaActual();
-    const saldoDisponible = this.saldoDisponiblePropio();
-
-    // El remanente disponible tras cubrir esta semana amortigua la siguiente
-    const remanenteParaProxima = Math.max(0, saldoDisponible - totalGastosEstaSemana);
-    const requerido = this.totalCompromisosProximaSemana() - remanenteParaProxima;
-    return requerido > 0 ? requerido : 0;
+    return this.totalCompromisosProximaSemana();
   });
   
   showTotals = signal(true);
@@ -203,6 +204,37 @@ export class ResumenComponent {
     setTimeout(() => {
       this.showReminderToast.set(false);
     }, 8000);
+
+    // Actualizador periódico cada 15 segundos para detectar paso de días o nueva semana
+    this.timerInterval = setInterval(() => {
+      const now = new Date();
+      const curr = this.currentDateSignal();
+      if (now.getDate() !== curr.getDate() || now.getMonth() !== curr.getMonth() || now.getFullYear() !== curr.getFullYear()) {
+        this.currentDateSignal.set(now);
+      }
+    }, 15000);
+
+    // Sincronizar fecha al volver a la pestaña o ventana
+    if (typeof window !== 'undefined') {
+      this.focusListener = () => this.currentDateSignal.set(new Date());
+      this.visibilityListener = () => {
+        if (!document.hidden) {
+          this.currentDateSignal.set(new Date());
+        }
+      };
+      window.addEventListener('focus', this.focusListener);
+      document.addEventListener('visibilitychange', this.visibilityListener);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+    if (typeof window !== 'undefined') {
+      if (this.focusListener) window.removeEventListener('focus', this.focusListener);
+      if (this.visibilityListener) document.removeEventListener('visibilitychange', this.visibilityListener);
+    }
   }
 
   toggleTotals() {
