@@ -8,6 +8,24 @@
   <button class="btn-primary" style="margin: 0;" (click)="save()">Guardar Cambios</button>
 </div>
 
+<!-- Configuración de Tema (Modo Claro / Modo Oscuro) -->
+<div class="card-panel" style="margin-bottom: 24px;">
+  <h3>Tema de la Aplicación</h3>
+  <p style="font-size: 13px; color: var(--text-muted); margin-top: -8px; margin-bottom: 16px;">
+    Personaliza la apariencia visual cambiando entre modo claro y modo oscuro de alto contraste.
+  </p>
+  <div class="segmented-control">
+    <button [class.active]="!isDark()" (click)="setTheme('light')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">light_mode</span>
+      Modo Claro (Fondo Blanco)
+    </button>
+    <button [class.active]="isDark()" (click)="setTheme('dark')">
+      <span class="material-symbols-outlined" style="font-size: 18px;">dark_mode</span>
+      Modo Oscuro (Fondo Negro)
+    </button>
+  </div>
+</div>
+
 <!-- Configuración de Formato de Hora -->
 <div class="card-panel" style="margin-bottom: 24px;">
   <h3>Formato de Hora</h3>

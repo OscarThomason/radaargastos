@@ -539,3 +539,138 @@
     border-radius: 20px 20px 0 0;
   }
 }
+
+// ========================================
+// REGLAS MODO OSCURO PARA CHATBOT MODAL
+// ========================================
+html.dark {
+  .chatbot-trigger-btn {
+    background: var(--surface) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid var(--border) !important;
+
+    .bot-online-dot {
+      border-color: var(--surface) !important;
+    }
+  }
+
+  .chatbot-window {
+    background: var(--surface) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 16px 44px -8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  .chat-header {
+    background: var(--surface) !important;
+    border-bottom: 1px solid var(--border) !important;
+
+    .chat-header-brand .chat-avatar-mini {
+      background: var(--surface2) !important;
+      border-color: var(--border) !important;
+    }
+
+    .chat-title {
+      color: var(--text) !important;
+    }
+
+    .chat-status {
+      color: var(--text-muted) !important;
+    }
+
+    .chat-header-actions .action-btn:hover {
+      background: var(--surface2) !important;
+      color: var(--text) !important;
+    }
+  }
+
+  .chat-body {
+    background: var(--bg) !important;
+  }
+
+  .msg-row .bot-bubble-avatar {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+  }
+
+  .msg-bubble {
+    &.user-msg {
+      background: #FFFFFF !important;
+      color: #0A0E17 !important;
+      font-weight: 500;
+
+      .msg-time {
+        color: rgba(10, 14, 23, 0.6) !important;
+      }
+    }
+
+    &.bot-msg {
+      background: var(--surface2) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+
+      .msg-time {
+        color: var(--text-dim) !important;
+      }
+    }
+  }
+
+  .datapoint-pill {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+
+    .dp-tag {
+      color: var(--text-muted) !important;
+    }
+
+    .dp-number {
+      color: var(--text) !important;
+    }
+  }
+
+  .quick-suggestions-bar {
+    background: var(--surface) !important;
+    border-top: 1px solid var(--border) !important;
+
+    .suggestion-chip {
+      background: var(--surface2) !important;
+      border-color: var(--border) !important;
+      color: var(--text) !important;
+
+      &:hover:not(:disabled) {
+        background: var(--surface-hover) !important;
+        border-color: var(--border-strong) !important;
+      }
+    }
+  }
+
+  .chat-input-bar {
+    background: var(--surface) !important;
+
+    .input-container {
+      background: var(--surface2) !important;
+      border-color: var(--border) !important;
+
+      &:focus-within {
+        background: var(--surface) !important;
+        border-color: var(--border-strong) !important;
+      }
+
+      .clean-input {
+        color: var(--text) !important;
+
+        &::placeholder {
+          color: var(--text-dim) !important;
+        }
+      }
+
+      .send-icon-btn {
+        background: #FFFFFF !important;
+        color: #0A0E17 !important;
+
+        &:hover:not(:disabled) {
+          background: #E2E8F0 !important;
+        }
+      }
+    }
+  }
+}

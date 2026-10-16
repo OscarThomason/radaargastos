@@ -184,3 +184,10 @@
     transform: translateY(0);
   }
 }
+
+html.dark {
+  .confirm-modal-box {
+    box-shadow: 6px 6px 0px rgba(255, 255, 255, 0.12) !important;
+    border-color: var(--border) !important;
+  }
+}

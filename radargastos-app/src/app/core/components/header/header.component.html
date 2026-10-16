@@ -13,6 +13,16 @@
   </div>
 
   <div class="topbar-actions">
+    <!-- Botón Toggle de Modo Oscuro / Claro -->
+    <button class="theme-toggle-btn"
+      (click)="toggleTheme()"
+      [title]="isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+      <span class="material-symbols-outlined icon-theme">
+        {{ isDark() ? 'light_mode' : 'dark_mode' }}
+      </span>
+      <span class="theme-text">{{ isDark() ? 'Claro' : 'Oscuro' }}</span>
+    </button>
+
     <!-- Chip de Fecha y Estado de Nube -->
     <div class="status-chip">
       <button class="cloud-status-btn"

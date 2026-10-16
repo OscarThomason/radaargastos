@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FinanceService } from '../../services/finance.service';
 import { CalendarService } from '../../services/calendar.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -15,6 +16,13 @@ export class HeaderComponent implements OnDestroy {
   authService = inject(AuthService);
   financeService = inject(FinanceService);
   private calendarService = inject(CalendarService);
+  themeService = inject(ThemeService);
+
+  isDark = computed(() => this.themeService.darkMode());
+
+  toggleTheme() {
+    this.themeService.toggleTheme();
+  }
 
   cloudStatus = computed(() => this.financeService.cloudSyncStatus());
   cloudError = computed(() => this.financeService.cloudSyncError());

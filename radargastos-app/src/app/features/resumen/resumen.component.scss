@@ -920,3 +920,118 @@
     gap: 10px;
   }
 }
+
+// ========================================
+// REGLAS MODO OSCURO PARA CALENDARIO Y RESUMEN
+// ========================================
+html.dark {
+  .agenda-calendar-container {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+  }
+
+  .agenda-title-block .agenda-year-text {
+    color: #FBBF24 !important; // Dorado brillante en modo oscuro
+  }
+
+  .agenda-day-cell.other-month .agenda-day-circle {
+    color: #4B5563 !important;
+  }
+
+  .agenda-day-circle {
+    &.circle-debt {
+      background: #0369A1 !important;
+      color: #E0F2FE !important;
+
+      &:hover {
+        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.4) !important;
+      }
+    }
+
+    &.circle-overdue {
+      background: #7F1D1D !important;
+      border-color: #EF4444 !important;
+      color: #FCA5A5 !important;
+
+      &:hover {
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+      }
+    }
+
+    &.is-today,
+    &.is-active-day {
+      border-color: #10B981 !important;
+      color: #34D399 !important;
+      background: rgba(16, 185, 129, 0.22) !important;
+
+      &.circle-debt {
+        background: #0369A1 !important;
+        color: #E0F2FE !important;
+      }
+
+      &.circle-overdue {
+        background: #7F1D1D !important;
+        color: #FCA5A5 !important;
+      }
+    }
+  }
+
+  .agenda-hover-tooltip {
+    background: var(--surface2) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+
+    &::after {
+      border-top-color: var(--surface2) !important;
+    }
+
+    .tooltip-item-card {
+      background: var(--surface) !important;
+      border-color: var(--border) !important;
+
+      &:hover {
+        background: var(--surface-hover) !important;
+        border-color: var(--border-strong) !important;
+      }
+
+      .btn-reschedule-action {
+        background: var(--surface2) !important;
+        border-color: var(--border) !important;
+        color: var(--text) !important;
+
+        &:hover {
+          background: #FFFFFF !important;
+          color: #0A0E17 !important;
+        }
+      }
+    }
+  }
+
+  .agenda-goals-container {
+    border-top-color: var(--border) !important;
+
+    .goals-lined-row {
+      border-bottom-color: var(--border) !important;
+
+      .week-goal-val {
+        color: #38BDF8 !important;
+      }
+    }
+  }
+
+  .move-date-modal-card {
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+
+    .modal-head {
+      border-bottom-color: var(--border) !important;
+    }
+
+    .selected-day-details-panel {
+      background: var(--surface2) !important;
+      border-color: var(--border) !important;
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../core/services/finance.service';
+import { ThemeService, AppTheme } from '../../core/services/theme.service';
 import { Location } from '@angular/common';
 
 @Component({
@@ -13,7 +14,14 @@ import { Location } from '@angular/common';
 })
 export class AjustesComponent {
   private financeService = inject(FinanceService);
+  private themeService = inject(ThemeService);
   private location = inject(Location);
+
+  isDark = computed(() => this.themeService.darkMode());
+
+  setTheme(theme: AppTheme) {
+    this.themeService.setTheme(theme);
+  }
 
   // Load current categories
   expenseCats = signal<string[]>([...this.financeService.expenseCategories()]);
