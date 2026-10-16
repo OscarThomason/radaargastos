@@ -1,14 +1,28 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="login-container">
-      <div class="notebook-page slide-in">
+    <div class="login-container" [class.is-dark]="themeService.darkMode()">
+      <!-- Botón flotante para alternar tema solo si no hay header activo -->
+      @if (!authService.userSignal()) {
+        <button 
+          type="button" 
+          class="theme-toggle-floating" 
+          (click)="themeService.toggleTheme()" 
+          [attr.aria-label]="themeService.darkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+          [title]="themeService.darkMode() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+          <span class="material-symbols-outlined">{{ themeService.darkMode() ? 'light_mode' : 'dark_mode' }}</span>
+          <span class="toggle-text">{{ themeService.darkMode() ? 'Modo Claro' : 'Modo Oscuro' }}</span>
+        </button>
+      }
+
+      <div class="notebook-page slide-in" [class.dark-notebook]="themeService.darkMode()">
         <!-- Binder holes simulation -->
         <div class="holes">
           <div class="hole"></div>
@@ -44,29 +58,177 @@ import { AuthService } from '../../core/services/auth.service';
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      /* Eliminar cualquier background porque se hereda del body global que ya tiene el patron */
       padding: 20px;
       overflow: hidden;
+      position: relative;
+    }
+
+    /* Botón flotante de alternar tema en la portada */
+    .theme-toggle-floating {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--surface, #FFFFFF);
+      color: var(--text, #0F172A);
+      border: 2px solid var(--border-strong, #0F172A);
+      border-radius: 9999px;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px var(--border-strong, #0F172A);
+      transition: all 0.2s ease;
+
+      .material-symbols-outlined {
+        font-size: 18px;
+      }
+
+      &:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0px var(--border-strong, #0F172A);
+      }
+
+      &:active {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0px var(--border-strong, #0F172A);
+      }
+    }
+
+    .is-dark .theme-toggle-floating {
+      background: #111827;
+      color: #F8FAFC;
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 3px 3px 0px #030712;
+
+      &:hover {
+        border-color: #FFFFFF;
+        box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.2);
+      }
     }
     
     .notebook-page {
       position: relative;
-      background-color: #FFFFFF;
-      background-image: 
-        linear-gradient(90deg, transparent 40px, #E53935 40px, #E53935 42px, transparent 42px),
-        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
-      background-size: 100% 100%, 24px 24px, 24px 24px;
-      background-position: left top;
-      
       padding: 60px 40px 60px 70px;
       max-width: 450px;
       width: 100%;
       text-align: center;
-      border: 2px solid var(--border);
-      box-shadow: 12px 12px 0px rgba(0,0,0,1);
       transform: rotate(-2deg);
-      transition: transform 0.3s;
+      transition: transform 0.3s, background-color 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+
+    /* MODO CLARO (Libreta blanca tradicional) */
+    .notebook-page:not(.dark-notebook) {
+      background-color: #FFFFFF;
+      background-image: 
+        linear-gradient(90deg, transparent 40px, #E53935 40px, #E53935 42px, transparent 42px),
+        linear-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+      background-size: 100% 100%, 24px 24px, 24px 24px;
+      background-position: left top;
+      border: 2px solid #0F172A;
+      box-shadow: 12px 12px 0px rgba(0, 0, 0, 1);
+
+      .content {
+        background: rgba(255, 255, 255, 0.92);
+        border: 2px dashed rgba(0, 0, 0, 0.15);
+      }
+
+      .logo {
+        color: #0F172A;
+      }
+
+      .subtitle {
+        color: #475569;
+      }
+
+      .hole {
+        background: var(--bg, #F8FAFC);
+        border: 2px solid #0F172A;
+        box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      .btn-google {
+        background: #FFFFFF;
+        color: #0F172A;
+        border: 2px solid #0F172A;
+        box-shadow: 4px 4px 0px #0F172A;
+
+        &:hover {
+          background: #F1F5F9;
+        }
+      }
+
+      .draw-anim,
+      .draw-line {
+        color: #0F172A;
+        background: #0F172A;
+      }
+
+      .loading-text {
+        color: #475569;
+      }
+    }
+
+    /* MODO OSCURO (Libreta grafito / carbón premium) */
+    .notebook-page.dark-notebook {
+      background-color: #111827;
+      background-image: 
+        linear-gradient(90deg, transparent 40px, #EF4444 40px, #EF4444 42px, transparent 42px),
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 100% 100%, 24px 24px, 24px 24px;
+      background-position: left top;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 12px 12px 0px #030712, 0 16px 36px rgba(0, 0, 0, 0.6);
+
+      .content {
+        background: rgba(17, 24, 39, 0.90);
+        border: 2px dashed rgba(255, 255, 255, 0.18);
+      }
+
+      .logo {
+        color: #F8FAFC;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .subtitle {
+        color: #94A3B8;
+      }
+
+      .hole {
+        background: #090D16;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.5);
+      }
+
+      /* Inversión en modo oscuro: botón Google con fondo blanco y texto oscuro */
+      .btn-google {
+        background: #FFFFFF;
+        color: #090D16;
+        border: 2px solid #FFFFFF;
+        box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.25);
+
+        &:hover {
+          background: #E2E8F0;
+        }
+      }
+
+      .draw-anim {
+        color: #F8FAFC;
+      }
+
+      .draw-line {
+        background: #F8FAFC;
+      }
+
+      .loading-text {
+        color: #94A3B8;
+      }
     }
 
     .notebook-page:hover {
@@ -95,37 +257,35 @@ import { AuthService } from '../../core/services/auth.service';
     .hole {
       width: 12px;
       height: 12px;
-      background: var(--bg);
       border-radius: 50%;
-      border: 2px solid var(--border);
-      box-shadow: inset 2px 2px 0 rgba(0,0,0,0.1);
+      transition: background 0.25s, border-color 0.25s;
     }
 
     .content {
       position: relative;
       z-index: 2;
-      background: rgba(255,255,255,0.85); /* Legibilidad extra sobre la cuadricula */
-      padding: 20px;
+      padding: 24px 20px;
       border-radius: 8px;
-      border: 2px dashed rgba(0,0,0,0.1);
+      transition: background 0.25s, border-color 0.25s;
     }
 
     .logo {
       font-size: 32px;
       margin-top: 0;
       margin-bottom: 12px;
-      color: var(--text);
       text-transform: uppercase;
       letter-spacing: -0.05em;
+      font-weight: 800;
+      transition: color 0.25s;
     }
 
     .subtitle {
-      color: var(--text);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 500;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
       line-height: 1.4;
       font-style: italic;
+      transition: color 0.25s;
     }
 
     .btn-google {
@@ -134,25 +294,16 @@ import { AuthService } from '../../core/services/auth.service';
       justify-content: center;
       gap: 12px;
       width: 100%;
-      background: var(--surface);
-      color: var(--text);
-      border: 2px solid var(--border);
       font-weight: 700;
       font-size: 15px;
       padding: 14px;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Sora', sans-serif;
       transition: all 0.2s;
-      box-shadow: 4px 4px 0px var(--border);
     }
 
     .btn-google:active {
       transform: translate(2px, 2px);
-      box-shadow: 2px 2px 0px var(--border);
-    }
-
-    .btn-google:hover {
-      background: #f8f8f8;
     }
 
     .btn-google img {
@@ -171,7 +322,6 @@ import { AuthService } from '../../core/services/auth.service';
 
     .draw-anim {
       font-size: 30px;
-      color: var(--text);
       animation: scribble 1.5s infinite alternate ease-in-out;
       transform-origin: bottom left;
     }
@@ -179,7 +329,6 @@ import { AuthService } from '../../core/services/auth.service';
     .draw-line {
       width: 0%;
       height: 3px;
-      background: var(--text);
       margin-top: -5px;
       border-radius: 3px;
       animation: drawLine 1.5s infinite alternate ease-in-out;
@@ -188,7 +337,6 @@ import { AuthService } from '../../core/services/auth.service';
     .loading-text {
       margin-top: 15px;
       font-weight: 600;
-      color: var(--text-muted);
       animation: pulse 1s infinite alternate;
     }
 
@@ -212,37 +360,64 @@ import { AuthService } from '../../core/services/auth.service';
     }
 
     @media (max-width: 768px) {
+      .theme-toggle-floating {
+        top: 16px;
+        right: 16px;
+        padding: 8px 12px;
+
+        .toggle-text {
+          display: none;
+        }
+      }
+
       .notebook-page {
         padding: 40px 15px 40px 30px;
+        box-shadow: 6px 6px 0px rgba(0,0,0,1);
+        border-width: 1.5px;
+      }
+
+      .notebook-page:not(.dark-notebook) {
         background-image: 
           linear-gradient(90deg, transparent 15px, #E53935 15px, #E53935 17px, transparent 17px),
           linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
           linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px);
-        box-shadow: 6px 6px 0px rgba(0,0,0,1);
-        border-width: 1px;
       }
+
+      .notebook-page.dark-notebook {
+        background-image: 
+          linear-gradient(90deg, transparent 15px, #EF4444 15px, #EF4444 17px, transparent 17px),
+          linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
+        box-shadow: 6px 6px 0px #030712;
+      }
+
       .logo {
         font-size: 24px;
       }
+
       .subtitle {
         font-size: 15px;
         margin-bottom: 24px;
       }
+
       .btn-google {
         font-size: 14px;
         padding: 12px;
-        box-shadow: 3px 3px 0px var(--border);
       }
+
       .holes {
         left: 4px;
       }
+
       .hole {
         width: 8px;
         height: 8px;
       }
+
       .draw-anim {
         animation: scribble-mobile 1.5s infinite alternate ease-in-out;
       }
+
       .draw-line {
         animation: drawLine-mobile 1.5s infinite alternate ease-in-out;
       }
@@ -253,6 +428,7 @@ import { AuthService } from '../../core/services/auth.service';
       50% { transform: translateX(0px) rotate(-5deg); }
       100% { transform: translateX(20px) rotate(10deg); }
     }
+
     @keyframes drawLine-mobile {
       0% { width: 0%; margin-left: -40px; }
       100% { width: 40px; margin-left: 0; }
@@ -261,13 +437,14 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class LoginComponent {
   authService = inject(AuthService);
+  themeService = inject(ThemeService);
   isLoading = false;
 
   login() {
     this.isLoading = true;
-    // Agregamos un ligero delay visual para que se aprecie la animación antes de que Google tome el control
     setTimeout(() => {
       this.authService.loginWithGoogle();
     }, 800);
   }
 }
+

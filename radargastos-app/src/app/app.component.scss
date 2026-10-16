@@ -49,10 +49,10 @@ main {
 
 .notebook-loader-card {
   background: var(--surface, #ffffff);
-  border: 1.5px solid var(--border, #000000);
+  border: 1.5px solid var(--border-strong, #000000);
   border-radius: 20px;
   padding: 32px 28px;
-  box-shadow: 4px 4px 0px var(--border, #000000), 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 4px 0px var(--border-strong, #000000), 0 20px 40px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,10 +67,10 @@ main {
   position: relative;
   width: 140px;
   height: 160px;
-  background: #ffffff;
-  border: 2px solid var(--border, #000000);
+  background: var(--surface, #ffffff);
+  border: 2px solid var(--border-strong, #000000);
   border-radius: 4px 14px 14px 4px;
-  box-shadow: 3px 3px 0px var(--border, #000000);
+  box-shadow: 3px 3px 0px var(--border-strong, #000000);
   margin-bottom: 20px;
   display: flex;
   overflow: hidden;
@@ -79,7 +79,7 @@ main {
 .notebook-spine {
   width: 20px;
   background: var(--surface2, #f4f4f4);
-  border-right: 1.5px solid var(--border, #000000);
+  border-right: 1.5px solid var(--border-strong, #000000);
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -89,17 +89,17 @@ main {
   .ring {
     width: 10px;
     height: 10px;
-    border: 2px solid var(--border, #000000);
+    border: 2px solid var(--border-strong, #000000);
     border-radius: 50%;
-    background: #ffffff;
+    background: var(--surface, #ffffff);
   }
 }
 
 .notebook-page {
   flex: 1;
   position: relative;
-  background: #ffffff;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.07) 1px, transparent 1px);
+  background: var(--surface, #ffffff);
+  background-image: linear-gradient(var(--grid-line, rgba(0, 0, 0, 0.07)) 1px, transparent 1px);
   background-size: 100% 24px;
   background-position: 0 12px;
   padding: 12px 14px;
@@ -112,6 +112,43 @@ main {
   left: 12px;
   width: 2px;
   background: #E53935;
+}
+
+:host-context(html.dark) {
+  .notebook-loading-overlay {
+    background: rgba(9, 13, 22, 0.95);
+  }
+
+  .notebook-loader-card {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 4px 4px 0px rgba(255, 255, 255, 0.15), 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .notebook-graphic {
+    background: #111827;
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 3px 3px 0px rgba(255, 255, 255, 0.15);
+  }
+
+  .notebook-spine {
+    background: #182234;
+    border-right-color: rgba(255, 255, 255, 0.2);
+
+    .ring {
+      border-color: rgba(255, 255, 255, 0.3);
+      background: #111827;
+    }
+  }
+
+  .notebook-page {
+    background: #111827;
+    background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  }
+
+  .red-margin-line {
+    background: #EF4444;
+  }
 }
 
 .filling-lines {
